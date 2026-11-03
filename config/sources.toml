@@ -30,6 +30,27 @@ match = "headline report|data quality"
 types = ["pdf"]
 notes = "The headline figures the loaded data is reconciled to, and the list of results the regulator excluded."
 
+[[file]]
+source = "tsm"
+role = "full-data"
+period = "2023/24"
+publisher = "Regulator of Social Housing"
+licence = "Open Government Licence v3.0"
+govuk = "/government/statistics/data-release-tsm-2024"
+match = "full data release"
+types = ["xlsx"]
+notes = "Published only as xlsx. Its Data Dictionary sheet maps each column heading to the field name the 2024/25 CSVs use."
+
+[[file]]
+source = "tsm"
+role = "report"
+period = "2023/24"
+publisher = "Regulator of Social Housing"
+licence = "Open Government Licence v3.0"
+govuk = "/government/statistics/tenant-satisfaction-measures-202324"
+match = "tenant satisfaction measures 2023/24"
+types = ["pdf"]
+
 # Regulatory judgements and gradings --------------------------------------------------------------------------------
 
 [[file]]
@@ -116,7 +137,18 @@ source = "ombudsman"
 role = "landlord-tables"
 period = "2025-26"
 publisher = "Housing Ombudsman Service"
-licence = "© Housing Ombudsman Service; reuse terms not yet found (docs/DATA.md)"
+licence = "© Housing Ombudsman Service; reuse terms being confirmed (docs/DECISIONS.md, 9)"
 page = "https://www.housing-ombudsman.org.uk/annual-complaint-review-reports/annual-complaints-review-2025-26/"
 links = "tables-for-landlords.*\\.xlsx$"
 types = ["xlsx"]
+
+[[file]]
+source = "ombudsman"
+role = "landlord-tables"
+period = "2024-25"
+publisher = "Housing Ombudsman Service"
+licence = "© Housing Ombudsman Service; reuse terms being confirmed (docs/DECISIONS.md, 9)"
+page = "https://www.housing-ombudsman.org.uk/annual-complaint-review-reports/annual-complaints-review-2024-25/"
+links = "tables-for-landlords.*\\.xlsx$"
+types = ["xlsx"]
+notes = "Before the Ombudsman began examining complaint handling in every case (October 2025): not directly comparable with 2025-26."

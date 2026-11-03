@@ -66,9 +66,11 @@ def check_register(settings: Settings, rep: Report) -> None:
     incomplete = [r["id"] for r in profiled if not (r.get("display_name") and r.get("slug") and r.get("type"))]
     rep.add("every profiled landlord has a name, slug and type", "fail" if incomplete else "ok",
             f"{len(profiled)} profiled; {len(incomplete)} incomplete", incomplete)
-    cov = {c["landlord_id"] for c in read_table(settings, "tsm_coverage")}
+    coverage = read_table(settings, "tsm_coverage")
+    latest = max(c["period"] for c in coverage)
+    cov = {c["landlord_id"] for c in coverage if c["period"] == latest}
     not_profiled = sorted(cov - {r["id"] for r in profiled})
-    rep.add("every TSM landlord is profiled", "fail" if not_profiled else "ok",
+    rep.add(f"every TSM {latest} landlord is profiled", "fail" if not_profiled else "ok",
             f"{len(cov)} in the TSM data; {len(not_profiled)} not profiled", not_profiled)
 
 
@@ -145,9 +147,10 @@ def check_tsm_reconciliation(settings: Settings, rep: Report, expect: dict) -> N
                 sat[r["method"]] += r["value"] * n
                 weight[r["method"]] += n
         rows, ok = [], True
+        has_by_method = any(weight.values())  # 2023/24's file has no satisfaction by method
         for method, (count, pct) in e.get("by_method", {}).items():
             got_pct = sat[method] / weight[method] if weight[method] else None
-            good = sums[method] == count and got_pct is not None and _close(got_pct, pct, tol)
+            good = sums[method] == count and (not has_by_method or (got_pct is not None and _close(got_pct, pct, tol)))
             ok &= good
             rows.append({"method": method, "surveys": sums[method], "published_surveys": count,
                          "satisfaction": round(got_pct, 2) if got_pct else None, "published_satisfaction": pct})
@@ -198,8 +201,12 @@ def check_other_reconciliation(settings: Settings, rep: Report, expect: dict) ->
     om = read_table(settings, "ombudsman")
     for period, e in expect.get("ombudsman", {}).items():
         n = len({r["name_published"] for r in om if r["period"] == period})
-        rep.add(f"Ombudsman {period}: landlords", "ok" if n == e["landlords"] else "fail",
-                f"got {n}, published {e['landlords']}")
+        if "landlords" in e:
+            rep.add(f"Ombudsman {period}: landlords", "ok" if n == e["landlords"] else "fail",
+                    f"got {n}, published {e['landlords']}")
+        else:  # only the number of reports is published, before those withheld for privacy
+            rep.add(f"Ombudsman {period}: landlords", "ok" if 0 < n <= e["reports"] else "fail",
+                    f"got {n}; {e['reports']} reports published, less an unstated number withheld for privacy")
     councils = [p for p in read_table(settings, "providers") if p["gss"]]
     stock = {r["landlord_id"] for r in read_table(settings, "stock_area") if r["basis"] == "council total"}
     for period, e in expect.get("stock", {}).items():
@@ -233,8 +240,10 @@ def check_stock_against_tsm(settings: Settings, rep: Report) -> None:
     """
     totals = area.rolled_up_totals(settings)
     pop = {}
-    for s in read_table(settings, "tsm_survey"):
-        if s["stock_type"] in ("LCRA", "COMB") and s["population"]:
+    survey = read_table(settings, "tsm_survey")
+    latest = max(s["period"] for s in survey)
+    for s in survey:
+        if s["period"] == latest and s["stock_type"] in ("LCRA", "COMB") and s["population"]:
             pop[s["landlord_id"]] = pop.get(s["landlord_id"], 0) + s["population"]
     rows = []
     for lid, p in pop.items():

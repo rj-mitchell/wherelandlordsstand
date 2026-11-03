@@ -61,25 +61,35 @@ MEASURES = {
 }
 
 
-def load(settings: Settings, period: str = "2025-26") -> dict[str, int]:
+def load(settings: Settings) -> dict[str, int]:
+    """Every year fetched, into one table."""
+    from landlords.fetch import read_index
     from landlords.register import Resolver
 
-    note = source_file(settings, "ombudsman", "landlord-tables", period)
-    header, rows = sheet_table(note["path"], "Table 1", "Landlord name")
-    require(header, ["Landlord name", "Size band", "Landlord type", *MEASURES.values()], "Ombudsman Table 1")
     resolver = Resolver()
-    out = []
-    for r in rows:
-        d = dict(zip(header, r, strict=False))
-        name = text(d["Landlord name"])
-        lid, _how = resolver.resolve(name)
-        for measure, col in MEASURES.items():
-            value, status = parse_value(d[col])
-            if status == "value":
-                out.append({"landlord_id": lid, "name_published": name, "size_band": text(d["Size band"]),
-                            "landlord_type": text(d["Landlord type"]), "measure": measure, "value": value,
-                            **file_ref(note)})
+    periods = sorted({r["period"] for r in read_index(settings, "ombudsman") if r["role"] == "landlord-tables"})
+    out, notes = [], []
+    for period in periods:
+        note = source_file(settings, "ombudsman", "landlord-tables", period)
+        notes.append(note)
+        header, rows = sheet_table(note["path"], "Table 1", "Landlord name")
+        require(header, ["Landlord name", "Size band", "Landlord type", *MEASURES.values()],
+                f"Ombudsman {period} Table 1")
+        for r in rows:
+            d = dict(zip(header, r, strict=False))
+            name = text(d["Landlord name"])
+            if not name:
+                continue
+            lid, _how = resolver.resolve(name)
+            for measure, col in MEASURES.items():
+                value, status = parse_value(d[col])
+                if status == "value":
+                    out.append({"landlord_id": lid, "name_published": name, "size_band": text(d["Size band"]),
+                                "landlord_type": text(d["Landlord type"]), "measure": measure, "value": value,
+                                **file_ref(note)})
     write_table(settings, "ombudsman", out, SCHEMA)
-    record_sources(settings, [note])
-    return {"ombudsman": len(out), "landlords": len({r["name_published"] for r in out}),
-            "unmatched": len({r["name_published"] for r in out if not r["landlord_id"]})}
+    record_sources(settings, notes)
+    names = {(r["period"], r["name_published"]) for r in out}
+    return {"periods": len(periods), "ombudsman": len(out), "landlords": len(names),
+            "unmatched": len({n for n in names if not any(r["landlord_id"] for r in out
+                                                           if (r["period"], r["name_published"]) == n)})}

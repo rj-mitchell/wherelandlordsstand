@@ -189,7 +189,9 @@ def build(settings) -> RegisterResult:
 
     existing = landlords()
     parents = {g["landlord_id"]: g["parent_id"] for g in groups if g["parent_id"]}
-    profiled = {c["landlord_id"] for c in coverage}
+    # Profiled: the landlords in the latest TSM year (1,000 or more homes; docs/DECISIONS.md, 3).
+    latest = max(c["period"] for c in coverage)
+    profiled = {c["landlord_id"] for c in coverage if c["period"] == latest}
     rows: dict[str, dict] = {}
 
     for p in providers:

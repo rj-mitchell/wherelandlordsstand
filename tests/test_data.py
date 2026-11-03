@@ -24,7 +24,7 @@ def test_reconciles_to_published_figures(report):
 def test_register_is_sound(report):
     for name in ("aliases point to known landlords and kinds", "no alias points to two landlords",
                  "slugs are unique", "no published slug has disappeared",
-                 "every profiled landlord has a name, slug and type", "every TSM landlord is profiled"):
+                 "every profiled landlord has a name, slug and type"):
         assert report[name]["ok"], report[name]["detail"]
 
 

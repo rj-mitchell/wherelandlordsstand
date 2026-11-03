@@ -1,7 +1,10 @@
-"""Tenant Satisfaction Measures: the regulator's full data set, read from the CSVs in its zip.
+"""Tenant Satisfaction Measures: the regulator's full data set, every year fetched.
 
-The zip's CSVs use the regulator's field names (``TP01_Satisfied_Calc_LCRA``), which are steadier than the xlsx's
-long headings. Three tables come out:
+Where the regulator publishes a zip of CSVs (2024/25 on), those are read: they use the regulator's field names
+(``TP01_Satisfied_Calc_LCRA``), which are steadier than the xlsx's long headings. Where there is only an xlsx
+(2023/24), each heading is turned into the same field name by the measure code it carries ("(TP01)", "(RP02 1)",
+"LCRA - … (CH02 1 Numerator)"), so every year goes through the same code. (The 2023/24 data dictionary can't be
+used for this: several of its headings and field names don't match the sheets.) Three tables come out:
 
 * ``tsm``: one row per landlord, stock type, measure and survey method. ``value`` is the published figure;
   ``status`` says why there is none ("undefined", "excluded" ...). Management information measures also carry their
@@ -14,16 +17,20 @@ long headings. Three tables come out:
 from __future__ import annotations
 
 import json
+import re
 
 import pyarrow as pa
 
 from landlords.config import Settings
 from landlords.load.common import (
     LayoutChanged,
+    MissingFile,
+    code,
     file_ref,
     parse_value,
     record_sources,
     require,
+    sheet_table,
     source_file,
     text,
     write_table,
@@ -97,13 +104,121 @@ def _num(v: str) -> float | None:
     return parse_value(v)[0]
 
 
-def load(settings: Settings, period: str = "2024/25") -> dict[str, int]:
-    note = source_file(settings, "tsm", "full-data", period, ext="zip")
-    path, ref = note["path"], file_ref(note)
+# Reading the files ------------------------------------------------------------------------------------------------
+
+_ID = {"Landlord name": "ProviderName", "Landlord code": "ProviderNumber", "Landlord type": "ProviderType"}
+_PART = {None: "Calculated_Value", " Numerator": "Numerator", " Denominator": "Denominator"}
+_SHEETS = {"Table_coverage": "Table_Coverage", "LCRA_perception": "LCRA_Perception",
+           "LCHO_perception": "LCHO_Perception", "COMB_perception": "Combined_Perception",
+           "Management_info": "Management_Info", "Perception_not_inc": "Perception_Not_Inc",
+           "Man_not_inc": "Man_Info_Not_Inc"}
+
+
+def field_name(heading: str, stock: str | None) -> str:
+    """The regulator's field name for an xlsx column heading. ``stock`` is LCRA, LCHO or COMB on a perception
+    sheet, None on the management sheet. Headings that aren't needed are returned unchanged."""
+    h = re.sub(r"\s+", " ", str(heading).replace("\xa0", " ")).strip()
+    if h in _ID:
+        return _ID[h]
+    for start, name in (("Landlord TSM Publication URL", "Publication_URL"), ("Landlord group size", "Group size"),
+                        ("Landlord predominant region", "Predominant region"),
+                        ("LCRA above 30% supported", "Above_30_SH")):
+        if h.startswith(start):
+            return name
+    if h == "Any additional notes from RSH":
+        return f"RSH_Comments_{stock}" if stock else "RSH Comments"
+    if stock:
+        for start, name in (("Relevant tenant population size", "Relevant_ten_pop_size"),
+                            ("Required minimum sample size", "MinimumSample"),
+                            ("Total sample size achieved", "Total_sample_size"),
+                            ("Estimated margin of error", "Estimated_margin"),
+                            ("Sample or census", "Census_or_Sample"),
+                            ("Predominant collection method", "Predominant_method"),
+                            ("External contractor's name", "External_contractor_name")):
+            if h.startswith(start):
+                return f"{name}_{stock}"
+        if m := re.fullmatch(r"Number of responses by method - (\w+?)", h):
+            return f"Responses_{m.group(1)}_{stock}"
+        if m := re.search(r"\(TP01\) for each survey method - ([A-Za-z]+?)\d*$", h):
+            return f"TP01_Satisfied_{m.group(1)}_{stock}"
+        if m := re.fullmatch(r"Proportion of respondents who report .*\((TP\d\d)\)\d*", h):
+            return f"{m.group(1)}_Satisfied_Calc_{stock}"
+        return h
+    if m := re.fullmatch(r"(LCRA|LCHO|Combined) - .*\((CH0[12]) ([12])( Numerator| Denominator)?\)\d*", h):
+        st = "COMB" if m.group(1) == "Combined" else m.group(1)
+        return f"{m.group(2)}_{m.group(3)}_{_PART[m.group(4)]}_{st}"
+    if m := re.search(r"\(((?:BS|RP|NM)\d\d)(?: (\d))?( Numerator| Denominator)?\)\d*$", h):
+        base = m.group(1) + (f"_{m.group(2)}" if m.group(2) else "")
+        return f"{base}_{_PART[m.group(3)]}"
+    if h.startswith("What is your (maximum) target timescale for non-emergency"):
+        return "RP02_Max_Timescale_Non_Emer"
+    if h.startswith("What is your (maximum) target timescale for emergency"):
+        return "RP02_Max_Timescale_Emer"
+    return h
+
+
+def xlsx_tables(path: str):
+    """A reader over the xlsx with the same interface as ``zip_csv``: (header, rows) for a table, by its CSV name."""
+    from python_calamine import CalamineWorkbook
+
+    sheets = CalamineWorkbook.from_path(path).sheet_names
+
+    def read(name: str) -> tuple[list[str], list[dict]]:
+        suffix = _SHEETS[name]
+        found = [sh for sh in sheets if sh.lower().endswith(suffix.lower())]
+        if len(found) != 1:
+            raise LayoutChanged(f"TSM xlsx: expected one sheet ending {suffix!r}, found {found}")
+        header, rows = sheet_table(path, found[0], "Landlord name")
+        if name == "Table_coverage":
+            fields = [h.replace(" ", "_") if h in ("Landlord name", "Landlord code", "Landlord type") else h
+                      for h in header]
+        elif name in ("Perception_not_inc", "Man_not_inc"):
+            fields = header
+        else:
+            stock = {"LCRA_perception": "LCRA", "LCHO_perception": "LCHO", "COMB_perception": "COMB"}.get(name)
+            fields = [field_name(h, stock) for h in header]
+        out = [dict(zip(fields, r, strict=False)) for r in rows]
+        # 2023/24 puts its notes below each table, so keep only rows that carry a landlord code.
+        key = next(k for k in ("ProviderNumber", "Landlord_code", "Landlord code") if k in fields)
+        return fields, [r for r in out if code(r.get(key, ""))]
+
+    return read
+
+
+def load(settings: Settings) -> dict[str, int]:
+    """Every TSM year fetched, into one set of tables."""
+    from landlords.fetch import read_index
+
+    periods = sorted({r["period"] for r in read_index(settings, "tsm") if r["role"] == "full-data"})
+    tsm, survey, coverage, notes = [], [], [], []
+    for period in periods:
+        t, s, c, note = load_period(settings, period)
+        tsm += t
+        survey += s
+        coverage += c
+        notes.append(note)
+    write_table(settings, "tsm", tsm, TSM_SCHEMA)
+    write_table(settings, "tsm_survey", survey, SURVEY_SCHEMA)
+    write_table(settings, "tsm_coverage", coverage, COVERAGE_SCHEMA)
+    record_sources(settings, notes)
+    return {"periods": len(periods), "tsm": len(tsm), "tsm_survey": len(survey), "tsm_coverage": len(coverage)}
+
+
+def load_period(settings: Settings, period: str) -> tuple[list, list, list, dict]:
+    try:
+        note = source_file(settings, "tsm", "full-data", period, ext="zip")
+        path = note["path"]
+
+        def read(name: str):
+            return zip_csv(path, name)
+    except MissingFile:
+        note = source_file(settings, "tsm", "full-data", period, ext="xlsx")
+        read = xlsx_tables(note["path"])
+    ref = file_ref(note)
     tsm, survey, coverage = [], [], {}
 
     # Coverage: who is in which table ----------------------------------------------------------------------------
-    header, rows = zip_csv(path, "Table_coverage")
+    header, rows = read("Table_coverage")
     cov_cols = {"lcra": "LCRA_Perception", "lcho": "LCHO_Perception", "combined": "Combined_Perception",
                 "management_info": "Management _Info", "perception_excluded": "Perception_Not_Inc",
                 "management_excluded": "Man_Info_Not_Inc"}
@@ -115,7 +230,7 @@ def load(settings: Settings, period: str = "2024/25") -> dict[str, int]:
         resolved[key] = found[0]
     require(header, ["Landlord_name", "Landlord_code", "Landlord_type"], "TSM coverage")
     for r in rows:
-        lid = text(r["Landlord_code"])
+        lid = code(r["Landlord_code"])
         coverage[lid] = {"landlord_id": lid, "name_published": text(r["Landlord_name"]),
                          "landlord_type": text(r["Landlord_type"]), "period": period,
                          **{k: _yes(r[c]) for k, c in resolved.items()},
@@ -124,7 +239,7 @@ def load(settings: Settings, period: str = "2024/25") -> dict[str, int]:
 
     # Perception: one file per stock type --------------------------------------------------------------------------
     for stock, name in STOCK_TYPES.items():
-        header, rows = zip_csv(path, name)
+        header, rows = read(name)
         method_col = next((h for h in header if h.lower().startswith("predominant_method")), None)
         need = ["ProviderName", "ProviderNumber", f"TP01_Satisfied_Calc_{stock}", f"Total_sample_size_{stock}",
                 f"Relevant_ten_pop_size_{stock}"]
@@ -132,7 +247,7 @@ def load(settings: Settings, period: str = "2024/25") -> dict[str, int]:
         if not method_col:
             raise LayoutChanged(f"TSM {stock} perception: no predominant method column")
         for r in rows:
-            lid = text(r["ProviderNumber"])
+            lid = code(r["ProviderNumber"])
             c = coverage.setdefault(lid, {"landlord_id": lid, "name_published": text(r["ProviderName"]),
                                           "period": period, "source_file": ref["source_file"]})
             c.update({"group_size": text(r.get("Group size", "")), "region": text(r.get("Predominant region", "")),
@@ -166,13 +281,13 @@ def load(settings: Settings, period: str = "2024/25") -> dict[str, int]:
             })
 
     # Management information -----------------------------------------------------------------------------------------
-    header, rows = zip_csv(path, "Management_info")
+    header, rows = read("Management_info")
     require(header, ["ProviderName", "ProviderNumber", "RSH Comments"]
             + [f"{m}_Calculated_Value" for m in MI_LANDLORD]
             + [f"{m}_Calculated_Value_{s}" for m in MI_BY_STOCK for s in ("LCRA", "LCHO", "COMB")],
             "TSM management information")
     for r in rows:
-        lid = text(r["ProviderNumber"])
+        lid = code(r["ProviderNumber"])
         comment = text(r["RSH Comments"]).replace("[X]", "")
         if lid in coverage:
             c = coverage[lid]
@@ -198,18 +313,22 @@ def load(settings: Settings, period: str = "2024/25") -> dict[str, int]:
 
     # The regulator's exclusion lists ---------------------------------------------------------------------------------
     for name in ("Perception_not_inc", "Man_not_inc"):
-        header, rows = zip_csv(path, name)
+        header, rows = read(name)
         require(header, ["Landlord code", "Notes from RSH following TSM review"], f"TSM {name}")
+        flag = "perception_excluded" if name == "Perception_not_inc" else "management_excluded"
         for r in rows:
-            lid = text(r["Landlord code"])
-            if lid in coverage:
-                note_text = text(r["Notes from RSH following TSM review"])
-                existing = coverage[lid].get("rsh_comment") or ""
-                coverage[lid]["rsh_comment"] = (existing + " " + note_text).strip() if note_text not in existing \
-                    else existing
+            lid = code(r["Landlord code"])
+            # A landlord can be on these lists without being in the coverage table (Guildford, 2023/24: "Did not
+            # submit TSM data"), so it is added, with no results, to keep the regulator's note.
+            c = coverage.setdefault(lid, {
+                "landlord_id": lid, "name_published": text(r.get("Landlord name", "")),
+                "landlord_type": "", "period": period, "lcra": False, "lcho": False, "combined": False,
+                "management_info": False, "perception_excluded": False, "management_excluded": False,
+                "group_size": "", "region": "", "above_30pc_supported": "", "publication_url": "",
+                "rsh_comment": "", "source_file": ref["source_file"]})
+            c[flag] = True
+            note_text = text(r["Notes from RSH following TSM review"])
+            existing = c.get("rsh_comment") or ""
+            c["rsh_comment"] = existing if note_text in existing else (existing + " " + note_text).strip()
 
-    write_table(settings, "tsm", tsm, TSM_SCHEMA)
-    write_table(settings, "tsm_survey", survey, SURVEY_SCHEMA)
-    write_table(settings, "tsm_coverage", list(coverage.values()), COVERAGE_SCHEMA)
-    record_sources(settings, [note])
-    return {"tsm": len(tsm), "tsm_survey": len(survey), "tsm_coverage": len(coverage)}
+    return tsm, survey, list(coverage.values()), note

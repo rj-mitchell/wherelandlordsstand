@@ -1,0 +1,50 @@
+# Figures the publishers print, which the loaded data must reproduce (`landlords check`).
+# Each comes from a named page or report. `tolerance` allows for rounding in published per-landlord figures.
+# A `known_difference` is reported but does not fail the check; it must say what was found and where it is written up.
+
+[tsm."2024/25"]
+source = "TSM 2024/25 Headline Report and data quality note (Regulator of Social Housing, 4 November 2025)"
+submissions = 360                 # landlords with results (the coverage table lists 363; 3 have none)
+rented_only = 299                 # includes Cannock Chase and Stoke-on-Trent, whose perception results were excluded
+rented_and_shared_ownership = 56
+shared_ownership_only = 3
+combined = 2
+tp01_rented_lower_quartile = 64.7
+tp01_rented_median = 71.8
+tp01_rented_upper_quartile = 78.9
+tolerance = 0.15
+
+[tsm."2024/25".by_method]
+# Headline Report, Table 2: surveys collected and overall satisfaction (TP01) by collection method, all submissions.
+postal = [40514, 80.2]
+"face to face" = [57409, 78.9]
+telephone = [313104, 69.4]
+sms = [7287, 63.2]
+internet = [80505, 60.1]
+
+[tsm."2024/25".telephone_main_method]
+# Headline Report, paragraph 2.5 and Figure 4: "71% of landlords used telephone surveys as their principal survey
+# collection method."
+percent = 71
+known_difference = "The data gives 245 of 358 landlords (68.4%) with telephone as the predominant method in any perception table; the other bands in Figure 4 are within about a point. Not yet explained; see docs/DATA.md."
+
+[tsm."2024/25".excluded]
+# The data quality note's list of excluded results. Each must appear as [E] (or be absent) in the data.
+"00GL" = ["perception"]
+"41UB" = ["perception"]
+"LH0279" = ["TP09"]
+"L4203" = ["TP10"]
+"43UK" = ["management"]
+"00AE" = ["BS02", "BS03", "BS04", "BS05"]
+"45UB" = ["RP02_1"]
+"29UC" = ["RP01"]
+"L0717" = ["RP02_1", "RP02_2"]
+"00AU" = ["CH02_1"]
+
+[ombudsman."2025-26"]
+source = "Housing Ombudsman, tables for landlords with individual performance reports 2025-26, Notes sheet"
+landlords = 290                   # 296 reports, less 6 landlords withheld to protect residents' privacy
+
+[stock."2025/26"]
+source = "Local authority registered provider social housing stock and rents in England 2025 to 2026"
+councils = 230

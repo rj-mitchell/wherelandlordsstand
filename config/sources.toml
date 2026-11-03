@@ -1,0 +1,122 @@
+# Where each published file is found. `landlords fetch` reads this file (src/landlords/fetch.py).
+#
+# One [[file]] per kind of file and period. `source` is the folder under data/raw/; `role` says what the file is;
+# `period` is the period it covers, written as the publisher writes it. Find files on a GOV.UK page by attachment
+# title (`govuk` + `match`), on another page by link address (`page` + `links`), or give `urls` in full.
+# `types` limits the file types kept. `keep_page` keeps the page itself, where the data is in the page.
+#
+# Licences are as stated by each publisher. See docs/DATA.md.
+
+# Tenant Satisfaction Measures -----------------------------------------------------------------------------------
+
+[[file]]
+source = "tsm"
+role = "full-data"
+period = "2024/25"
+publisher = "Regulator of Social Housing"
+licence = "Open Government Licence v3.0"
+govuk = "/government/statistics/tenant-satisfaction-measures-202425"
+match = "full data set"
+types = ["xlsx", "zip"]
+
+[[file]]
+source = "tsm"
+role = "report"
+period = "2024/25"
+publisher = "Regulator of Social Housing"
+licence = "Open Government Licence v3.0"
+govuk = "/government/statistics/tenant-satisfaction-measures-202425"
+match = "headline report|data quality"
+types = ["pdf"]
+notes = "The headline figures the loaded data is reconciled to, and the list of results the regulator excluded."
+
+# Regulatory judgements and gradings --------------------------------------------------------------------------------
+
+[[file]]
+source = "judgements"
+role = "table"
+period = "current"
+publisher = "Regulator of Social Housing"
+licence = "Open Government Licence v3.0"
+govuk = "/government/publications/regulatory-judgements-and-enforcement-notices"
+match = "table"
+types = ["xlsx"]
+notes = "Published judgements and notices since April 2024, replaced as new ones are published."
+
+[[file]]
+source = "judgements"
+role = "archive"
+period = "2012 to March 2024"
+publisher = "Regulator of Social Housing"
+licence = "Open Government Licence v3.0"
+govuk = "/government/publications/archived-regulatory-judgements-and-notices-table"
+match = "archived"
+types = ["xlsx"]
+
+[[file]]
+source = "judgements"
+role = "under-review"
+period = "current"
+publisher = "Regulator of Social Housing"
+licence = "Open Government Licence v3.0"
+govuk = "/guidance/gradings-under-review-list"
+keep_page = true
+notes = "The list is the page itself: kept as the Content API's JSON."
+
+# The register of providers ---------------------------------------------------------------------------------------
+
+[[file]]
+source = "providers"
+role = "register"
+period = "current"
+publisher = "Regulator of Social Housing"
+licence = "Open Government Licence v3.0"
+govuk = "/government/publications/registered-providers-of-social-housing"
+match = "^list of registered providers"
+types = ["xlsx"]
+
+# Stock and rents -------------------------------------------------------------------------------------------------
+
+[[file]]
+source = "stock"
+role = "prp-data"
+period = "2025/26"
+publisher = "Regulator of Social Housing"
+licence = "Open Government Licence v3.0"
+govuk = "/government/statistics/private-registered-provider-social-housing-stock-and-rents-in-england-2025-to-2026"
+match = "data release"
+types = ["xlsx"]
+notes = "Housing associations and for-profit providers: the Statistical Data Return, 31 March 2026."
+
+[[file]]
+source = "stock"
+role = "larp-data"
+period = "2025/26"
+publisher = "Regulator of Social Housing"
+licence = "Open Government Licence v3.0"
+govuk = "/government/statistics/local-authority-registered-provider-social-housing-stock-and-rents-in-england-2025-to-2026"
+match = "data release"
+types = ["xlsx"]
+notes = "Councils: the Local Authority Data Return, 31 March 2026."
+
+[[file]]
+source = "stock"
+role = "notes"
+period = "2025/26"
+publisher = "Regulator of Social Housing"
+licence = "Open Government Licence v3.0"
+govuk = "/government/statistics/private-registered-provider-social-housing-stock-and-rents-in-england-2025-to-2026"
+match = "technical notes"
+types = ["pdf"]
+
+# Housing Ombudsman -----------------------------------------------------------------------------------------------
+
+[[file]]
+source = "ombudsman"
+role = "landlord-tables"
+period = "2025-26"
+publisher = "Housing Ombudsman Service"
+licence = "© Housing Ombudsman Service; reuse terms not yet found (docs/DATA.md)"
+page = "https://www.housing-ombudsman.org.uk/annual-complaint-review-reports/annual-complaints-review-2025-26/"
+links = "tables-for-landlords.*\\.xlsx$"
+types = ["xlsx"]

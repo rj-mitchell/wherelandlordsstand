@@ -1,0 +1,17 @@
+# Where Landlords Stand settings. Paths are relative to the repository root unless absolute.
+# Environment overrides: LANDLORDS_DATA_DIR, LANDLORDS_CONFIG.
+
+[paths]
+data_dir = "data"
+
+[fetch]
+# Identifies the fetcher to publishers' servers (docs/DECISIONS.md: being a good citizen).
+user_agent = "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+# One request at a time, at least this many seconds apart, to any server.
+min_interval_seconds = 1.0
+timeout_seconds = 60
+retries = 3
+
+[coverage]
+# Landlords with at least this many homes get a profile (proposed decision 3).
+min_homes = 1000

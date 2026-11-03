@@ -15,7 +15,7 @@ Countries Stand (same licence, same author).
 > Where Landlords Stand is independent. It is not affiliated with or endorsed by the Regulator of Social Housing, the
 > Housing Ombudsman Service or any landlord.
 
-**Private and not deployed.** Nothing is public until the owner says so.
+**Not deployed.** The code is public, like the sibling sites; the site goes live only when the owner says so.
 
 ## Status
 

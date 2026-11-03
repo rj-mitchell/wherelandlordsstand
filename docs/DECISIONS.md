@@ -30,5 +30,6 @@ These come from the owner's brief (3 November 2026) and are followed from the st
 - No landlord logos. Names only.
 - Being a good citizen when fetching: one request at a time, at least a second apart, with an identifying user agent,
   and every response kept so it is fetched once.
-- The repository stays private, and nothing is deployed, until the owner says so.
+- The repository is public, like the sibling sites (owner, 3 November 2026). Nothing is deployed until the owner
+  says so.
 - Code: AGPL-3.0, as the sibling sites, same author.

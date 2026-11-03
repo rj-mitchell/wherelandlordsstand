@@ -1,0 +1,100 @@
+# The "Your rights" page. Every section names its official sources, the date it was checked, and a date to check it
+# again. Written from official sources on 3 November 2026 (GOV.UK, legislation.gov.uk, the Housing Ombudsman, the
+# Regulator of Social Housing). To be signed off by an adviser before launch. Reading age about 9.
+#
+# Not yet verified: the ICO's own pages (its site refused automated requests). Check them by hand before launch.
+
+heading = "Your rights"
+intro = [
+  "Here is what landlords must do, and where to go if something goes wrong. It covers council landlords and housing associations in England.",
+]
+not_advice = "This is general information, not legal advice. For advice about your own situation, contact Shelter, Citizens Advice or your council's housing team."
+
+[[section]]
+heading = "If you are offered a home"
+text = [
+  "Your council must tell you about decisions on your housing application. You can ask for a review of those decisions. How to ask, and how long you have, is set out in your council's allocation scheme.",
+  "If the council is helping you because you are homeless, you can ask for a review of whether an offer is suitable. You can do this whether or not you accept the offer. You must ask within 21 days. The council must decide within 8 weeks.",
+  "If you are homeless and turn down an offer the council says is suitable, the council may stop helping you. Before a final offer, the council must tell you this and tell you about your right to a review.",
+]
+sources = [
+  ["Housing Act 1996, section 166A", "https://www.legislation.gov.uk/ukpga/1996/52/section/166A"],
+  ["Housing Act 1996, section 202", "https://www.legislation.gov.uk/ukpga/1996/52/section/202"],
+  ["Housing Act 1996, section 193", "https://www.legislation.gov.uk/ukpga/1996/52/section/193"],
+  ["Homelessness Code of Guidance, chapter 19", "https://www.gov.uk/guidance/homelessness-code-of-guidance-for-local-authorities/chapter-19-review-of-decisions-and-appeals-to-the-county-court"],
+]
+checked = "2026-11-03"
+recheck = "2027-05-03"
+
+[[section]]
+heading = "Dangerous damp, mould and other hazards (Awaab's Law)"
+text = [
+  "Since 27 October 2025, council landlords and housing associations must deal with some hazards in set times. This covers emergency hazards, and damp and mould that could seriously harm you.",
+  "From 30 November 2026, it also covers being too cold or too hot, falls, a building that could collapse, fire, electrical hazards, and hygiene. More hazards are due to be added in 2027.",
+  "If there is an emergency hazard, the landlord must look into it and make the home safe within 24 hours.",
+  "If there is a significant hazard, the landlord must:",
+]
+list = [
+  "look into it within 10 working days of finding out about it",
+  "make the home safe within 5 working days of looking into it",
+  "send you a written summary within 3 working days of looking into it, if more work is needed",
+  "start that work within 5 working days, or as soon as it can and within 12 weeks",
+  "find you somewhere else safe to stay if it can't make your home safe in time",
+]
+sources = [
+  ["The Hazards in Social Housing (Prescribed Requirements) (England) Regulations 2025", "https://www.legislation.gov.uk/uksi/2025/1042/contents"],
+  ["Awaab's Law: guidance for social landlords (GOV.UK, updated 16 July 2026)", "https://www.gov.uk/government/publications/awaabs-law-guidance-for-social-landlords/awaabs-law-guidance-for-social-landlords-timeframes-for-repairs-in-the-social-rented-sector"],
+  ["Awaab's Law phase 2 guidance (GOV.UK, updated 31 July 2026)", "https://www.gov.uk/government/publications/awaabs-law-phase-2-guidance-for-social-housing-landlords/awaabs-law-phase-2-guidance-for-social-landlords"],
+  ["Awaab's Law: guidance for tenants (GOV.UK)", "https://www.gov.uk/government/publications/awaabs-law-guidance-for-tenants-in-social-housing/awaabs-law-guidance-for-tenants-in-social-housing"],
+]
+checked = "2026-11-03"
+# Phase 2 starts 30 November 2026: confirm the regulations have been made and are in force.
+recheck = "2026-12-01"
+note = "It applies to homes you rent with a tenancy, including some temporary and supported housing. It does not cover shared ownership."
+
+[[section]]
+heading = "Complaints"
+text = [
+  "Complain to your landlord first. Your landlord must tell you it has your complaint within 5 working days. It must reply within 10 working days after that.",
+  "If you are not happy with the reply, ask for your complaint to go to the second stage. The landlord must tell you it has it within 5 working days, and reply within 20 working days after that.",
+  "The landlord can take longer only for a good reason, and must tell you how to contact the Housing Ombudsman if it does.",
+  "After the landlord's final reply, you can take your complaint to the Housing Ombudsman. It is free. You have 12 months from the final reply. If your landlord is not replying, the Ombudsman can step in sooner.",
+  "Contact the Housing Ombudsman on 0300 111 3000 or at info@housing-ombudsman.org.uk. Because of a problem with its computer systems in October 2026, it asks people to raise new complaints by phone or email for now.",
+]
+sources = [
+  ["The Housing Ombudsman's Complaint Handling Code", "https://www.housing-ombudsman.org.uk/landlords-info/complaint-handling-code/the-code-2024/"],
+  ["When to get help from the Housing Ombudsman", "https://www.housing-ombudsman.org.uk/residents/when-to-get-help-from-the-housing-ombudsman/"],
+  ["The Ombudsman's update on its IT security incident, 3 November 2026", "https://www.housing-ombudsman.org.uk/2026/11/03/it-security-incident-latest/"],
+]
+checked = "2026-11-03"
+# The Ombudsman's IT incident is changing fast: check how to complain every week until it is over.
+recheck = "2026-11-10"
+
+[[section]]
+heading = "If a landlord is not meeting the standards"
+text = [
+  "The Regulator of Social Housing sets standards for how all social landlords treat tenants, including safety and repairs. If you think a landlord is not meeting them, you can tell the regulator. It does not sort out individual complaints: those go to the Housing Ombudsman.",
+  "You can tell the regulator online, by email to enquiries@rsh.gov.uk, or by phone on 0300 124 5225.",
+]
+sources = [
+  ["How to make a referral to the Regulator of Social Housing (updated 3 November 2026)", "https://www.gov.uk/guidance/how-to-make-a-referral-to-us"],
+  ["The regulator's consumer standards", "https://www.gov.uk/government/news/rsh-sets-new-standards-to-drive-improvements-in-social-housing"],
+]
+checked = "2026-11-03"
+recheck = "2026-12-03"
+
+[[section]]
+heading = "Getting information from your landlord"
+text = [
+  "Housing association tenants and shared owners: since 1 October 2026, housing associations must publish information about how they manage their homes, such as repairs, complaints and anti-social behaviour. From 1 April 2027 you can ask for information in writing. The landlord must answer within 30 days. If you are not happy, ask the landlord to look again, then you can go to the Housing Ombudsman within 3 months. This is called STAIRs.",
+  "Council tenants: STAIRs does not cover councils. Instead, you can ask a council for information under the Freedom of Information Act. It must answer within 20 working days. If you are not happy, ask the council to look again, then you can complain to the Information Commissioner's Office.",
+]
+sources = [
+  ["Social Tenant Access to Information Requirements: policy statement (GOV.UK, updated 30 September 2025)", "https://www.gov.uk/government/consultations/social-tenant-access-to-information-requirements-consultation/outcome/social-tenant-access-to-information-requirements-policy-statement"],
+  ["The Housing Ombudsman on STAIRs", "https://www.housing-ombudsman.org.uk/home/social-tenant-access-to-information-requirements/"],
+  ["Freedom of Information Act 2000, section 10", "https://www.legislation.gov.uk/ukpga/2000/36/section/10"],
+  ["How to make a freedom of information request (GOV.UK)", "https://www.gov.uk/make-a-freedom-of-information-request/how-to-make-an-foi-request"],
+]
+checked = "2026-11-03"
+# Individual STAIRs requests start on 1 April 2027.
+recheck = "2027-03-01"

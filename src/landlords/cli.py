@@ -9,7 +9,10 @@
     landlords check                     # the checks: every row matched, ranges, reconciliation, coverage
     landlords score                     # peer groups and bands (config/scoring.toml)
     landlords build                     # the pages, in data/site/
-    landlords serve                     # see them at http://127.0.0.1:8000/ (this computer only)
+    landlords serve                     # the site and its API at http://127.0.0.1:8000/ (this computer only)
+    landlords update                    # weekly: fetch, load, check, score, build into data/builds/ (not live)
+    landlords publish                   # by hand: make the newest build live; `landlords rollback` undoes it
+    landlords reports / missed          # readers' reports of mistakes; searches that found nothing
 """
 
 from __future__ import annotations
@@ -109,15 +112,93 @@ def build() -> None:
 
 
 @app.command()
-def serve(port: int = typer.Option(8000), host: str = typer.Option("127.0.0.1", help="local only by default")) -> None:
-    """Serve data/site/ on this computer only (nothing is deployed)."""
-    import functools
-    import http.server
+def serve(port: int = typer.Option(8000), host: str = typer.Option("127.0.0.1", help="local only by default"),
+          behind_proxy: bool = typer.Option(False, help="take visitors' addresses from X-Forwarded-For")) -> None:
+    """Serve the published pages (data/live, or data/site if nothing is published) and the small API."""
+    import uvicorn
 
-    folder = load_settings().data_dir / "site"
-    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(folder))
-    typer.echo(f"http://{host}:{port}/")
-    http.server.ThreadingHTTPServer((host, port), handler).serve_forever()
+    from landlords.api import create_app, site_dir
+
+    s = load_settings()
+    typer.echo(f"Serving {site_dir(s)} at http://{host}:{port}/")
+    uvicorn.run(create_app(s, behind_proxy), host=host, port=port, access_log=False, log_level="warning")
+
+
+@app.command()
+def update(no_fetch: bool = typer.Option(False, help="use the files already fetched")) -> None:
+    """The weekly update: fetch, load, check, score and build into data/builds/. Never changes the live site."""
+    from landlords import publish
+
+    info = publish.update(load_settings(), fetch=not no_fetch)
+    typer.echo(json.dumps({k: info[k] for k in ("build", "needs_attention", "checks_failed")}
+                          | {"new_files": len(info.get("new_files", [])), "pages": info["pages"]}))
+    raise typer.Exit(1 if info["needs_attention"] else 0)
+
+
+@app.command()
+def publish(build: str = typer.Argument(None, help="a build in data/builds/; the newest if none"),
+            force: bool = typer.Option(False, help="publish even though its checks failed")) -> None:
+    """Make a build the live site, by hand, after reading its change report."""
+    from landlords import publish as publish_
+
+    typer.echo(json.dumps(publish_.publish(load_settings(), build, force)))
+
+
+@app.command()
+def rollback() -> None:
+    """Put back the build that was live before the last publish."""
+    from landlords import publish
+
+    typer.echo(json.dumps(publish.rollback(load_settings())))
+
+
+@app.command()
+def reports(close: int = typer.Option(None, help="close this report (its email address is deleted)"),
+            outcome: str = typer.Option("", help="what was done, when closing")) -> None:
+    """Readers' reports of mistakes that are still open."""
+    from landlords.api import State
+
+    state = State(load_settings().data_dir / "state.db")
+    if close is not None:
+        typer.echo(json.dumps({"closed": state.close_report(close, outcome)}))
+        return
+    for r in state.open_reports():
+        typer.echo(json.dumps(dict(zip(("id", "at", "page", "message", "email"), r, strict=True))))
+
+
+@app.command()
+def backup(to: Path = typer.Option(..., help="folder for the copies"), keep: int = typer.Option(14)) -> None:
+    """Copy the state database (readers' reports, missed searches): the one thing that can't be rebuilt."""
+    import gzip
+    import shutil
+    import sqlite3
+    from datetime import UTC, datetime
+
+    src = load_settings().data_dir / "state.db"
+    if not src.exists():
+        typer.echo("No state database yet: nothing to back up.")
+        return
+    to.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
+    tmp = to / f"landlords-state-{stamp}.sqlite"
+    with sqlite3.connect(src) as a, sqlite3.connect(tmp) as b:
+        a.backup(b)  # a consistent copy, even while the site is writing
+    with open(tmp, "rb") as fi, gzip.open(f"{tmp}.gz", "wb") as fo:
+        shutil.copyfileobj(fi, fo)
+    tmp.unlink()
+    copies = sorted(to.glob("landlords-state-*.sqlite.gz"))
+    for old in copies[:-keep]:
+        old.unlink()
+    typer.echo(f"Backed up to {tmp}.gz ({len(copies[-keep:])} kept)")
+
+
+@app.command()
+def missed(days: int = typer.Option(28)) -> None:
+    """Searches that found nothing, most frequent first: names to consider adding as aliases."""
+    from landlords.api import State
+
+    for q, n in State(load_settings().data_dir / "state.db").top_missed(days):
+        typer.echo(f"{n}\t{q}")
 
 
 @app.command()

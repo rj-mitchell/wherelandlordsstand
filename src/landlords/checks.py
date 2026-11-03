@@ -10,7 +10,7 @@ import json
 import re
 import statistics
 from collections import Counter, defaultdict
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from landlords import area
 from landlords.config import Settings, load_toml
@@ -257,6 +257,15 @@ def check_stock_against_tsm(settings: Settings, rep: Report) -> None:
             f"{len(pop)} landlords compared; {len(rows)} differ by more than a third (see the report)", rows)
 
 
+def check_rights_dates(rep: Report, today: date | None = None) -> None:
+    """Every section of the rights page has a date by which it must be checked again (config/rights.toml)."""
+    today = today or date.today()
+    due = [f"{s['heading']} (due {s['recheck']})" for s in load_toml("rights.toml").get("section", [])
+           if date.fromisoformat(s["recheck"]) <= today]
+    rep.add("rights page checked on time", "warn" if due else "ok",
+            f"{len(due)} sections due to be checked again" + (f": {due}" if due else ""), due)
+
+
 def change_report(settings: Settings) -> dict:
     """The biggest movers: TP01 (rented) between the two latest TSM periods, and grade changes in the current table."""
     tsm = read_table(settings, "tsm")
@@ -290,6 +299,7 @@ def run(settings: Settings) -> dict:
     check_other_reconciliation(settings, rep, expect)
     check_areas(settings, rep)
     check_stock_against_tsm(settings, rep)
+    check_rights_dates(rep)
     changes = change_report(settings)
     out = settings.staging_dir / "check-report.json"
     out.write_text(json.dumps({"finished": datetime.now(UTC).isoformat(timespec="seconds"), "checks": rep.checks},

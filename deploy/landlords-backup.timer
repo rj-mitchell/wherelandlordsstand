@@ -1,0 +1,9 @@
+[Unit]
+Description=Where Landlords Stand: back up the state database every night
+
+[Timer]
+OnCalendar=*-*-* 04:52:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

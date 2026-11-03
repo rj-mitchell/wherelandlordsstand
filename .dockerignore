@@ -1,0 +1,10 @@
+.git
+.venv
+data
+**/__pycache__
+.pytest_cache
+.ruff_cache
+docs
+deploy/.env
+deploy/backups
+*.png

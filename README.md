@@ -9,8 +9,8 @@ people deciding whether to bid for or accept a social home: someone who sees a l
 wants to know, on a phone and in under a minute, what that landlord is like. Every figure shown links to the
 published file and year it comes from.
 
-It is planned as a project of the Where They Stand Foundation, like Where MPs Stand, Where Councils Stand and Where
-Countries Stand (same licence, same author).
+It is a project of [Where They Stand](https://wheretheystand.uk), which is applying to register as a charity in
+England and Wales, like Where MPs Stand, Where Councils Stand and Where Countries Stand (same licence, same author).
 
 > Where Landlords Stand is independent. It is not affiliated with or endorsed by the Regulator of Social Housing, the
 > Housing Ombudsman Service or any landlord.
@@ -44,14 +44,32 @@ Phase 2, profiles, is built and waiting for its gate, a review of the method by 
   `config/wording.toml`, and every figure links to its file. Static HTML, no JavaScript, under 11 KB a page
   (`landlords build`), seen only on this computer (`landlords serve`).
 
-Next: the bidder tools (phase 3): search, compare, area pages and a rights page, tested with applicants.
+Phase 3, the bidder tools, is built and waiting for its gate, testing with applicants
+([`docs/USER-TESTING.md`](docs/USER-TESTING.md) is the plan):
+
+- **search** by any name a landlord goes by (advert, short, former, ALMO), in the browser; a name that isn't covered
+  gets an explanation (a registered landlord under 1,000 homes is named as such) and a way in through council areas;
+- **area pages** for 296 council areas, listing the landlords that own homes there;
+- **compare** up to three landlords side by side (needs JavaScript; each profile has the same figures without it);
+- **your rights**: offers and reviews, Awaab's Law, complaints and the Ombudsman, the regulator, STAIRs and FOI,
+  written from official sources, each section dated with a date to check it again (`config/rights.toml`);
+- **data downloads**: CSV files whose rows carry their source and licence;
+- **report a mistake**, a form that works without JavaScript, with a public log of our fixes; and a count of searches
+  that found nothing, so names can be added (`landlords serve`, the small API in `src/landlords/api.py`);
+- council profiles link to Where Councils Stand where it covers the council.
+
+Ready for phase 4, launch, which happens only when the owner says: a weekly `landlords update` builds into a new
+folder, `landlords publish` makes it live by hand, `landlords rollback` undoes it, and `deploy/` has the container,
+timers and [`docs/DEPLOY.md`](docs/DEPLOY.md). **Nothing is deployed.**
 
 | File | What it is |
 |---|---|
-| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Product decisions. They override everything else. **All proposed, none confirmed yet.** |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Product decisions. They override everything else. |
 | [`docs/DATA.md`](docs/DATA.md) | The sources, what is really in each file, how it is loaded, the checks, and open questions |
 | [`docs/METHOD.md`](docs/METHOD.md) | How landlords are compared, with a worked example and questions for the reviewer |
-| [`docs/OPERATIONS.md`](docs/OPERATIONS.md) | Fetching, loading, matching names and checking |
+| [`docs/OPERATIONS.md`](docs/OPERATIONS.md) | Fetching, loading, matching names, checking, updating and publishing |
+| [`docs/USER-TESTING.md`](docs/USER-TESTING.md) | The plan for testing the bidder tools with applicants (phase 3's gate) |
+| [`docs/DEPLOY.md`](docs/DEPLOY.md) | Putting the site on the shared server, when the owner says so |
 
 ## How it works
 
@@ -87,8 +105,8 @@ uv sync
 uv run landlords fetch            # about a minute; data/raw/
 uv run landlords load             # data/staging/
 uv run landlords check            # the gate: every row matched, published figures reproduced
-uv run landlords build            # peer groups, bands and the pages, in data/site/
-uv run landlords serve            # http://127.0.0.1:8000/, on this computer only
+uv run landlords build            # peer groups, bands and every page, in data/site/
+uv run landlords serve            # the site and its API at http://127.0.0.1:8000/, on this computer only
 uv run pytest
 ```
 

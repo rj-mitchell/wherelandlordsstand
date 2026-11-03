@@ -209,6 +209,23 @@ def regulator_notes(data: Data, lid: str) -> list[dict]:
             if c["period"] == latest and c["rsh_comment"]]
 
 
+def council_link(settings: Settings, gss: str) -> str:
+    """The council's page on Where Councils Stand, if that site covers it."""
+    import csv
+
+    from landlords.config import STATIC_DIR
+
+    sister = settings.section("sister_sites")
+    if not gss or not sister.get("where_councils_stand"):
+        return ""
+    with open(STATIC_DIR / "councils.csv", newline="", encoding="utf-8") as fh:
+        ok = {r["gss"] for r in csv.DictReader(fh) if r.get("modgov_status") == "ok"}
+    if gss not in ok:
+        return ""
+    code = sister.get("where_councils_stand_codes", {}).get(gss, gss)
+    return sister["where_councils_stand"].format(gss=code)
+
+
 def build_profile(data: Data, lid: str) -> dict:
     reg = data.reg[lid]
     al = data.aliases.get(lid, [])
@@ -224,6 +241,7 @@ def build_profile(data: Data, lid: str) -> dict:
         "survey_note": survey_note(data, lid), "safety": safety_for(data, lid),
         "ombudsman": ombudsman_for(data, lid), "areas": areas_for(data, lid),
         "regulator_notes": regulator_notes(data, lid),
+        "council_link": council_link(data.settings, reg["gss"]) if reg["type"] == "council" else "",
     }
     used = set()
 

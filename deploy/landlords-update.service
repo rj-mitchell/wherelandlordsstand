@@ -1,0 +1,15 @@
+# Fetch new published files, load and check them, and build the pages into a new folder in /data/builds. It never
+# changes the live site: a person reads the change report and runs `landlords publish` (docs/OPERATIONS.md).
+# Installed by deploy/update.sh with landlords-update.timer.
+[Unit]
+Description=Where Landlords Stand: weekly update (builds, does not publish)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/wherelandlordsstand/deploy
+# Exits 1 when something needs attention; each run's summary is appended to /data/updates.jsonl.
+ExecStart=/usr/bin/docker compose run --rm -T app landlords update
+Nice=10
+TimeoutStartSec=1h

@@ -118,14 +118,14 @@ information on repairs". These are kept in `tsm_coverage.rsh_comment` and should
 **Building safety is near 100% for most landlords, but not all.** Of 359 landlords with building safety measures,
 113 report 100% on every one, and 77 report below 95% on at least one. The median of each of BS01–BS05 is 100%. The
 lowest are 83.1% (gas, BS01), 21.9% (fire risk assessments, BS02), 0% (asbestos, BS03; water, BS04) and 41.6% (lifts,
-BS05). This supports showing building safety as "all checks done" or "gaps in N% of homes" (proposed decision 5).
+BS05). This supports showing building safety as "all checks done" or "gaps in N% of homes" (docs/DECISIONS.md, 5).
 
 **Survey method matters.** Satisfaction varies with how the survey was done (headline report, 2.7). Predominant
 method, from the loaded data: telephone 245 landlords, internet 46, postal 29, face to face 15, SMS 5, no predominant
 method 18 (of 358 with a perception table).
 
-**Size bands.** The regulator's bands (`<5,000`, `5,000-40,000`, `>40,000`) aren't the peer groups proposed for
-scoring (1,000–9,999; 10,000–49,999; 50,000+). The proposed bands will need each landlord's homes, which the stock
+**Size bands.** The regulator's bands (`<5,000`, `5,000-40,000`, `>40,000`) aren't the peer groups used for
+scoring (1,000–9,999; 10,000–49,999; 50,000+). Those bands need each landlord's homes, which the stock
 data gives (phase 2).
 
 ### Reconciliation with the published figures

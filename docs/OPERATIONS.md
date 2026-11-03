@@ -79,3 +79,37 @@ code. `landlords build` replaces `data/site/` each time. Nothing is deployed: `s
 
 `uv run pytest` checks the built pages: each under 100 KB, with the line about turning down offers, no scripts or
 outside resources, and every source link pointing to a listed file.
+
+## The weekly update, publishing and rolling back
+
+```bash
+uv run landlords update                # fetch, load, check, score, build into data/builds/<time>/ (never live)
+uv run landlords publish               # make the newest build live (data/live), after reading its reports
+uv run landlords publish 20261103-232550
+uv run landlords rollback              # put back the build that was live before
+```
+
+`landlords update` exits 1 if a source failed to fetch or a check failed (`needs_attention`). Each build has
+`build-info.json` (new files, failed checks, page counts) and `change-report.json` (grade changes, biggest movers).
+Read both, look at a few changed pages, then publish. A build with failed checks is refused unless `--force`. New
+landlords added by `register` have rule-made display names: check them before publishing. The last six builds are
+kept.
+
+## Readers' reports and missed searches
+
+```bash
+uv run landlords reports                                   # open reports of mistakes
+uv run landlords reports --close 3 --outcome "fixed alias"   # closes it and deletes the reporter's email address
+uv run landlords missed                                    # searches that found nothing, most frequent first
+uv run landlords backup --to backups                       # copy the state database
+```
+
+If a report shows a mistake of ours, fix it, add a line to `data_static/corrections.csv` (shown on the corrections
+page), rebuild and publish. If it is about a publisher's figure, we don't change it: reply and point to the publisher.
+A missed search that is really a landlord's name is added through `landlords match --accept` like any other alias.
+
+## The rights page
+
+Every section of `config/rights.toml` has a `recheck` date; `landlords check` warns once one has passed. The
+Ombudsman's complaints section is due weekly while its IT incident lasts; Awaab's Law on 1 December 2026, when phase 2
+should be in force; STAIRs by March 2027.

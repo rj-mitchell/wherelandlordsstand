@@ -15,3 +15,18 @@ retries = 3
 [coverage]
 # Landlords with at least this many homes get a profile (proposed decision 3).
 min_homes = 1000
+
+[site]
+name = "Where Landlords Stand"
+# Not deployed: the address is set when the owner decides to launch.
+url = ""
+parent_name = "Where They Stand"
+parent_url = "https://wheretheystand.uk"
+
+[sister_sites]
+# Council landlords link to their page on Where Councils Stand where it covers the council (docs/DECISIONS.md, 4):
+# councils whose Modern.gov service answered (modgov_status "ok" in data_static/councils.csv).
+where_councils_stand = "https://wherecouncilsstand.com/councils/{gss}"
+# Where Councils Stand still files Barnsley and Sheffield under their pre-2019 codes (docs/DATA.md, "Area codes").
+# Remove these once it is fixed there.
+where_councils_stand_codes = { E08000038 = "E08000016", E08000039 = "E08000019" }

@@ -7,6 +7,7 @@ name = "Where Landlords Stand"
 tagline = "What social landlords in England are like, from what the regulator and the Housing Ombudsman publish."
 independence = "Independent. Not part of the Regulator of Social Housing, the Housing Ombudsman or any landlord."
 not_live = "This is a test version. It is not public yet."
+parent = "A project of Where They Stand, which is applying to register as a charity in England and Wales."
 
 [card]
 heading = "Before you bid"
@@ -15,11 +16,15 @@ refusal = "Thinking of turning down an offer? Check your council's rules first. 
 homes = "Rents out about {homes} homes in England."
 homes_note = "This is the number of tenants in rented homes it counted for its {period} tenant survey."
 merged = "{name} joined {successor} on {date}. These figures are from before then."
+compare = "Compare with other landlords"
 
 [types]
 council = "Council"
 "housing association" = "Housing association"
 "for-profit" = "For-profit landlord"
+
+[council_link]
+text = "See what {name}'s council and cabinet meetings have discussed and decided, on Where Councils Stand."
 
 [grade]
 heading = "The regulator's grade"
@@ -74,3 +79,94 @@ council = "{name} is a council. Its homes are in its own area."
 [sources]
 heading = "Where these figures come from"
 intro = "Every figure on this page comes from one of these published files. We do not change them."
+
+[search]
+heading = "Find a landlord"
+intro = "Seen a landlord's name on a home you could bid for? Find out what it is like, from what the regulator and the Housing Ombudsman publish."
+label = "Landlord's name"
+placeholder = "For example, Clarion or Leeds City Council"
+hint = "You can use the name on the advert, a short name or an old name."
+noscript = "Search needs JavaScript. Without it, use the list of all landlords below."
+none = "We couldn't find that name. We cover social landlords in England with 1,000 or more homes. If the advert shows only a logo, try the list of council areas."
+small = "{name} is a registered social landlord with fewer than 1,000 homes. We don't cover landlords that small, because they don't have to publish the same figures."
+areas_link = "Find landlords by council area"
+all = "All landlords"
+count = "{count} social landlords in England with 1,000 or more homes."
+
+[area]
+heading = "Council areas"
+index_intro = "Pick the council area where the home is. Each page lists the landlords we cover that own homes there, with the number of homes they own there."
+intro = "{count} landlords we cover own homes in this area."
+landlord = "Landlord"
+homes = "Homes here"
+grade = "Grade"
+overall = "Satisfaction"
+notes = "Homes here: rented homes each landlord owns in this area on 31 March 2026, from the regulator's stock data. For a group, we added up the figures for its companies. Landlords with fewer than 1,000 homes are not listed. Overall satisfaction is compared with similar landlords, not with the others on this page."
+council_note = "A council's homes are counted in its own area."
+
+[compare]
+heading = "Compare landlords"
+intro = "Pick up to three landlords to see side by side."
+add = "Add a landlord"
+remove = "Remove"
+empty = "No landlords picked yet."
+type = "Type"
+homes = "Rented homes"
+grade = "Regulator's grade"
+overall = "Overall satisfaction"
+peer = "Compared with"
+ombudsman = "Housing Ombudsman"
+at_fault = "found at fault"
+findings = "findings"
+no_report = "No report"
+not_graded = "Not graded yet"
+safety = "Safety checks"
+all_done = "All done"
+not_all_done = "Not all done"
+none = "Not enough figures"
+caveat = "Each landlord is compared with its own group of similar landlords. So a band means the same thing, but the groups can differ."
+noscript = "Comparing needs JavaScript. Without it, each landlord's page has the same figures."
+
+[downloads]
+heading = "Download the data"
+intro = "Everything on this site, as CSV files. Each row of published figures names the file it comes from and its licence."
+attribution_heading = "Using this data"
+attribution = [
+  "Tenant Satisfaction Measures, regulatory judgements and stock figures: Regulator of Social Housing. Contains public sector information licensed under the Open Government Licence v3.0.",
+  "Complaints figures: © Housing Ombudsman Service. We are confirming the Ombudsman's terms for reuse.",
+  "Bands, peer groups and homes by area are worked out by Where Landlords Stand from the published figures, as set out on the method page.",
+]
+
+[downloads.files]
+"landlords.csv" = "each landlord we cover, with the regulator's consumer grade"
+"bands.csv" = "our bands among similar landlords, by year"
+"tenant-satisfaction-measures.csv" = "every Tenant Satisfaction Measure for the landlords we cover, as published"
+"ombudsman.csv" = "the Housing Ombudsman's figures for each landlord with a report, as published"
+"regulatory-judgements.csv" = "the regulator's judgements and gradings for the landlords we cover"
+"homes-by-area.csv" = "rented and shared ownership homes by council area"
+
+[corrections]
+heading = "Report a mistake"
+intro = [
+  "If we have made a mistake, tell us and we will fix it. We keep a public list of what we fixed.",
+  "We never change a publisher's figures. If you think a figure from the regulator or the Ombudsman is wrong, tell them too: we show what they publish.",
+]
+page = "Which page? (optional)"
+message = "What is wrong?"
+email = "Your email (optional)"
+email_hint = "Only if you want a reply. We delete it when we close your report."
+send = "Send"
+offline = "This form only works on the live site."
+log_heading = "Mistakes we have fixed"
+log_empty = "None yet."
+thanks_heading = "Thank you"
+thanks = "We have your report. We will look at it and fix any mistake of ours."
+
+[privacy]
+heading = "Privacy"
+sections = [
+  ["No cookies, no tracking", "This site sets no cookies and uses no analytics or advertising. It loads nothing from other websites."],
+  ["Searches", "Searching happens in your browser. If a search finds nothing, the words you searched for are sent to us, with the date and nothing else, so we can add names people look for."],
+  ["Reports of mistakes", "If you report a mistake, we keep what you wrote and, if you give it, your email address, until we have dealt with it. Then we delete your email address."],
+  ["Visits", "Visits pass through Cloudflare, which protects the site. We do not keep logs of visits."],
+]

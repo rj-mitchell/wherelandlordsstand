@@ -1,0 +1,44 @@
+# Where Landlords Stand on the shared server: the website and its small API. Where MPs Stand's web server is the
+# front door (HTTPS, Cloudflare): it passes this site's visitors to the app over the shared "sites" network.
+# The weekly update and the nightly backup run on timers, each in a one-off container (deploy/landlords-*.timer).
+# Install or update with: bash /opt/wherelandlordsstand/deploy/update.sh (docs/DEPLOY.md). NOT YET DEPLOYED.
+
+name: wherelandlordsstand
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  app:
+    build:
+      context: ..
+    env_file: .env
+    logging: *logging
+    volumes:
+      - landlords-data:/data
+      - ./backups:/backups
+    restart: unless-stopped
+    # a small site: pages are static, the data is a few megabytes
+    mem_limit: 1g
+    expose:
+      - "8000"
+    networks:
+      default:
+      sites:
+        aliases:
+          - wherelandlordsstand
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+networks:
+  sites:
+    external: true  # made by Where MPs Stand's update.sh (or: docker network create sites)
+
+volumes:
+  landlords-data:

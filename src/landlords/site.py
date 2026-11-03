@@ -26,7 +26,13 @@ font:1.0625rem/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 a{color:var(--accent)}a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .skip{position:absolute;left:-999px}.skip:focus{left:1rem;top:1rem;background:var(--card);padding:.5rem}
 header,main,footer{max-width:46rem;margin:0 auto;padding:0 1rem}
-header{padding-top:1rem;border-bottom:1px solid var(--rule)}header p{margin:.25rem 0 .75rem;color:var(--muted);font-size:.9rem}
+header{padding-top:1rem;border-bottom:1px solid var(--rule)}
+nav{display:flex;flex-wrap:wrap;gap:.25rem 1rem;font-size:.95rem;margin:.25rem 0 .5rem}
+label{display:block;font-weight:600;margin:.75rem 0 .25rem}input,textarea,select,button{font:inherit;color:inherit}
+input[type=search],input[type=text],input[type=email],textarea{width:100%;padding:.5rem;border:2px solid var(--ink);
+background:var(--card)}button{padding:.5rem 1rem;border:2px solid var(--ink);background:var(--ink);color:var(--paper);
+cursor:pointer}ul.results{list-style:none;padding:0}ul.results li{padding:.5rem 0;border-bottom:1px solid var(--rule)}
+.hint{color:var(--muted);font-size:.9rem}.cmp th{min-width:7rem}.scroll{overflow-x:auto}header p{margin:.25rem 0 .75rem;color:var(--muted);font-size:.9rem}
 .site{font-weight:700;text-decoration:none;color:var(--ink)}.test{background:var(--note);color:var(--note-ink);
 padding:.4rem .75rem;font-size:.9rem;margin:.5rem 0}
 h1{font-size:1.9rem;line-height:1.2;margin:1.25rem 0 .25rem}h2{font-size:1.3rem;margin:2rem 0 .5rem}
@@ -94,17 +100,27 @@ class Sources:
                 f'<p>{esc(w["sources"]["intro"])}</p><ol class="sources">{"".join(lis)}</ol></section>')
 
 
-def page(title: str, body: str, w: dict, depth: int, description: str = "") -> str:
+NAV = [("index.html", "Find a landlord"), ("areas/index.html", "Areas"), ("compare/index.html", "Compare"),
+       ("rights/index.html", "Your rights"), ("method/index.html", "How we compare")]
+
+
+def page(title: str, body: str, w: dict, depth: int, description: str = "", scripts: tuple[str, ...] = ()) -> str:
+    """A whole page: our own stylesheet and scripts only, nothing from anywhere else."""
     up = "../" * depth
+    nav = "".join(f'<a href="{up}{href}">{esc(label)}</a>' for href, label in NAV)
+    js = "".join(f'<script src="{up}{src}" defer></script>' for src in scripts)
+    site = w["site"]
     return f"""<!doctype html>
 <html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{esc(title)}</title><meta name="description" content="{esc(description or w['site']['tagline'])}">
-<meta name="robots" content="noindex"><link rel="stylesheet" href="{up}styles.css"></head>
+<title>{esc(title)}</title><meta name="description" content="{esc(description or site['tagline'])}">
+<meta name="robots" content="noindex"><link rel="stylesheet" href="{up}styles.css">{js}</head>
 <body><a class="skip" href="#main">Skip to content</a>
-<header><a class="site" href="{up}index.html">{esc(w['site']['name'])}</a><p>{esc(w['site']['tagline'])}</p>
-<p class="test">{esc(w['site']['not_live'])}</p></header>
+<header><a class="site" href="{up}index.html">{esc(site['name'])}</a><p>{esc(site['tagline'])}</p>
+<nav aria-label="Main">{nav}</nav><p class="test">{esc(site['not_live'])}</p></header>
 <main id="main">{body}</main>
-<footer><p>{esc(w['site']['independence'])}</p><p><a href="{up}method/index.html">How we compare landlords</a></p></footer>
+<footer><p>{esc(site['independence'])}</p><p>{esc(site['parent'])}</p>
+<p><a href="{up}corrections/index.html">Report a mistake</a> · <a href="{up}privacy/index.html">Privacy</a> ·
+<a href="{up}data/index.html">Download the data</a> · <a href="{up}method/index.html">How we compare landlords</a></p></footer>
 </body></html>
 """
 
@@ -248,31 +264,20 @@ def profile_html(p: dict, w: dict) -> str:
 
     if p["type"] == "council":
         out.append(f'<h2>{esc(w["areas"]["heading"])}</h2><p>{fill(w["areas"]["council"], name=name)}</p>')
+        if p.get("council_link"):
+            out.append(f'<p><a href="{esc(p["council_link"])}">{fill(w["council_link"]["text"], name=name)}</a></p>')
     elif p["areas"]:
         top = p["areas"][:12]
         items = "".join(f'<li>{esc(a["area_name"])}: {a["rented_homes"]:,.0f}</li>' for a in top)
         more = f'<p>{fill(w["areas"]["more"], count=len(p["areas"]) - len(top))}</p>' if len(p["areas"]) > len(top) else ""
         out.append(f'<h2>{esc(w["areas"]["heading"])}</h2><p>{esc(w["areas"]["intro"])}</p><ul class="list">{items}</ul>'
                    f'{more}{src.ref(*{s for a in p["areas"] for s in a["source_files"].split(",")})}')
+    out.append(f'<p><a href="../../compare/index.html?l={esc(p["slug"])}">{esc(w["card"]["compare"])}</a></p>')
     if p["formerly"]:
         out.append(f'<p class="src">Earlier names: {esc(", ".join(p["formerly"]))}.</p>')
     out.append(src.html(w))
     return page(f"{name} – {w['site']['name']}", "".join(out), w, depth=2,
                 description=f"{name}: grade, tenant satisfaction compared with similar landlords, Ombudsman complaints and safety checks.")
-
-
-def index_html(profiles: list[dict], w: dict) -> str:
-    by_letter: dict[str, list] = {}
-    for p in sorted(profiles, key=lambda p: p["name"].lower().removeprefix("the ")):
-        letter = p["name"].lower().removeprefix("the ")[:1].upper()
-        by_letter.setdefault(letter if letter.isalpha() else "#", []).append(p)
-    parts = [f"<h1>{esc(w['site']['name'])}</h1><p>{len(profiles)} social landlords in England with 1,000 or more homes.</p>"]
-    for letter, ps in by_letter.items():
-        items = "".join(f'<li><a href="landlords/{esc(p["slug"])}/index.html">{esc(p["name"])}</a>'
-                        + (f' <span class="src">({esc(", ".join(p["also_known_as"][:3]))})</span>' if p["also_known_as"] else "")
-                        + "</li>" for p in ps)
-        parts.append(f'<h2>{esc(letter)}</h2><ul class="az">{items}</ul>')
-    return page(w["site"]["name"], "".join(parts), w, depth=0)
 
 
 def method_html(settings: Settings, w: dict) -> str:
@@ -345,6 +350,10 @@ def build(settings: Settings, out: Path | None = None) -> dict[str, int]:
         text = profile_html(p, w)
         (d / "index.html").write_text(text)
         sizes.append(len(text.encode()))
-    (out / "index.html").write_text(index_html(profiles, w))
     (out / "method" / "index.html").write_text(method_html(settings, w))
-    return {"profiles": len(profiles), "largest_kb": round(max(sizes) / 1024, 1), "folder": str(out)}
+    from landlords.site_pages import build_extra
+
+    extra = build_extra(settings, profiles, out, w)
+    if max(sizes) > 100 * 1024:
+        raise RuntimeError(f"a profile page is over 100 KB ({max(sizes) // 1024} KB)")
+    return {"profiles": len(profiles), "largest_kb": round(max(sizes) / 1024, 1), **extra, "folder": str(out)}

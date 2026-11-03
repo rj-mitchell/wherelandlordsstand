@@ -7,6 +7,9 @@
     landlords match                     # propose landlords for names without a code, for review
     landlords match --accept FILE       # add the proposals marked "yes" in FILE to data_static/aliases.csv
     landlords check                     # the checks: every row matched, ranges, reconciliation, coverage
+    landlords score                     # peer groups and bands (config/scoring.toml)
+    landlords build                     # the pages, in data/site/
+    landlords serve                     # see them at http://127.0.0.1:8000/ (this computer only)
 """
 
 from __future__ import annotations
@@ -80,6 +83,41 @@ def match(accept: Path = typer.Option(None, help="a reviewed file: add the rows 
     path = out or s.staging_dir / "match-review.csv"
     reg.write_csv(path, proposals, reg.REVIEW_FIELDS)
     typer.echo(json.dumps({"names_without_landlord": len(names), "proposals": len(proposals), "file": str(path)}))
+
+
+@app.command()
+def score() -> None:
+    """Place each profiled landlord among similar landlords, by the rules in config/scoring.toml."""
+    from landlords import area
+    from landlords import score as score_
+
+    s = load_settings()
+    area.build(s)
+    typer.echo(json.dumps(score_.run(s)))
+
+
+@app.command()
+def build() -> None:
+    """Write the pages to data/site/: a profile for each landlord, the list, and the method page."""
+    from landlords import area, site
+    from landlords import score as score_
+
+    s = load_settings()
+    area.build(s)
+    score_.run(s)
+    typer.echo(json.dumps(site.build(s)))
+
+
+@app.command()
+def serve(port: int = typer.Option(8000), host: str = typer.Option("127.0.0.1", help="local only by default")) -> None:
+    """Serve data/site/ on this computer only (nothing is deployed)."""
+    import functools
+    import http.server
+
+    folder = load_settings().data_dir / "site"
+    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(folder))
+    typer.echo(f"http://{host}:{port}/")
+    http.server.ThreadingHTTPServer((host, port), handler).serve_forever()
 
 
 @app.command()

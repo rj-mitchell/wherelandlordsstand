@@ -1,0 +1,76 @@
+# Every sentence the pages generate comes from this file (the brief: "all generated sentences from a fixed list").
+# {placeholders} are filled from the data. Aim for a reading age of about 9: short sentences, everyday words.
+# To be signed off by an adviser before launch.
+
+[site]
+name = "Where Landlords Stand"
+tagline = "What social landlords in England are like, from what the regulator and the Housing Ombudsman publish."
+independence = "Independent. Not part of the Regulator of Social Housing, the Housing Ombudsman or any landlord."
+not_live = "This is a test version. It is not public yet."
+
+[card]
+heading = "Before you bid"
+# Shown on every card (the brief: never tell readers to avoid or refuse a landlord).
+refusal = "Thinking of turning down an offer? Check your council's rules first. Saying no to an offer can affect your place on the housing register."
+homes = "Rents out about {homes} homes in England."
+homes_note = "This is the number of tenants in rented homes it counted for its {period} tenant survey."
+merged = "{name} joined {successor} on {date}. These figures are from before then."
+
+[types]
+council = "Council"
+"housing association" = "Housing association"
+"for-profit" = "For-profit landlord"
+
+[grade]
+heading = "The regulator's grade"
+graded = "The Regulator of Social Housing checks how well landlords treat tenants. It gave {name} grade {grade} on {date}."
+group_graded = "The Regulator of Social Housing checks how well landlords treat tenants. It gave {group}, which {name} is part of, grade {grade} on {date}."
+not_graded = "The Regulator of Social Housing has not yet given {name} a grade for how it treats tenants."
+under_review = "The regulator is looking into {name} again (since {date})."
+enforcement = "The regulator issued an enforcement notice to {name} on {date}."
+scale = "Grades go from C1 (best) to C4 (worst)."
+# Plain-English summaries of the regulator's own definitions of each grade.
+C1 = "C1 means the landlord is doing what the regulator expects."
+C2 = "C2 means there are some weaknesses. The landlord needs to improve."
+C3 = "C3 means there are serious failings. The landlord needs to improve a lot."
+C4 = "C4 means there are very serious failings. The landlord must make big changes."
+
+[bands]
+heading = "How it compares"
+intro = "We compared {name} with {peers} similar landlords: {peer_label}. These are tenants' answers to the {period} survey and the landlord's own records."
+headline = "Overall satisfaction: {value} of tenants were happy with the service. That puts it in the {band} of similar landlords."
+pillar = "{label}: in the {band}."
+not_scored = "{label}: not enough figures to compare."
+up = "Up from {old_band} in {old_period}."
+down = "Down from {old_band} in {old_period}."
+explain = "Top quarter means it did better than at least three in four similar landlords. Bottom quarter means it did worse than at least three in four."
+no_results = "There are no tenant survey results for {name} for {period}."
+regulator_note = "The regulator says: {note}"
+
+[method_note]
+text = "{name} asked tenants mostly by {method}. Most similar landlords asked by {peer_method}. How tenants are asked can change the results."
+
+[ombudsman]
+heading = "Complaints to the Housing Ombudsman"
+report = "In {period}, the Housing Ombudsman looked at complaints about {published_name}. It made {findings} findings. It found the landlord at fault in {rate} of them."
+compensation = "It ordered or recommended {amount} in compensation."
+severe = "{severe} of the findings were severe failings."
+no_report = "The Housing Ombudsman did not publish figures for {name} for {period}. It does this for landlords with 5 or more findings in a year."
+change = "From October 2025 the Ombudsman looks at how complaints were handled in every case. So these figures are not comparable with earlier years."
+
+[safety]
+heading = "Safety checks"
+all_done = "All done. Every home that needed a gas, fire, asbestos, water or lift safety check had one (as at 31 March {year})."
+gaps = "Not all done (as at 31 March {year}):"
+gap_item = "{label}: done for {value} of homes that needed them"
+not_published = "{label}: no figure published"
+
+[areas]
+heading = "Where it has homes"
+intro = "Homes it owns in each council area, 31 March 2026. We added up the figures for each company in the group."
+more = "and {count} more areas"
+council = "{name} is a council. Its homes are in its own area."
+
+[sources]
+heading = "Where these figures come from"
+intro = "Every figure on this page comes from one of these published files. We do not change them."

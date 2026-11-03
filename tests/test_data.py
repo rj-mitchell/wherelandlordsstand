@@ -32,3 +32,26 @@ def test_every_row_with_a_code_has_a_landlord(report):
     for table in ("tsm", "tsm_coverage", "grades", "stock_area", "providers"):
         c = report[f"every {table} row has a landlord"]
         assert c["ok"], c["detail"]
+
+
+SITE = settings.data_dir / "site"
+
+
+@pytest.mark.skipif(not (SITE / "index.html").exists(), reason="pages not built (`landlords build`)")
+def test_pages_are_small_self_contained_and_carry_the_warning():
+    import re
+
+    from landlords.config import load_toml
+
+    refusal = load_toml("wording.toml")["card"]["refusal"].replace("'", "&#x27;")
+    pages = list((SITE / "landlords").glob("*/index.html"))
+    assert len(pages) >= 360
+    for path in pages:
+        text = path.read_text()
+        assert len(text.encode()) < 100 * 1024, path
+        assert refusal in text, path
+        assert "<script" not in text, path                       # readable without JavaScript, nothing third-party
+        assert not re.search(r'<link[^>]+href="https?:', text), path
+        assert 'id="sources"' in text, path                      # every page lists its sources
+        for ref in re.findall(r'href="#source-(\d+)"', text):    # every figure's link goes to a listed file
+            assert f'id="source-{ref}"' in text, (path, ref)

@@ -1,0 +1,85 @@
+# How each profiled landlord is placed among similar landlords (`landlords score`, src/landlords/score.py).
+# The method page is generated from this file, so every rule here is explained to readers in the words below.
+# These rules are for review (phase 2 gate: the method reviewed by a housing-data reviewer).
+
+# Peer groups ------------------------------------------------------------------------------------------------------
+[peer_groups]
+# Landlords are compared with others of the same type and size.
+types = ["council", "housing association", "for-profit"]
+# Size bands, by homes: 1,000-9,999; 10,000-49,999; 50,000 and over.
+size_bands = [1000, 10000, 50000]
+# Size is the number of tenants in the landlord's own TSM survey population that year (rented, shared ownership
+# and combined added together). Where a landlord has none (its survey results were excluded), its homes in the
+# stock return are used instead.
+# A group with fewer landlords than this is merged: first with the next size band down (or up, for the smallest)
+# of the same type; and a type with fewer than this many landlords in all joins `merge_type_into`.
+min_group = 15
+merge_type_into = { "for-profit" = "housing association" }
+
+# What is scored -----------------------------------------------------------------------------------------------------
+[scoring]
+# Results for rented homes (LCRA). A landlord allowed to report rented and shared ownership homes together (COMB)
+# is scored on those combined results. Shared owners' results are shown but not scored.
+stock_types = ["LCRA", "COMB"]
+# A measure is scored only if at least this many landlords in the peer group have a figure for it.
+min_peers = 10
+# A pillar is scored only if the landlord has figures for at least this share of its measures.
+min_share = 0.5
+# Band edges, in percentiles within the peer group.
+band_edges = [25, 50, 75]
+bands = ["bottom quarter", "lower middle", "upper middle", "top quarter"]
+
+[headline]
+measure = "TP01"
+label = "Overall satisfaction"
+
+[pillars.repairs]
+label = "Repairs and homes"
+measures = ["TP02", "TP03", "TP04", "RP01", "RP02_1", "RP02_2"]
+
+[pillars.heard]
+label = "Being heard"
+measures = ["TP06", "TP07", "TP08", "TP09", "CH02_1", "CH02_2"]
+
+[pillars.neighbourhood]
+label = "Neighbourhood"
+measures = ["TP10", "TP11", "TP12"]
+
+# Each measure: what it is called, and whether a higher figure is better. Measures not in a pillar are shown, not
+# scored. Complaints and anti-social behaviour cases per 1,000 homes are volumes: a high figure can mean tenants find
+# it easy to complain or report, so they are never scored. TP05 (feeling safe in the home) is shown but is not in
+# a pillar in the plan; for review.
+[measures]
+TP01 = { label = "Satisfied with the landlord's service overall", better = "higher", unit = "%" }
+TP02 = { label = "Satisfied with repairs", better = "higher", unit = "%" }
+TP03 = { label = "Satisfied with how long the last repair took", better = "higher", unit = "%" }
+TP04 = { label = "Satisfied the home is well maintained", better = "higher", unit = "%" }
+TP05 = { label = "Satisfied the home is safe", better = "higher", unit = "%" }
+TP06 = { label = "Satisfied the landlord listens and acts", better = "higher", unit = "%" }
+TP07 = { label = "Satisfied the landlord keeps them informed", better = "higher", unit = "%" }
+TP08 = { label = "Agree the landlord treats them fairly and with respect", better = "higher", unit = "%" }
+TP09 = { label = "Satisfied with how complaints are handled", better = "higher", unit = "%" }
+TP10 = { label = "Satisfied communal areas are clean and well kept", better = "higher", unit = "%" }
+TP11 = { label = "Satisfied the landlord helps the neighbourhood", better = "higher", unit = "%" }
+TP12 = { label = "Satisfied with how anti-social behaviour is handled", better = "higher", unit = "%" }
+RP01 = { label = "Homes that don't meet the Decent Homes Standard", better = "lower", unit = "%" }
+RP02_1 = { label = "Non-emergency repairs done within the landlord's target time", better = "higher", unit = "%" }
+RP02_2 = { label = "Emergency repairs done within the landlord's target time", better = "higher", unit = "%" }
+CH02_1 = { label = "First-stage complaints answered in time", better = "higher", unit = "%" }
+CH02_2 = { label = "Second-stage complaints answered in time", better = "higher", unit = "%" }
+CH01_1 = { label = "First-stage complaints per 1,000 homes", better = "volume", unit = "" }
+CH01_2 = { label = "Second-stage complaints per 1,000 homes", better = "volume", unit = "" }
+NM01_1 = { label = "Anti-social behaviour cases per 1,000 homes", better = "volume", unit = "" }
+NM01_2 = { label = "Anti-social behaviour cases involving hate incidents per 1,000 homes", better = "volume", unit = "" }
+
+# Building safety, outside the ranking (docs/DECISIONS.md, 5) --------------------------------------------------------
+[building_safety]
+measures = { BS01 = "gas safety checks", BS02 = "fire risk assessments", BS03 = "asbestos checks", BS04 = "water safety (legionella) checks", BS05 = "lift safety checks" }
+# "All checks done" when every check that applies is published as 100%.
+complete_at = 100.0
+
+# Survey method note ---------------------------------------------------------------------------------------------------
+[survey_method]
+# A note is shown where a landlord's main survey method differs from the one most used in its peer group, because
+# results differ by method (TSM Headline Report 2024/25, 2.7).
+labels = { "telephone" = "telephone", "internet" = "online", "face to face" = "face to face", "postal" = "post", "sms" = "text message", "other" = "other ways", "mixed" = "a mix of methods" }

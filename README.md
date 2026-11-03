@@ -34,12 +34,23 @@ totals, and every row is matched to a landlord, which was the gate for phase 1. 
 fit, is in
 [`docs/DATA.md`](docs/DATA.md).
 
-Next: scoring and the "Before you bid" card (phase 2), then the bidder tools (phase 3).
+Phase 2, profiles, is built and waiting for its gate, a review of the method by a housing-data reviewer
+([`docs/METHOD.md`](docs/METHOD.md) has the method, a worked example and the questions for them). It adds:
+
+- a second year (TSM 2023/24, the Ombudsman's 2024-25 tables), so profiles can show changes;
+- peer groups, percentiles and bands, by the rules in `config/scoring.toml` (`landlords score`);
+- a page for each of the 363 landlords, led by a "Before you bid" card: the regulator's grade, bands among similar
+  landlords with changes since last year, the Ombudsman's figures and the safety checks. Every sentence comes from
+  `config/wording.toml`, and every figure links to its file. Static HTML, no JavaScript, under 11 KB a page
+  (`landlords build`), seen only on this computer (`landlords serve`).
+
+Next: the bidder tools (phase 3): search, compare, area pages and a rights page, tested with applicants.
 
 | File | What it is |
 |---|---|
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | Product decisions. They override everything else. **All proposed, none confirmed yet.** |
 | [`docs/DATA.md`](docs/DATA.md) | The sources, what is really in each file, how it is loaded, the checks, and open questions |
+| [`docs/METHOD.md`](docs/METHOD.md) | How landlords are compared, with a worked example and questions for the reviewer |
 | [`docs/OPERATIONS.md`](docs/OPERATIONS.md) | Fetching, loading, matching names and checking |
 
 ## How it works
@@ -76,6 +87,8 @@ uv sync
 uv run landlords fetch            # about a minute; data/raw/
 uv run landlords load             # data/staging/
 uv run landlords check            # the gate: every row matched, published figures reproduced
+uv run landlords build            # peer groups, bands and the pages, in data/site/
+uv run landlords serve            # http://127.0.0.1:8000/, on this computer only
 uv run pytest
 ```
 

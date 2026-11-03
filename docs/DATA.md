@@ -1,7 +1,8 @@
 # Data
 
 What each source publishes, what is really in the files, how it is loaded, and what doesn't fit. Written from the
-files themselves, downloaded on 3 November 2026: one year of each source.
+files themselves, downloaded on 3 November 2026: one year of each source in phase 1, and a second year of the TSMs
+and the Ombudsman's tables in phase 2 (below, "A second year").
 
 ## The files
 
@@ -24,6 +25,9 @@ gets a new hash and sits beside the old one. GOV.UK pages are found through the 
 | RSH | [Private registered providers data release](https://www.gov.uk/government/statistics/private-registered-provider-social-housing-stock-and-rents-in-england-2025-to-2026) (Statistical Data Return, v1.1) | 2025/26 | 9.5 MB | `d21919e4da5c` |
 | RSH | [Local authority registered provider data release](https://www.gov.uk/government/statistics/local-authority-registered-provider-social-housing-stock-and-rents-in-england-2025-to-2026) (Local Authority Data Return) | 2025/26 | 440 KB | `cfdea04e8440` |
 | RSH | Private registered providers: technical notes and definitions (PDF) | 2025/26 | 491 KB | `a8f1000586da` |
+| RSH | [TSM full data release 2024](https://www.gov.uk/government/statistics/data-release-tsm-2024) (xlsx only, v2.1) | 2023/24 | 718 KB | `b481648689c8` |
+| RSH | TSM 2023/24 Headline Report (PDF) | 2023/24 | 834 KB | `c3cb6dec14d1` |
+| Housing Ombudsman | [Tables for landlords with individual performance reports 2024-25](https://www.housing-ombudsman.org.uk/annual-complaint-review-reports/annual-complaints-review-2024-25/) | 2024-25 | 402 KB | `460adfbe5d40` |
 | Housing Ombudsman | [Tables for landlords with individual performance reports 2025-26](https://www.housing-ombudsman.org.uk/annual-complaint-review-reports/annual-complaints-review-2025-26/) (xlsx, "latest update 15 September 2026") | 2025-26 | 406 KB | `fe9766f953ec` |
 
 **Licences.** The regulator's files are under the Open Government Licence v3.0. The Ombudsman's pages say only
@@ -279,6 +283,40 @@ The regulator's TSM file also links Heart of Medway's results to a page on mhs.o
 kept as an alias of kind "group". `landlords match` now offers a company's registered subsidiaries first when a name
 is an unregistered parent (109 companies in the group table have one).
 
+## A second year
+
+Added in phase 2 so that profiles can show changes since the year before.
+
+**TSM 2023/24** is published only as an xlsx (v2.1, December 2025). Version 2.0 (November 2025) replaced zeros with
+`[U]` where the denominator was zero, and included data "resubmitted since November 2024"; the headline report
+(October 2024) describes v1.0. What differs from 2024/25:
+
+* **No CSVs**, so the loader reads the xlsx. Its data dictionary can't be used to translate headings: several field
+  names carry a stray `_a` suffix, identifiers are given as "System Property", and 13 LCRA headings don't match the
+  sheet. Each heading is instead mapped by the measure code it carries ("(TP01)", "(RP02 1)", "LCRA - … (CH02 1
+  Numerator)") to the field name the 2024/25 CSVs use (`load/tsm.py`, `field_name`).
+* **Notes below the tables** ("Notes:", "1. Landlord TSM Publication URL…") rather than above them; rows without a
+  landlord code are skipped.
+* **Unrounded figures** (74.9898332655551) where 2024/25 gives one decimal place (75.0). Kept as published; pages show
+  one decimal place.
+* **Labels**: "FacetoFace" for "Face to Face", ">40000" for ">40,000", and a group size of "Merged during year".
+* **Landlords only on the exclusion lists**: Castle Point (22UE, "did not collect tenant perception information")
+  and Guildford (43UD, "Did not submit TSM data for 2023/24. This failure has been included in our consumer
+  grading") are on the not-included lists but not in the coverage table. They are kept, with the regulator's note.
+
+It reconciles with its headline report: 360 submissions (302 rented only, 54 both, 2 shared ownership only, 2
+combined), TP01 quartiles 63.7, 71.3 and 78.4 (published as 64%, 71%, 78%), and surveys and satisfaction by method
+(postal 50,622 at 77.2%, face to face 28,395 at 74.7%, telephone 299,190 at 69.8%, SMS 10,756 at 63.1%, internet
+90,618 at 58.3%) within 0.1.
+
+**Ombudsman 2024-25** has the same Table 1 columns. The notes say 281 landlords had reports and that those with one
+determination were withheld, without saying how many; Table 1 has 277 rows. Its names differ from 2025-26's: councils
+by short name ("Camden Council" for the London Borough of Camden), "54North Homes Limited", and initials in brackets
+("Notting Hill Genesis (NHG)", "London & Quadrant Housing Trust (L&Q)"). The 21 names that weren't exact were checked
+by hand and added as aliases (kind "short" or "published", source "Housing Ombudsman 2024-25; checked by hand"). Its
+figures are from before the Ombudsman began examining complaint handling in every case (October 2025), so they are
+shown separately, under "Earlier Ombudsman figures", and never compared with 2025-26.
+
 ## The name register
 
 **`data_static/landlords.csv`** has one row for every registered provider (1,577) and every former provider still
@@ -300,7 +338,7 @@ named in a loaded file (112, almost all from the archived judgements), 1,689 in 
 `landlords register` adds new rows and refreshes the facts that come from the regulator. It never removes a row, and
 never changes a display name, slug, status or successor that is already there: those are edited by hand.
 
-**`data_static/aliases.csv`** (`landlord_id`, `alias`, `kind`, `source`, `valid_to`) has 86 aliases:
+**`data_static/aliases.csv`** (`landlord_id`, `alias`, `kind`, `source`, `valid_to`) has 107 aliases (21 added in phase 2 for the Ombudsman's 2024-25 names; the table below is phase 1's 86):
 
 | Kind | Count | From |
 |---|---|---|
@@ -359,7 +397,8 @@ E08000039), and so does our copy now. The sibling repo needs the same fix.
 
 ## Checks
 
-`landlords check` writes `data/staging/check-report.json` and a change report. On the data above, all 25 checks pass:
+`landlords check` writes `data/staging/check-report.json` and a change report. On the data above, all 30 checks pass (both TSM years and both Ombudsman years
+are reconciled):
 
 * every row of the TSM, coverage, judgements, stock, providers and Ombudsman tables has a landlord: pass (**the phase 1
   gate**);
@@ -372,16 +411,15 @@ E08000039), and so does our copy now. The sibling repo needs the same fix.
 * homes by area against TSM populations: 5 differ, reported as a warning (above).
 
 The change report lists grade changes in the current judgements (upgrades, downgrades and regrades, newest first).
-TP01 movers between years need a second TSM year, so there are none yet.
+With two TSM years loaded it also lists the biggest
+movers in TP01 (rented) between them.
 
 ## Open questions
 
 1. **The Ombudsman's reuse terms.** No licence is stated on its site. A third party says its decisions are under the
    Open Government Licence; the landlord tables may not be covered by the same terms. **To do:** ask the Ombudsman
    (email drafted, 3 November 2026). Until it answers, the data is used (docs/DECISIONS.md, 9).
-2. **Ombudsman figures per 1,000 homes.** Not published per landlord. Dividing its counts by the regulator's homes is
-   our arithmetic, against the rule of publishing only published figures. Show the uphold rate and counts only, or
-   compute and label it?
+2. ~~Ombudsman figures per 1,000 homes~~: decided. Only the Ombudsman's own figures are shown (docs/DECISIONS.md, 10).
 3. **"71% used telephone".** The data gives 68.4%. Possibly a different base (all submissions, or rented only before
    exclusions); worth asking the regulator if the figure is used.
 4. ~~MHS Homes Ltd~~: resolved. It is the unregistered parent of Heart of Medway Housing Association (above).

@@ -1,7 +1,7 @@
 # Operations
 
-How the data is fetched, loaded and checked. Phase 1 runs by hand; the weekly update and publishing come later
-(phase 2 onwards).
+How the data is fetched, loaded, checked and turned into pages. Everything runs by hand for now; the weekly update
+and publishing come later.
 
 ## Fetching
 
@@ -65,3 +65,17 @@ Every row matched to a landlord, the register sound, values in range, the publis
 
 When a new year is published, add its expected totals to `config/reconciliation.toml` from the publisher's report
 before loading it.
+
+## Scoring and the pages
+
+```bash
+uv run landlords score                 # peer groups and bands -> data/staging/peer_groups, scores
+uv run landlords build                 # score, then write the pages to data/site/
+uv run landlords serve                 # http://127.0.0.1:8000/ on this computer only
+```
+
+The rules are in `config/scoring.toml` and every sentence in `config/wording.toml`; change them there, not in the
+code. `landlords build` replaces `data/site/` each time. Nothing is deployed: `serve` listens on 127.0.0.1 only.
+
+`uv run pytest` checks the built pages: each under 100 KB, with the line about turning down offers, no scripts or
+outside resources, and every source link pointing to a listed file.

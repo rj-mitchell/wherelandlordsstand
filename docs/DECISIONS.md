@@ -7,6 +7,12 @@ made.
 recorded here as proposals. Each becomes a decision only when the owner confirms it; until then, nothing is built that
 depends on one being final.
 
+## Made
+
+| # | Topic | Decision |
+|---|---|---|
+| 9 | Ombudsman data, for now | The Ombudsman's landlord tables are used while its reuse terms are confirmed (owner, 3 November 2026). **To do:** send the Ombudsman the drafted email asking for its reuse terms and attribution, home numbers per landlord, and Table 6; record the answer here. |
+
 ## Proposed (awaiting the owner)
 
 | # | Topic | Proposal |

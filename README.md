@@ -82,4 +82,4 @@ uv run pytest
 ## Licence
 
 Code: AGPL-3.0, as the sibling sites. The regulator's data is under the Open Government Licence v3.0. The Housing
-Ombudsman's reuse terms are not yet known (docs/DATA.md, open question 1).
+Ombudsman's reuse terms are being confirmed; its data is used meanwhile (docs/DECISIONS.md, 9).

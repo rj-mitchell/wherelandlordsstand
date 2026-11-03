@@ -31,8 +31,8 @@ gets a new hash and sits beside the old one. GOV.UK pages are found through the 
 publication scheme or freedom of information pages, nor any page in its sitemap; the footer's "Legal" heading covers
 only privacy and FOI. Landlord Record (landlordrecord.co.uk/data), an independent site built from the Ombudsman's
 decisions, states that "the source decisions are made available under the Open Government Licence v3.0", but it
-doesn't say where the Ombudsman says so. **Its reuse terms must be confirmed by the Ombudsman before any of its
-figures is published** (open question 1).
+doesn't say where the Ombudsman says so. Its figures are used for now while the Ombudsman is asked to confirm its terms
+(docs/DECISIONS.md, 9; open question 1).
 
 `landlords load` reads the newest file for each source into tidy tables in `data/staging/` (Parquet). Every row
 carries `source_file` (the file's hash) and `period`, and `data/staging/sources.json` maps each hash to its note, so
@@ -377,8 +377,8 @@ TP01 movers between years need a second TSM year, so there are none yet.
 ## Open questions
 
 1. **The Ombudsman's reuse terms.** No licence is stated on its site. A third party says its decisions are under the
-   Open Government Licence; the landlord tables may not be covered by the same terms. Ask the Ombudsman to confirm
-   before publishing its figures.
+   Open Government Licence; the landlord tables may not be covered by the same terms. **To do:** ask the Ombudsman
+   (email drafted, 3 November 2026). Until it answers, the data is used (docs/DECISIONS.md, 9).
 2. **Ombudsman figures per 1,000 homes.** Not published per landlord. Dividing its counts by the regulator's homes is
    our arithmetic, against the rule of publishing only published figures. Show the uphold rate and counts only, or
    compute and label it?

@@ -69,3 +69,12 @@ def test_companies_roll_up_to_the_nearest_profiled_landlord():
     assert owners["OWN"] == ("OWN", "itself")
     assert owners["LONE"] == ("", "")
     assert owners["CHILD"] == ("", "")
+
+
+def test_a_group_reported_under_its_unregistered_parent_is_proposed_first(static):
+    _register(static, [{"id": "4634", "legal_name": "Heart of Medway Housing Association Limited",
+                        "status": "active", "type": "housing association"},
+                       {"id": "5064", "legal_name": "HFL Homes Limited", "status": "active"}])
+    out = register.propose([("MHS Homes Ltd", "Ombudsman")],
+                           unregistered_parents={normalise("mhs homes Ltd"): ["4634"]})
+    assert out[0]["candidate_id"] == "4634" and out[0]["kind"] == "group" and out[0]["accept"] == ""

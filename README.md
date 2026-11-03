@@ -30,8 +30,8 @@ Phase 1, the data spine. It:
 - checks every row against the register and the data against the figures the publishers print (`landlords check`).
 
 On the data downloaded on 3 November 2026 the data reconciles with the regulator's and the Ombudsman's published
-totals, and every row is matched to a landlord **except one**: the Ombudsman's "MHS Homes Ltd", which is on no
-regulator list (docs/DATA.md, open question 4). What is in each file, and what doesn't fit, is in
+totals, and every row is matched to a landlord, which was the gate for phase 1. What is in each file, and what doesn't
+fit, is in
 [`docs/DATA.md`](docs/DATA.md).
 
 Next: scoring and the "Before you bid" card (phase 2), then the bidder tools (phase 3).

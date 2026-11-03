@@ -305,8 +305,14 @@ REVIEW_FIELDS = ["name_published", "source", "candidate_id", "candidate_name", "
                  "kind"]
 
 
-def propose(names: list[tuple[str, str]], limit: int = 3) -> list[dict]:
-    """Candidate landlords for published names that the register can't place, best first. Nothing is accepted."""
+def propose(names: list[tuple[str, str]], limit: int = 3,
+            unregistered_parents: dict[str, list[str]] | None = None) -> list[dict]:
+    """Candidate landlords for published names that the register can't place, best first. Nothing is accepted.
+
+    ``unregistered_parents`` maps a parent company that isn't on the register (normalised name, from the stock
+    return's group table) to its registered subsidiaries. The Ombudsman reports some groups under such a parent
+    ("MHS Homes Ltd", parent of Heart of Medway Housing Association), so those subsidiaries are offered first.
+    """
     from rapidfuzz import fuzz, process
 
     resolver = Resolver()
@@ -327,6 +333,10 @@ def propose(names: list[tuple[str, str]], limit: int = 3) -> list[dict]:
         n = normalise(name)
         if resolver.resolve(name)[0]:
             continue
+        for lid in (unregistered_parents or {}).get(n, []):
+            out.append({"name_published": name, "source": source, "candidate_id": lid,
+                        "candidate_name": f"{reg[lid]['legal_name']} (its unregistered parent is {name!r})",
+                        "candidate_type": reg[lid]["type"], "score": 100, "accept": "", "kind": "group"})
         for match, score, _ in process.extract(n, keys, scorer=fuzz.token_set_ratio, limit=limit * 3):
             lid = choices[match]
             if any(o["candidate_id"] == lid and o["name_published"] == name for o in out):

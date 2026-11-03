@@ -72,7 +72,11 @@ def match(accept: Path = typer.Option(None, help="a reviewed file: add the rows 
         return
     names = sorted({(r["name_published"], f"Housing Ombudsman {r['period']}")
                     for r in read_table(s, "ombudsman") if not r["landlord_id"]})
-    proposals = reg.propose(names)
+    parents: dict[str, list[str]] = {}
+    for g in read_table(s, "groups"):
+        if g.get("unregistered_parent"):
+            parents.setdefault(reg.normalise(g["unregistered_parent"]), []).append(g["landlord_id"])
+    proposals = reg.propose(names, unregistered_parents=parents)
     path = out or s.staging_dir / "match-review.csv"
     reg.write_csv(path, proposals, reg.REVIEW_FIELDS)
     typer.echo(json.dumps({"names_without_landlord": len(names), "proposals": len(proposals), "file": str(path)}))

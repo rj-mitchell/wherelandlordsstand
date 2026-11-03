@@ -42,6 +42,7 @@ GROUPS = pa.schema([
     ("is_group_parent", pa.bool_()),
     ("parent_id", pa.string()),         # the registered parent's code, if any
     ("parent_name", pa.string()),
+    ("unregistered_parent", pa.string()),  # a parent company not on the register, by name (e.g. "mhs homes Ltd")
     ("source_file", pa.string()),
 ])
 
@@ -86,7 +87,11 @@ def load(settings: Settings) -> dict[str, int]:
                                     "size": text(d["Size of organisation"]),
                                     "in_group": text(d["Does organisation belong to group structure"]) == "Yes",
                                     "is_group_parent": text(d["Is organisation group parent"]) == "Yes",
-                                    "parent_id": "", "parent_name": "", "source_file": prp["sha256"]})
+                                    "parent_id": "", "parent_name": "", "unregistered_parent": "",
+                                    "source_file": prp["sha256"]})
+        unregistered = text(d.get("Unregistered Parent's name", ""))
+        if unregistered and unregistered != "[x]":
+            g["unregistered_parent"] = unregistered
         parent = code(d["Registered Parent's code"])
         if parent and parent not in ("[x]",):
             g["parent_id"], g["parent_name"] = parent, text(d["Registered Parent's name"])

@@ -27,8 +27,12 @@ gets a new hash and sits beside the old one. GOV.UK pages are found through the 
 | Housing Ombudsman | [Tables for landlords with individual performance reports 2025-26](https://www.housing-ombudsman.org.uk/annual-complaint-review-reports/annual-complaints-review-2025-26/) (xlsx, "latest update 15 September 2026") | 2025-26 | 406 KB | `fe9766f953ec` |
 
 **Licences.** The regulator's files are under the Open Government Licence v3.0. The Ombudsman's pages say only
-"© Housing Ombudsman Service 2026"; no reuse licence was found on its site. **Its reuse terms must be settled before
-any of its figures is published** (open question 1).
+"© Housing Ombudsman Service 2026". No reuse licence was found anywhere on its site: not on the decision, landlord,
+publication scheme or freedom of information pages, nor any page in its sitemap; the footer's "Legal" heading covers
+only privacy and FOI. Landlord Record (landlordrecord.co.uk/data), an independent site built from the Ombudsman's
+decisions, states that "the source decisions are made available under the Open Government Licence v3.0", but it
+doesn't say where the Ombudsman says so. **Its reuse terms must be confirmed by the Ombudsman before any of its
+figures is published** (open question 1).
 
 `landlords load` reads the newest file for each source into tidy tables in `data/staging/` (Parquet). Every row
 carries `source_file` (the file's hash) and `period`, and `data/staging/sources.json` maps each hash to its note, so
@@ -268,9 +272,12 @@ matches.
   2026). The 2025-26 tables were published before it, on 15 September 2026.
 
 Matching: 284 names are a landlord's exact legal name, 3 are aliases (all renames), 1 matches after normalising
-("Legal and General Affordable Homes Limited"), 1 is Octavia Housing (now merged into Abri), and **1 has no match:
-MHS Homes Ltd**, typed "Other". MHS Homes is not on the register, and no regulator file names it, so it has no code to
-match to (open question 4). This is the one failure of the phase 1 gate.
+("Legal and General Affordable Homes Limited"), 1 is Octavia Housing (now merged into Abri), and 1 is a group
+reported under its parent: **MHS Homes Ltd**, typed "Other", is not on the register because it is the **unregistered
+parent** of Heart of Medway Housing Association (4634), as the stock return's group table records ("mhs homes Ltd").
+The regulator's TSM file also links Heart of Medway's results to a page on mhs.org.uk under "MHS Homes Group". It is
+kept as an alias of kind "group". `landlords match` now offers a company's registered subsidiaries first when a name
+is an unregistered parent (109 companies in the group table have one).
 
 ## The name register
 
@@ -293,7 +300,7 @@ named in a loaded file (112, almost all from the archived judgements), 1,689 in 
 `landlords register` adds new rows and refreshes the facts that come from the regulator. It never removes a row, and
 never changes a display name, slug, status or successor that is already there: those are edited by hand.
 
-**`data_static/aliases.csv`** (`landlord_id`, `alias`, `kind`, `source`, `valid_to`) has 85 aliases:
+**`data_static/aliases.csv`** (`landlord_id`, `alias`, `kind`, `source`, `valid_to`) has 86 aliases:
 
 | Kind | Count | From |
 |---|---|---|
@@ -303,11 +310,12 @@ never changes a display name, slug, status or successor that is already there: t
 | trading | 2 | "Metropolitan Thames Valley Housing (MTV)" (Ombudsman), "Bournemouth Housing Landlord Services" (BCP) |
 | logo label | 2 | "Orbit", "Moat" (Kent Homechoice logo alt text) |
 | managing body | 1 | "Poole Housing Partnership", BCP Council's ALMO |
+| group | 1 | "MHS Homes Ltd", the unregistered parent of Heart of Medway Housing Association |
 
 Names on adverts that weren't given an alias: names that already match a legal name (Golding Homes, Town & Country
 Housing, Southern Housing, West Kent Housing Association, Places for People, Park Properties Housing Association,
 Walsall Housing Group, Warwick District Council), and two that can't point to one landlord: **"Sage"** (Sage Homes RP
-5082 and Sage Rented 5083 are both profiled) and **"MHS Homes"** (not on the register). Park Properties Housing
+5082 and Sage Rented 5083 are both profiled) and "MHS Homes" (now matched through its subsidiary, above). Park Properties Housing
 Association (5056) is a for-profit provider below the TSM threshold, so it isn't profiled.
 
 **Matching names without a code.** `landlords match` looks each name up in tiers and stops at the first tier with an
@@ -351,11 +359,10 @@ E08000039), and so does our copy now. The sibling repo needs the same fix.
 
 ## Checks
 
-`landlords check` writes `data/staging/check-report.json` and a change report. On the data above, 24 checks pass and
-one fails:
+`landlords check` writes `data/staging/check-report.json` and a change report. On the data above, all 25 checks pass:
 
-* every row of the TSM, coverage, judgements, stock and providers tables has a landlord: **pass**;
-* every Ombudsman row has a landlord: **fail**, MHS Homes Ltd;
+* every row of the TSM, coverage, judgements, stock, providers and Ombudsman tables has a landlord: pass (**the phase 1
+  gate**);
 * aliases point to known landlords and kinds, no alias points to two landlords, slugs unique, no published slug
   missing, every profiled landlord has a name, slug and type, every TSM landlord profiled: pass;
 * values in range (percentages 0–100, rates not negative, maladministration rate 0–1, grades C/G/V 1–4): pass;
@@ -369,15 +376,15 @@ TP01 movers between years need a second TSM year, so there are none yet.
 
 ## Open questions
 
-1. **The Ombudsman's reuse terms.** No licence is stated on its site. Ask the Ombudsman before publishing its figures.
+1. **The Ombudsman's reuse terms.** No licence is stated on its site. A third party says its decisions are under the
+   Open Government Licence; the landlord tables may not be covered by the same terms. Ask the Ombudsman to confirm
+   before publishing its figures.
 2. **Ombudsman figures per 1,000 homes.** Not published per landlord. Dividing its counts by the regulator's homes is
    our arithmetic, against the rule of publishing only published figures. Show the uphold rate and counts only, or
    compute and label it?
 3. **"71% used telephone".** The data gives 68.4%. Possibly a different base (all submissions, or rented only before
    exclusions); worth asking the regulator if the figure is used.
-4. **MHS Homes Ltd.** In the Ombudsman's 2025-26 table (type "Other", 1,000–9,999 homes) and named on Kent Homechoice
-   adverts, but on no regulator list. It needs either a register row without a regulator code, or to be left out of
-   the Ombudsman data with a reason.
+4. ~~MHS Homes Ltd~~: resolved. It is the unregistered parent of Heart of Medway Housing Association (above).
 5. **Average rent.** Published per area and number of bedrooms, not per landlord. Show the published figures by
    bedroom size, or compute an average and say so?
 6. **Estuary Housing Association.** Active on the register but with no homes in 2026. Find the regulator's statement

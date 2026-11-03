@@ -55,3 +55,32 @@ def test_pages_are_small_self_contained_and_carry_the_warning():
         assert 'id="sources"' in text, path                      # every page lists its sources
         for ref in re.findall(r'href="#source-(\d+)"', text):    # every figure's link goes to a listed file
             assert f'id="source-{ref}"' in text, (path, ref)
+
+
+@pytest.mark.skipif(not (settings.staging_dir / "scores.parquet").exists(), reason="data not scored")
+def test_the_launch_switch(tmp_path):
+    import dataclasses
+
+    from landlords import site
+
+    def build(**site_cfg):
+        raw = {**settings.raw, "site": {**settings.section("site"), **site_cfg}}
+        s = dataclasses.replace(settings, raw=raw)
+        out = tmp_path / str(len(list(tmp_path.iterdir())))
+        site.build(s, out)
+        return out
+
+    test = build(launched=False)
+    page = (test / "landlords" / "abri-group" / "index.html").read_text()
+    assert 'name="robots" content="noindex"' in page and 'class="test"' in page
+    assert "Disallow: /\n" in (test / "robots.txt").read_text() and not (test / "sitemap.xml").exists()
+
+    with pytest.raises(RuntimeError, match="url"):
+        build(launched=True, url="")
+
+    live = build(launched=True, url="https://example.org")
+    page = (live / "landlords" / "abri-group" / "index.html").read_text()
+    assert "noindex" not in page and 'class="test"' not in page
+    assert "Sitemap: https://example.org/sitemap.xml" in (live / "robots.txt").read_text()
+    assert "<loc>https://example.org/landlords/abri-group/</loc>" in (live / "sitemap.xml").read_text()
+    site.build(settings, settings.data_dir / "site")  # put the test-version pages back

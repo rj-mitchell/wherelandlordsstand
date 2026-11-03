@@ -1,0 +1,80 @@
+# The about, terms, accessibility and "not found" pages. Like config/wording.toml, every sentence lives here.
+# {contact}, {operator}, {parent}, {site} and {url} are filled from config/settings.toml ([site]).
+
+[about]
+heading = "About"
+sections = [
+  ["What this site is", [
+    "Where Landlords Stand helps people decide about a social home. If you see a landlord named on a home you could bid for, or you are offered a home, you can see what that landlord is like in under a minute.",
+    "It covers every council and housing association in England with 1,000 or more homes. It uses only what the Regulator of Social Housing and the Housing Ombudsman publish: tenants' answers to the regulator's survey, the landlord's own records, the regulator's grades, and the Ombudsman's findings on complaints.",
+  ]],
+  ["What it is not", [
+    "It is not advice. It never tells anyone to turn down an offer: saying no to an offer can affect your place on the housing register.",
+    "It never changes the publishers' figures. Where we work something out, such as how a landlord compares with similar landlords, we say so and explain how on the method page.",
+  ]],
+  ["Who runs it", [
+    "{site} is a project of {parent}, which is applying to register as a charity in England and Wales. Its sister sites are Where MPs Stand, on the record of the UK Parliament, Where Councils Stand, on what councils discuss and decide, and Where Countries Stand, on the record of the United Nations.",
+    "It is independent. It is not part of the Regulator of Social Housing, the Housing Ombudsman Service or any landlord, and no landlord pays to be on it. It shows no logos: landlords are named, nothing more.",
+    "The code is open source, under the GNU Affero General Public License (AGPL-3.0).",
+  ]],
+  ["Contact", [
+    "Email {contact}. To report a mistake, use the form on the corrections page.",
+  ]],
+]
+
+[terms]
+heading = "Terms of use"
+short = "The short version: use it freely, check the sources, and credit the site if you reuse its work."
+updated = "2026-11-03"
+sections = [
+  ["About these terms", [
+    "{site} is a project of {parent}, run by {operator}. By using the site you agree to these terms. Contact: {contact}.",
+  ]],
+  ["What the service is, and is not", [
+    "The site shows figures published by the Regulator of Social Housing and the Housing Ombudsman, and where each landlord comes among similar landlords. Every figure links to the file it comes from. Always check the source before relying on a figure.",
+    "It is general information, not legal or housing advice, and not a recommendation to bid for, accept or refuse any home.",
+    "The site is independent. It is not affiliated with or endorsed by the Regulator of Social Housing, the Housing Ombudsman Service or any landlord.",
+    "The service is free and provided \"as is\". It may change, be paused or stop.",
+  ]],
+  ["Reusing our work", [
+    "Our own work on the site is licensed under the Creative Commons Attribution 4.0 International licence (CC BY 4.0): the text we write, the bands, the peer groups, the homes by council area, and the method. You may copy, share and adapt it for any purpose, including commercially, as long as you credit {site}, link to the page, and say if you changed it. For example: \"Bands from {site} ({url}), CC BY 4.0.\"",
+    "Other material is under its own terms. The regulator's figures are used under the Open Government Licence v3.0. The Housing Ombudsman's figures are © Housing Ombudsman Service, and we are confirming its terms for reuse. The name {site} and its mark are not covered by the CC licence: please don't use them in a way that suggests the site endorses you or your work.",
+  ]],
+  ["Fair use of the service", [
+    "Please don't send automated requests in bulk: everything is in the data downloads. Please don't try to break, overload or gain unauthorised access to the site, or present its figures as saying something they do not. Access may be limited or blocked to protect the service.",
+  ]],
+  ["Responsibility", [
+    "Every effort is made to keep the site accurate and fair, and our mistakes are corrected when found and listed on the corrections page. To the extent the law allows, {parent} is not liable for any loss arising from use of, or reliance on, the site. Nothing in these terms limits liability that cannot be limited by law.",
+  ]],
+  ["Changes and law", [
+    "These terms may be updated; the date above shows when. They are governed by the law of England and Wales, and the courts of England and Wales have jurisdiction, without affecting any rights you have where you live.",
+  ]],
+]
+
+[accessibility]
+heading = "Accessibility"
+# Filled in from the latest accessibility test (docs/LAUNCH.md).
+tested = "2026-11-03"
+tested_how = "Every kind of page (a landlord, a council, a merged landlord, one with no survey results, an area, the lists, compare with three landlords, search with and without results, rights, method, downloads, corrections, privacy, about, terms, this page and \"not found\") was checked with the axe-core automated checker against WCAG 2.2 AA, at phone and desktop sizes, in light and dark modes, with no failures. Keyboard use was checked by script."
+sections = [
+  ["What you can expect", [
+    "{site} should be usable by everyone, including people who use a screen reader, a keyboard, voice control or magnification.",
+    "Text can be enlarged to 200% or more without loss of content, and the layout fits small screens without scrolling sideways. Every part of the site can be used with a keyboard alone; a \"Skip to content\" link is the first stop. Pages follow your device's light or dark setting. Bands are shown in words as well as with shaded boxes, so colour is never the only way to tell them apart.",
+    "Landlords' pages, area pages and the rights page work without JavaScript. Search and compare need it; without it, the list of all landlords and each landlord's page give the same information.",
+    "The site uses no cookies and needs no account. Its sentences aim for a reading age of about 9.",
+  ]],
+  ["Standard and testing", [
+    "The site aims to meet the Web Content Accessibility Guidelines (WCAG) 2.2 at level AA. It was last tested on {tested}. {tested_how}",
+    "Automated checks find only some problems, so testing with people who use assistive technology is still to do. If something does not work for you, please tell us.",
+  ]],
+  ["Known limitations", [
+    "Links to the regulator's and the Ombudsman's files go to sites we do not run; some are spreadsheets, which can be hard to use with a screen reader.",
+  ]],
+  ["Reporting a problem", [
+    "If you find something hard to use, or need information in a different format, email {contact} or use the form on the corrections page. We aim to reply within 10 working days.",
+  ]],
+]
+
+[not_found]
+heading = "Page not found"
+text = "We couldn't find that page. It may have moved. Try searching for the landlord."

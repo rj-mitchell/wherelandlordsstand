@@ -44,7 +44,8 @@ def fetch(source: list[str] = typer.Argument(None, help="sources to fetch; all i
         failed += bool(r.error)
         typer.echo(json.dumps({"source": r.entry.source, "role": r.entry.role, "period": r.entry.period,
                                "found": len(r.found), "new": [n["file"] for n in r.new],
-                               "cached": len(r.cached), "error": r.error}))
+                               "cached": len(r.cached), "error": r.error}
+                              | ({"waiting": "not published yet"} if r.waiting else {})))
     raise typer.Exit(1 if failed else 0)
 
 
@@ -190,6 +191,22 @@ def backup(to: Path = typer.Option(..., help="folder for the copies"), keep: int
     for old in copies[:-keep]:
         old.unlink()
     typer.echo(f"Backed up to {tmp}.gz ({len(copies[-keep:])} kept)")
+    from landlords.offsite import OffsiteError, send
+
+    try:
+        status = send(Path(f"{tmp}.gz"))
+    except OffsiteError as exc:
+        typer.echo(f"Off-site copy failed: {exc}")
+        raise typer.Exit(1) from exc
+    typer.echo(f"Off-site copy: {status.get('offsite') or 'stored in ' + status['bucket']}")
+
+
+@app.command()
+def offsite() -> None:
+    """Check the off-site backup bucket: whether the key works, and how many of this site's backups are there."""
+    from landlords.offsite import check
+
+    typer.echo(json.dumps(check(), indent=2))
 
 
 @app.command()

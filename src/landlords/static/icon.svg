@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Where Landlords Stand">
+<rect width="64" height="64" rx="8" fill="#1f4f7a"/>
+<path d="M12 30 32 13l20 17" fill="none" stroke="#fbfaf7" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="16" y="44" width="6" height="8" fill="#fbfaf7"/><rect x="25" y="39" width="6" height="13" fill="#fbfaf7"/>
+<rect x="34" y="34" width="6" height="18" fill="#fbfaf7"/><rect x="43" y="29" width="6" height="23" fill="#fbfaf7" opacity=".45"/>
+</svg>

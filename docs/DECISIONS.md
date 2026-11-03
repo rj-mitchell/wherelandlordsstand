@@ -19,6 +19,7 @@ All the decisions proposed in the planning session of 3 November 2026 have now b
 | 8 | Owner | A project of **Where They Stand** (wheretheystand.uk), like the sibling sites (owner, 3 November 2026). |
 | 9 | Ombudsman data, for now | The Ombudsman's landlord tables are used while its reuse terms are confirmed (owner, 3 November 2026). **To do:** send the Ombudsman the drafted email asking for its reuse terms and attribution, home numbers per landlord, and Table 6; record the answer here. |
 | 10 | Ombudsman figures | Only the Ombudsman's own published figures are shown: findings, the share found at fault (its maladministration rate), severe findings and compensation. No rate per 1,000 homes is worked out by us, because the Ombudsman doesn't publish one (owner, 3 November 2026). |
+| 11 | Licence for our own work | Our own work (the text we write, bands, peer groups, homes by council area, the method) is licensed under **CC BY 4.0**, as on Where MPs Stand. Publishers' figures stay under their own terms; the name and mark are not covered (owner, 3 November 2026). |
 
 ## Ground rules from the brief
 

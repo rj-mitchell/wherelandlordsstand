@@ -7,6 +7,15 @@
 #
 # Licences are as stated by each publisher. See docs/DATA.md.
 
+# Documents in the watched collections (end of file) that are deliberately not fetched.
+ignore = [
+  "/government/statistics/data-quality-and-methodology-tsm-2024",
+  "/guidance/pre-release-access-list-tsm-2024",
+  "/government/collections/regulatory-judgements-a-to-z-list-of-landlords",
+  "/government/collections/regulatory-judgements-and-enforcement-notices",
+  "/government/publications/list-of-non-submission-of-annual-accounts",
+]
+
 # Tenant Satisfaction Measures -----------------------------------------------------------------------------------
 
 [[file]]
@@ -50,6 +59,19 @@ licence = "Open Government Licence v3.0"
 govuk = "/government/statistics/tenant-satisfaction-measures-202324"
 match = "tenant satisfaction measures 2023/24"
 types = ["pdf"]
+
+# Not published yet (expected autumn 2026). `optional`: until the page exists, `landlords fetch` reports it as waiting.
+# Add its headline figures to config/reconciliation.toml when it appears.
+[[file]]
+source = "tsm"
+role = "full-data"
+period = "2025/26"
+publisher = "Regulator of Social Housing"
+licence = "Open Government Licence v3.0"
+govuk = "/government/statistics/tenant-satisfaction-measures-202526"
+match = "full data"
+types = ["xlsx", "zip"]
+optional = true
 
 # Regulatory judgements and gradings --------------------------------------------------------------------------------
 
@@ -152,3 +174,12 @@ page = "https://www.housing-ombudsman.org.uk/annual-complaint-review-reports/ann
 links = "tables-for-landlords.*\\.xlsx$"
 types = ["xlsx"]
 notes = "Before the Ombudsman began examining complaint handling in every case (October 2025): not directly comparable with 2025-26."
+
+# Collections watched for new documents that no [[file]] above covers (a new year, a corrected release).
+# `landlords fetch` lists them under "unlisted"; add a [[file]] line, or the path to `ignore`.
+[[watch]]
+govuk = "/government/collections/tenant-satisfaction-measures"
+
+[[watch]]
+govuk = "/government/collections/individual-social-housing-providers-and-regulatory-judgements"
+

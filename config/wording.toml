@@ -109,6 +109,7 @@ heading = "Compare landlords"
 intro = "Pick up to three landlords to see side by side."
 add = "Add a landlord"
 remove = "Remove"
+measure = "What is compared"
 empty = "No landlords picked yet."
 type = "Type"
 homes = "Rented homes"
@@ -134,7 +135,7 @@ attribution_heading = "Using this data"
 attribution = [
   "Tenant Satisfaction Measures, regulatory judgements and stock figures: Regulator of Social Housing. Contains public sector information licensed under the Open Government Licence v3.0.",
   "Complaints figures: © Housing Ombudsman Service. We are confirming the Ombudsman's terms for reuse.",
-  "Bands, peer groups and homes by area are worked out by Where Landlords Stand from the published figures, as set out on the method page.",
+  "Bands, peer groups and homes by area are worked out by Where Landlords Stand from the published figures, as set out on the method page. They are licensed under CC BY 4.0: credit Where Landlords Stand and link to the site (see the terms page).",
 ]
 
 [downloads.files]

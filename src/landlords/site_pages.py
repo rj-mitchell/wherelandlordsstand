@@ -143,7 +143,7 @@ def landlord_json(p: dict, w: dict) -> dict:
 
 def compare_html(w: dict) -> str:
     t = w["compare"]
-    text = {**{k: t[k] for k in ("type", "homes", "grade", "overall", "peer", "ombudsman", "safety", "remove", "empty",
+    text = {**{k: t[k] for k in ("measure", "type", "homes", "grade", "overall", "peer", "ombudsman", "safety", "remove", "empty",
                                   "not_graded", "no_report", "at_fault", "findings", "all_done", "not_all_done",
                                   "caveat", "none")},
             "bands": rules()["scoring"]["bands"]}
@@ -300,13 +300,63 @@ def rights_html(w: dict) -> str:
     return page(f"{r['heading']} – {w['site']['name']}", "".join(parts), w, depth=1)
 
 
+# About, terms, accessibility, not found; robots.txt and the sitemap -------------------------------------------------
+
+
+def _fill_site(text: str, settings: Settings, w: dict, extra: dict | None = None) -> str:
+    site = settings.section("site")
+    values = {"site": w["site"]["name"], "parent": site.get("parent_name", "Where They Stand"),
+              "operator": site.get("operator", ""), "contact": site.get("contact", ""),
+              "url": (site.get("url") or "the site's address").removeprefix("https://"), **(extra or {})}
+    return text.format(**values)
+
+
+def text_page(settings: Settings, w: dict, key: str, extra: dict | None = None) -> str:
+    t = load_toml("pages.toml")[key]
+    parts = [f"<h1>{esc(t['heading'])}</h1>"]
+    if t.get("short"):
+        parts.append(f"<p><strong>{esc(t['short'])}</strong></p>")
+    if t.get("updated"):
+        parts.append(f'<p class="hint">Last updated {esc(nice_date(t["updated"]))}.</p>')
+    for heading, paras in t["sections"]:
+        parts.append(f"<h2>{esc(heading)}</h2>")
+        parts += [f"<p>{esc(_fill_site(x, settings, w, extra))}</p>" for x in paras]
+    return page(f"{t['heading']} – {w['site']['name']}", "".join(parts), w, depth=1)
+
+
+def not_found_html(w: dict) -> str:
+    t = load_toml("pages.toml")["not_found"]
+    # Served for any missing address, at any depth, so its links start from the site's root.
+    body = f'<h1>{esc(t["heading"])}</h1><p>{esc(t["text"])}</p><p><a href="/index.html">{esc(w["search"]["heading"])}</a></p>'
+    return page(f"{t['heading']} – {w['site']['name']}", body, w, depth=0).replace('href="styles.css"', 'href="/styles.css"') \
+        .replace('href="icon.svg"', 'href="/icon.svg"').replace('href="index.html"', 'href="/index.html"')
+
+
+def robots_and_sitemap(settings: Settings, out: Path) -> None:
+    """While the site is a test version, crawlers are asked to stay away. Once launched, they get a sitemap."""
+    from landlords.site import launched
+
+    site = settings.section("site")
+    if not launched():
+        (out / "robots.txt").write_text("# A test version, not yet public.\nUser-agent: *\nDisallow: /\n")
+        return
+    url = (site.get("url") or "").rstrip("/")
+    if not url.startswith("https://"):
+        raise RuntimeError("[site] launched is true but [site] url is not set (https://…): see docs/LAUNCH.md")
+    pages = sorted(p.relative_to(out).as_posix() for p in out.rglob("index.html"))
+    locs = "".join(f"<url><loc>{url}/{p.removesuffix('index.html')}</loc></url>" for p in pages)
+    (out / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n'
+                                     f'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{locs}</urlset>\n')
+    (out / "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: {url}/sitemap.xml\n")
+
+
 def build_extra(settings: Settings, profiles: list[dict], out: Path, w: dict) -> dict:
     """Write every page except the profiles and the method page."""
     import shutil
 
     from landlords.register import aliases, landlords
 
-    for name in ("search.js", "compare.js"):
+    for name in ("search.js", "compare.js", "icon.svg"):
         shutil.copy(STATIC / name, out / name)
     (out / "names.json").write_text(json.dumps(names_json(profiles, landlords(), aliases(), w),
                                                separators=(",", ":")))
@@ -334,4 +384,12 @@ def build_extra(settings: Settings, profiles: list[dict], out: Path, w: dict) ->
         (out / name).mkdir(exist_ok=True)
         (out / name / "index.html").write_text(html)
     (out / "corrections" / "thanks.html").write_text(thanks_html(w))
+    acc = load_toml("pages.toml")["accessibility"]
+    for name in ("about", "terms", "accessibility"):
+        (out / name).mkdir(exist_ok=True)
+        (out / name / "index.html").write_text(text_page(settings, w, name, {
+            "tested": nice_date(acc["tested"]) if acc.get("tested") else "not yet",
+            "tested_how": acc.get("tested_how", "")}))
+    (out / "404.html").write_text(not_found_html(w))
+    robots_and_sitemap(settings, out)
     return {"areas": len(areas), "downloads": len(files)}

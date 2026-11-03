@@ -55,6 +55,7 @@ class Entry:
     links: str = ""             # regular expression on link addresses (html)
     types: tuple[str, ...] = () # file extensions to keep
     keep_page: bool = False     # keep the page itself as a raw file (when the data is in the page)
+    optional: bool = False      # a release not published yet: a missing page is expected, not a failure
     notes: str = ""
 
 
@@ -84,6 +85,11 @@ class Result:
     new: list[dict] = field(default_factory=list)       # notes of files not seen before
     cached: list[str] = field(default_factory=list)     # URLs already fetched
     error: str = ""
+    waiting: bool = False       # an optional page that isn't published yet
+
+
+class NotFound(RuntimeError):
+    """The page or file doesn't exist (HTTP 404 or 410). Not retried."""
 
 
 class Client:
@@ -118,6 +124,8 @@ class Client:
             try:
                 self._last = time.monotonic()
                 resp = self.http.get(url)
+                if resp.status_code in (404, 410):
+                    raise NotFound(f"{url}: {resp.status_code}")
                 if resp.status_code in (429, 500, 502, 503, 504):
                     raise httpx.HTTPStatusError(f"{resp.status_code}", request=resp.request, response=resp)
                 resp.raise_for_status()
@@ -240,6 +248,17 @@ def latest(settings: Settings, source: str, role: str | None = None, period: str
 def run_entry(settings: Settings, client: Client, entry: Entry, refresh: bool = False) -> Result:
     res = Result(entry)
     try:
+        return _run_entry(settings, client, entry, res, refresh)
+    except NotFound as exc:
+        if entry.optional:
+            res.waiting = True
+        else:
+            res.error = str(exc)
+        return res
+
+
+def _run_entry(settings: Settings, client: Client, entry: Entry, res: Result, refresh: bool) -> Result:
+    try:
         if entry.govuk:
             resp = client.get(GOVUK_API + entry.govuk)
             content = resp.json()
@@ -273,16 +292,39 @@ def run_entry(settings: Settings, client: Client, entry: Entry, refresh: bool = 
                               resp.headers.get("last-modified", ""))
             if new:
                 res.new.append(note)
+    except NotFound:
+        raise
     except Exception as exc:  # noqa: BLE001 - one failed source must not stop the others
         res.error = str(exc)
         log.warning("%s %s: %s", entry.source, entry.period, exc)
     return res
 
 
+def unlisted(client: Client) -> list[dict]:
+    """Documents in the GOV.UK collections watched in sources.toml that no ``[[file]]`` line covers: new releases
+    (a new TSM year, say) to add to sources.toml."""
+    cfg = load_toml("sources.toml")
+    known = {e.govuk for e in entries() if e.govuk} | set(cfg.get("ignore", []))
+    out = []
+    for w in cfg.get("watch", []):
+        try:
+            content = client.get(GOVUK_API + w["govuk"]).json()
+        except Exception as exc:  # noqa: BLE001
+            out.append({"collection": w["govuk"], "error": str(exc)})
+            continue
+        for doc in content.get("links", {}).get("documents", []):
+            path = doc.get("base_path", "")
+            if path and path not in known:
+                out.append({"collection": w["govuk"], "document": path, "title": doc.get("title", ""),
+                            "updated": doc.get("public_updated_at", "")})
+    return out
+
+
 def run(settings: Settings, sources: list[str] | None = None, refresh: bool = False) -> list[Result]:
     chosen = [e for e in entries() if not sources or e.source in sources]
     with Client(settings) as client:
         results = [run_entry(settings, client, e, refresh) for e in chosen]
+        new_documents = unlisted(client) if not sources else []
     # New files are listed for review; nothing reaches the site until it is published by hand.
     settings.staging_dir.mkdir(parents=True, exist_ok=True)
     report = {
@@ -290,6 +332,8 @@ def run(settings: Settings, sources: list[str] | None = None, refresh: bool = Fa
         "new_files": [n for r in results for n in r.new],
         "failed": [{"source": r.entry.source, "role": r.entry.role, "period": r.entry.period, "error": r.error}
                    for r in results if r.error],
+        "waiting": [f"{r.entry.source} {r.entry.role} {r.entry.period}" for r in results if r.waiting],
+        "unlisted": new_documents,
     }
     (settings.staging_dir / "fetch-report.json").write_text(json.dumps(report, indent=2) + "\n")
     return results

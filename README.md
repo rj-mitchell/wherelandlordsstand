@@ -62,6 +62,11 @@ Ready for phase 4, launch, which happens only when the owner says: a weekly `lan
 folder, `landlords publish` makes it live by hand, `landlords rollback` undoes it, and `deploy/` has the container,
 timers and [`docs/DEPLOY.md`](docs/DEPLOY.md). **Nothing is deployed.**
 
+Phase 4, launch, is prepared: about, terms, accessibility and "not found" pages; an accessibility test (axe-core, WCAG
+2.2 AA, no failures); one switch that takes the site out of test mode (`[site] launched`); off-site backups; and a
+watch for new releases (TSM 2025/26 is due any day). What is left needs people or the server: see
+[`docs/LAUNCH.md`](docs/LAUNCH.md).
+
 | File | What it is |
 |---|---|
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | Product decisions. They override everything else. |
@@ -70,6 +75,7 @@ timers and [`docs/DEPLOY.md`](docs/DEPLOY.md). **Nothing is deployed.**
 | [`docs/OPERATIONS.md`](docs/OPERATIONS.md) | Fetching, loading, matching names, checking, updating and publishing |
 | [`docs/USER-TESTING.md`](docs/USER-TESTING.md) | The plan for testing the bidder tools with applicants (phase 3's gate) |
 | [`docs/DEPLOY.md`](docs/DEPLOY.md) | Putting the site on the shared server, when the owner says so |
+| [`docs/LAUNCH.md`](docs/LAUNCH.md) | The launch checklist: what is done, and what needs the owner, reviewers or the server |
 
 ## How it works
 
@@ -112,5 +118,7 @@ uv run pytest
 
 ## Licence
 
-Code: AGPL-3.0, as the sibling sites. The regulator's data is under the Open Government Licence v3.0. The Housing
-Ombudsman's reuse terms are being confirmed; its data is used meanwhile (docs/DECISIONS.md, 9).
+Code: AGPL-3.0, as the sibling sites. Our own work on the site (text, bands, peer groups, homes by council area, the
+method) is under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), as on Where MPs Stand. The regulator's
+data is under the Open Government Licence v3.0. The Housing Ombudsman's reuse terms are being confirmed; its data is
+used meanwhile (docs/DECISIONS.md, 9).

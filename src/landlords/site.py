@@ -24,6 +24,7 @@ CSS = """
 *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);
 font:1.0625rem/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 a{color:var(--accent)}a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .skip{position:absolute;left:-999px}.skip:focus{left:1rem;top:1rem;background:var(--card);padding:.5rem}
 header,main,footer{max-width:46rem;margin:0 auto;padding:0 1rem}
 header{padding-top:1rem;border-bottom:1px solid var(--rule)}
@@ -104,23 +105,34 @@ NAV = [("index.html", "Find a landlord"), ("areas/index.html", "Areas"), ("compa
        ("rights/index.html", "Your rights"), ("method/index.html", "How we compare")]
 
 
+_LAUNCHED = False
+
+
+def launched() -> bool:
+    """The launch switch, [site] launched in config/settings.toml (docs/LAUNCH.md), as set by the current build."""
+    return _LAUNCHED
+
+
 def page(title: str, body: str, w: dict, depth: int, description: str = "", scripts: tuple[str, ...] = ()) -> str:
     """A whole page: our own stylesheet and scripts only, nothing from anywhere else."""
     up = "../" * depth
+    live = launched()
     nav = "".join(f'<a href="{up}{href}">{esc(label)}</a>' for href, label in NAV)
     js = "".join(f'<script src="{up}{src}" defer></script>' for src in scripts)
     site = w["site"]
     return f"""<!doctype html>
 <html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{esc(title)}</title><meta name="description" content="{esc(description or site['tagline'])}">
-<meta name="robots" content="noindex"><link rel="stylesheet" href="{up}styles.css">{js}</head>
+{"" if live else '<meta name="robots" content="noindex">'}<link rel="icon" href="{up}icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="{up}styles.css">{js}</head>
 <body><a class="skip" href="#main">Skip to content</a>
 <header><a class="site" href="{up}index.html">{esc(site['name'])}</a><p>{esc(site['tagline'])}</p>
-<nav aria-label="Main">{nav}</nav><p class="test">{esc(site['not_live'])}</p></header>
+<nav aria-label="Main">{nav}</nav>{"" if live else f'<p class="test">{esc(site["not_live"])}</p>'}</header>
 <main id="main">{body}</main>
 <footer><p>{esc(site['independence'])}</p><p>{esc(site['parent'])}</p>
-<p><a href="{up}corrections/index.html">Report a mistake</a> · <a href="{up}privacy/index.html">Privacy</a> ·
-<a href="{up}data/index.html">Download the data</a> · <a href="{up}method/index.html">How we compare landlords</a></p></footer>
+<p><a href="{up}about/index.html">About</a> · <a href="{up}corrections/index.html">Report a mistake</a> ·
+<a href="{up}data/index.html">Download the data</a> · <a href="{up}terms/index.html">Terms</a> ·
+<a href="{up}privacy/index.html">Privacy</a> · <a href="{up}accessibility/index.html">Accessibility</a></p></footer>
 </body></html>
 """
 
@@ -335,6 +347,8 @@ its file.</p>"""
 
 
 def build(settings: Settings, out: Path | None = None) -> dict[str, int]:
+    global _LAUNCHED
+    _LAUNCHED = bool(settings.section("site").get("launched"))
     w = load_toml("wording.toml")
     out = out or settings.data_dir / "site"
     if out.exists():

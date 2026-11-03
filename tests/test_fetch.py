@@ -60,3 +60,16 @@ def test_sources_file_is_valid():
     assert {e.source for e in entries} >= {"tsm", "judgements", "providers", "stock", "ombudsman"}
     for e in entries:
         assert bool(e.govuk) + bool(e.page) + bool(e.urls) >= 1, e
+
+
+def test_a_release_not_yet_published_is_waiting_not_failed(settings, monkeypatch):
+    e = entry(govuk="/government/statistics/not-yet", optional=True)
+
+    class Gone:
+        def get(self, url):
+            raise fetch.NotFound(f"{url}: 404")
+
+    res = fetch.run_entry(settings, Gone(), e)
+    assert res.waiting and not res.error
+    res = fetch.run_entry(settings, Gone(), entry(govuk="/government/statistics/should-be-there"))
+    assert res.error and not res.waiting

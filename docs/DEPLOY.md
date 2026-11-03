@@ -44,8 +44,9 @@ memory. Disk: about 30 MB per build, and the last six builds are kept (`landlord
    ```
 7. **Check:** visit the site, search for a landlord, send a test report through the corrections form (then close it:
    `landlords reports --close <id>`), and run `bash /opt/hansardgpt/deploy/check.sh`.
-8. **Take the "test version" line off** (`[site] not_live` in `config/wording.toml`), and remove `noindex` from the
-   page header (`site.page`), only at launch.
+8. **The launch switch** (docs/LAUNCH.md): set `[site] url` and `launched = true` in `config/settings.toml`, merge,
+   update the server, then `landlords update` and `landlords publish`. That takes off the "test version" line and
+   `noindex`, opens robots.txt and writes the sitemap. Until then the site can run on the server as a private test.
 
 ## Running it
 
@@ -64,9 +65,17 @@ Commands are run in `/opt/wherelandlordsstand/deploy`, each in a one-off contain
 * **Missed searches:** `landlords missed` lists the words people searched for without a result: candidates for new
   aliases (docs/OPERATIONS.md, "The register and names").
 * **Backups:** the state database (reports, missed searches) is copied every night to
-  `/opt/wherelandlordsstand/deploy/backups`, the last 14 kept. Everything else can be rebuilt from the raw files. The
-  off-site copy (Backblaze B2, as the other sites) is to be added at launch: Where Councils Stand's `offsite.py` can
-  be adapted.
+  `/opt/wherelandlordsstand/deploy/backups`, the last 14 kept, and to the charity's Backblaze B2 bucket, the last 60
+  kept there beside the other sites' backups (each site's have their own names, and each deletes only its own).
+  Everything else can be rebuilt from the raw files. To set up the off-site copy, once, copy the bucket and key from
+  Where MPs Stand's settings and check them:
+  ```bash
+  cd /opt/wherelandlordsstand/deploy
+  for k in BUCKET KEY_ID APPLICATION_KEY; do v=$(grep "^HANSARD_B2_$k=" /opt/hansardgpt/deploy/.env | cut -d= -f2-); \
+    sed -i "/^LANDLORDS_B2_$k=/d" .env; echo "LANDLORDS_B2_$k=$v" >> .env; done
+  docker compose run --rm -T app landlords offsite                  # "ok": true
+  docker compose run --rm -T app landlords backup --to /backups     # ends "Off-site copy: stored in ..."
+  ```
 * **New code:** merge into `main` on GitHub, then `bash /opt/wherelandlordsstand/deploy/update.sh`.
 * **The privacy page** (`[privacy]` in `config/wording.toml`) names Cloudflare and says visits are not logged
   (`landlords serve` turns uvicorn's access log off). Keep it true.

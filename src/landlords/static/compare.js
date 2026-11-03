@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     picks.innerHTML = rows.map((l) => `<li>${esc(l.name)} <button type="button" data-s="${esc(l.slug)}" aria-label="${esc(text.remove)} ${esc(l.name)}">${esc(text.remove)}</button></li>`).join("");
     if (!rows.length) { table.innerHTML = `<p>${esc(text.empty)}</p>`; return; }
     const line = (label, f) => `<tr><th scope="row">${esc(label)}</th>${rows.map((l) => `<td>${f(l)}</td>`).join("")}</tr>`;
-    let html = `<div class="scroll"><table class="cmp"><thead><tr><th scope="col"></th>${rows.map((l) => `<th scope="col"><a href="${root}landlords/${esc(l.slug)}/index.html">${esc(l.name)}</a></th>`).join("")}</tr></thead><tbody>`;
+    let html = `<div class="scroll"><table class="cmp"><thead><tr><th scope="col"><span class="sr-only">${esc(text.measure)}</span></th>${rows.map((l) => `<th scope="col"><a href="${root}landlords/${esc(l.slug)}/index.html">${esc(l.name)}</a></th>`).join("")}</tr></thead><tbody>`;
     html += line(text.type, (l) => esc(l.type));
     html += line(text.homes, (l) => l.homes ? esc(l.homes.toLocaleString("en-GB")) : "–");
     html += line(text.grade, (l) => l.grade ? `${esc(l.grade)} <span class="hint">(${esc(l.grade_date)})</span>` : esc(text.not_graded));

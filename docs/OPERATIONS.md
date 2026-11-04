@@ -88,7 +88,7 @@ Every Thursday the server runs `landlords update`. Nobody needs to run anything 
 2. If anything is new (files from the publishers, or a new version of the site), it builds a new set of pages in
    `data/builds/<time>/`. If nothing is new, it builds nothing.
 3. **Before launch** (`[site] launched` false) it publishes them at once: nothing is public, so there is nothing to
-   approve. **After launch** it emails `[publish] notify_to` (wherestheystanduk@gmail.com) a report and two links:
+   approve. **After launch** it emails `[publish] notify_to` (wheretheystanduk@gmail.com) a report and two links:
    one to look at the new pages, and one to approve them. The approve link opens a page with the report and a
    **Publish these pages** button; opening the link never publishes on its own (email scanners open links). After
    publishing, the same page has an **Undo** button while those pages are live. Links work for 14 days; if nobody

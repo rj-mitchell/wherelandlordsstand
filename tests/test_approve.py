@@ -104,6 +104,6 @@ def test_the_email(settings, monkeypatch):
                                   {"open_reports": 2, "rights_due": ["Complaints (due 2026-11-10)"]})
     assert "to approve" in subject and "https://x/admin/approve/T" in body and "Publish button" in body
     assert "Readers' reports of mistakes waiting: 2" in body and "Complaints" in body
-    assert notify.send(settings, subject, body) == "sent to wherestheystanduk@gmail.com"
+    assert notify.send(settings, subject, body) == "sent to wheretheystanduk@gmail.com"
     msg = sent[-1]
-    assert msg["To"] == "wherestheystanduk@gmail.com" and "app-password" not in msg.as_string()
+    assert msg["To"] == "wheretheystanduk@gmail.com" and "app-password" not in msg.as_string()

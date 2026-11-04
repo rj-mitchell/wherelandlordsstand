@@ -38,8 +38,8 @@ launch. Ticked items are done in the repository; the rest need the owner, a revi
       reconciliation, and publish. Profiles then show 2025/26 with changes since 2024/25.
 - [ ] **Rights page dates**: `landlords check` warns when a section is due. Due now: the Ombudsman's complaints
       section weekly while its IT incident lasts; Awaab's Law on 1 December 2026 (phase 2 should be in force).
-- [ ] **Where Councils Stand's council list**: fixed on its branch `claude/dazzling-bardeen-dwkkk1` (4 November 2026).
-      Once that is merged into its `main`, remove `where_councils_stand_codes` from `config/settings.toml` here.
+- [x] **Where Councils Stand's council list**: Barnsley's and Sheffield's codes fixed there (merged 4 November
+      2026), and the temporary mapping removed here.
 
 ## On the server (docs/DEPLOY.md)
 

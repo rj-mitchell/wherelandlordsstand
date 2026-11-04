@@ -17,11 +17,10 @@ Stand" has the commands. In short, on a server that has already moved in:
 
 ```bash
 cd /opt/where-they-stand/server && git pull --ff-only
-git clone https://github.com/rj-mitchell/wherelandlordsstand ../apps/wherelandlordsstand
+git clone -b main https://github.com/rj-mitchell/wherelandlordsstand ../apps/wherelandlordsstand
 cp env/landlords.env.example env/landlords.env && mkdir -p backups/landlords
 bash scripts/update.sh
-bash scripts/run-job.sh landlords-job landlords update
-bash scripts/run-job.sh landlords-job landlords publish
+bash scripts/run-job.sh landlords-job landlords update     # the first pages, published at once (or wait for Thursday)
 ```
 
 Then look at it privately: `ssh -L 8004:127.0.0.1:8004 root@<server>` and open http://localhost:8004.
@@ -29,7 +28,8 @@ Then look at it privately: `ssh -L 8004:127.0.0.1:8004 root@<server>` and open h
 **Releasing it:** a domain whose DNS A records point at the server; `LANDLORDS_DOMAIN`, `LANDLORDS_REDIRECTS` and
 `landlords` in `PUBLIC_SITES` in the server's `.env`; `LANDLORDS_SITE_URL` and `LANDLORDS_LAUNCHED=true` in
 `env/landlords.env` (they override `[site]` in `config/settings.toml`); `bash scripts/update.sh`; then rebuild and
-publish the pages: `bash scripts/run-job.sh landlords-job sh -c 'landlords update && landlords publish'`.
+publish the pages: `bash scripts/run-job.sh landlords-job sh -c 'landlords update && landlords publish'`. From then on
+new pages wait for approval by email.
 
 **This repository's default branch must be `main`.** It was created empty, so its first branch
 (`claude/dazzling-bardeen-dwkkk1`) became the default and there is no `main`. On GitHub, create `main` from that branch
@@ -41,13 +41,11 @@ branch it cloned.
 Commands go through the shared server's job lock: `bash scripts/run-job.sh landlords-job landlords <command>`, in
 `/opt/where-they-stand/server`.
 
-* **Updates** run every Thursday (`where-they-stand-landlords-update.timer`). They build into `/data/builds/`; they
-  never publish. Read the report, then publish by hand (docs/OPERATIONS.md):
-  ```bash
-  docker compose run --rm -T landlords-job sh -c 'cat /data/builds/$(ls /data/builds | tail -1)/build-info.json'
-  bash scripts/run-job.sh landlords-job landlords publish
-  bash scripts/run-job.sh landlords-job landlords rollback   # if something is wrong
-  ```
+* **Updates** run every Thursday (`where-they-stand-landlords-update.timer`). Before launch they publish new pages
+  themselves; after launch they email a link to approve them, with a Publish button and an Undo button
+  (docs/OPERATIONS.md, "The weekly update"). Nothing to run by hand. For the email, put `LANDLORDS_SMTP_USER` and
+  `LANDLORDS_SMTP_PASSWORD` (a Gmail app password) in `env/landlords.env`, then check it:
+  `bash scripts/run-job.sh landlords-job landlords email-test`.
 * **Readers' reports:** `landlords reports`; close one with `landlords reports --close <id> --outcome "..."`, which
   deletes the reporter's email address. Fixes to our own mistakes go in the public log, `data_static/corrections.csv`.
 * **Missed searches:** `landlords missed`: candidates for new aliases (docs/OPERATIONS.md, "The register and names").

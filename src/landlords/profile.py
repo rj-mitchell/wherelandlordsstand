@@ -222,8 +222,7 @@ def council_link(settings: Settings, gss: str) -> str:
         ok = {r["gss"] for r in csv.DictReader(fh) if r.get("modgov_status") == "ok"}
     if gss not in ok:
         return ""
-    code = sister.get("where_councils_stand_codes", {}).get(gss, gss)
-    return sister["where_councils_stand"].format(gss=code)
+    return sister["where_councils_stand"].format(gss=gss)
 
 
 def build_profile(data: Data, lid: str) -> dict:

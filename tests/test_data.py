@@ -84,3 +84,31 @@ def test_the_launch_switch(tmp_path):
     assert "Sitemap: https://example.org/sitemap.xml" in (live / "robots.txt").read_text()
     assert "<loc>https://example.org/landlords/abri-group/</loc>" in (live / "sitemap.xml").read_text()
     site.build(settings, settings.data_dir / "site")  # put the test-version pages back
+
+
+@pytest.mark.skipif(not (settings.raw_dir / "tsm").exists(), reason="data not fetched")
+def test_the_weekly_update_publishes_before_launch_and_asks_after(tmp_path, monkeypatch):
+    import dataclasses
+    import shutil
+
+    from landlords import publish
+    from landlords.api import State
+
+    data = tmp_path / "data"
+    shutil.copytree(settings.raw_dir, data / "raw")
+    shutil.copytree(settings.staging_dir, data / "staging", ignore=shutil.ignore_patterns("*.part"))
+    s = dataclasses.replace(settings, data_dir=data)
+
+    first = publish.update(s, fetch=False, notify=False)
+    assert first["build"] and "first pages" in first["published"] and publish.current(s) == first["build"]
+
+    again = publish.update(s, fetch=False, notify=False)
+    assert again["build"] is None                                   # nothing new: no new pages
+
+    launched = dataclasses.replace(s, raw={**s.raw, "site": {**s.section("site"), "launched": True,
+                                                             "url": "https://example.org"}})
+    monkeypatch.setattr(publish, "code_version", lambda: "a-new-version")
+    asked = publish.update(launched, fetch=False, notify=False)
+    assert asked["build"] and asked["approval"] and publish.current(s) == first["build"]   # waits for approval
+    [(build,)] = State(data / "state.db").connect().execute("select build from approvals").fetchall()
+    assert build == asked["build"]

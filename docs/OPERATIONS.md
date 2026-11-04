@@ -80,20 +80,40 @@ code. `landlords build` replaces `data/site/` each time. Nothing is deployed: `s
 `uv run pytest` checks the built pages: each under 100 KB, with the line about turning down offers, no scripts or
 outside resources, and every source link pointing to a listed file.
 
-## The weekly update, publishing and rolling back
+## The weekly update, the email, and publishing
+
+Every Thursday the server runs `landlords update`. Nobody needs to run anything by hand:
+
+1. It fetches any new files, loads and checks them.
+2. If anything is new (files from the publishers, or a new version of the site), it builds a new set of pages in
+   `data/builds/<time>/`. If nothing is new, it builds nothing.
+3. **Before launch** (`[site] launched` false) it publishes them at once: nothing is public, so there is nothing to
+   approve. **After launch** it emails `[publish] notify_to` (wherestheystanduk@gmail.com) a report and two links:
+   one to look at the new pages, and one to approve them. The approve link opens a page with the report and a
+   **Publish these pages** button; opening the link never publishes on its own (email scanners open links). After
+   publishing, the same page has an **Undo** button while those pages are live. Links work for 14 days; if nobody
+   approves, the site keeps its current pages. A build whose checks failed can't be approved.
+4. The email also goes out, without links, when something else needs attention: checks failed, a new kind of release
+   appeared, a section of the rights page is due to be checked again, or readers' reports are waiting.
+
+`[publish] mode = "auto"` publishes every build whose checks pass, and the email just says what changed.
+
+Setting up the email, once, on the server (`env/landlords.env`): `LANDLORDS_SMTP_USER` (the Gmail address that
+sends it) and `LANDLORDS_SMTP_PASSWORD` (a Google **app password**: Google account → Security → 2-Step Verification
+→ App passwords; the account needs 2-Step Verification on). Then check it:
+`bash scripts/run-job.sh landlords-job landlords email-test`.
+
+By hand, if ever needed:
 
 ```bash
-uv run landlords update                # fetch, load, check, score, build into data/builds/<time>/ (never live)
-uv run landlords publish               # make the newest build live (data/live), after reading its reports
+uv run landlords update                # as above (`--no-email` to skip the email)
+uv run landlords publish               # make the newest build live
 uv run landlords publish 20261103-232550
 uv run landlords rollback              # put back the build that was live before
 ```
 
-`landlords update` exits 1 if a source failed to fetch or a check failed (`needs_attention`). Each build has
-`build-info.json` (new files, failed checks, page counts) and `change-report.json` (grade changes, biggest movers).
-Read both, look at a few changed pages, then publish. A build with failed checks is refused unless `--force`. New
-landlords added by `register` have rule-made display names: check them before publishing. The last six builds are
-kept.
+Each build has `build-info.json` (new files, failed checks, what was done) and `change-report.json` (grade changes,
+biggest movers). The last six builds are kept, and never the live one or the one before it.
 
 ## Readers' reports and missed searches
 

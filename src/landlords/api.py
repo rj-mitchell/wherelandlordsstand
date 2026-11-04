@@ -22,7 +22,7 @@ from pathlib import Path
 from urllib.parse import parse_qs
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from landlords.config import Settings
@@ -34,6 +34,8 @@ create table if not exists reports (id integer primary key, at text not null, pa
   email text, closed_at text, outcome text);
 create table if not exists missed (day text not null, query text not null, count integer not null default 0,
   primary key (day, query));
+create table if not exists approvals (token_hash text primary key, build text not null, created text not null,
+  expires text not null, published_at text, rolled_back_at text);
 """
 HEADERS = {
     "Content-Security-Policy": "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; "
@@ -77,10 +79,46 @@ class State:
             db.execute("insert into missed (day, query, count) values (?, ?, 1) on conflict (day, query) "
                        "do update set count = count + 1", (date.today().isoformat(), query))
 
+    def open_report_count(self) -> int:
+        with self.connect() as db:
+            return db.execute("select count(*) from reports where closed_at is null").fetchone()[0]
+
+    # Approval links (publish.py, "approve"): only a hash of each token is kept, so the database can't approve.
+    def add_approval(self, build: str, days: int) -> str:
+        import secrets
+        from datetime import timedelta
+
+        token = secrets.token_urlsafe(32)
+        now = datetime.now(UTC)
+        with self.connect() as db:
+            db.execute("insert into approvals (token_hash, build, created, expires) values (?, ?, ?, ?)",
+                       (_hash(token), build, now.isoformat(timespec="seconds"),
+                        (now + timedelta(days=days)).isoformat(timespec="seconds")))
+        return token
+
+    def approval(self, token: str) -> dict | None:
+        """The approval a token is for, if it exists and hasn't expired."""
+        with self.connect() as db:
+            row = db.execute("select build, created, expires, published_at, rolled_back_at from approvals "
+                             "where token_hash = ?", (_hash(token),)).fetchone()
+        if not row or row[2] < datetime.now(UTC).isoformat(timespec="seconds"):
+            return None
+        return dict(zip(("build", "created", "expires", "published_at", "rolled_back_at"), row, strict=True))
+
+    def mark(self, token: str, field: str) -> None:
+        assert field in ("published_at", "rolled_back_at")
+        with self.connect() as db:
+            db.execute(f"update approvals set {field} = ? where token_hash = ?",  # noqa: S608 (field is checked)
+                       (datetime.now(UTC).isoformat(timespec="seconds"), _hash(token)))
+
     def top_missed(self, days: int = 28, limit: int = 50) -> list[tuple]:
         with self.connect() as db:
             return db.execute("select query, sum(count) n from missed where day >= date('now', ?) group by query "
                               "order by n desc limit ?", (f"-{days} days", limit)).fetchall()
+
+
+def _hash(token: str) -> str:
+    return sha256(token.encode()).hexdigest()
 
 
 class Limiter:
@@ -171,6 +209,107 @@ def create_app(settings: Settings, behind_proxy: bool = False) -> FastAPI:
         if len(q) >= 2:
             state.missed(q)
         return {"ok": True}
+
+    # ---- Approving a new build (publish.py): the link in the weekly email --------------------------------------
+    # Opening the link never publishes (mail scanners open links): it shows the report and a button, which posts.
+
+    def admin_page(title: str, body: str, status: int = 200) -> HTMLResponse:
+        from html import escape
+
+        html = (f'<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" '
+                f'content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">'
+                f'<title>{escape(title)}</title><link rel="stylesheet" href="/styles.css"></head><body>'
+                f'<main id="main"><h1>{escape(title)}</h1>{body}</main></body></html>')
+        return HTMLResponse(html, status_code=status, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex"})
+
+    def approval_or_404(request: Request, token: str):
+        if not limiter.allow(visitor(request)):
+            return None, admin_page("Too many tries", "<p>Try again in a minute.</p>", 429)
+        a = state.approval(token)
+        info_path = settings.data_dir / "builds" / (a["build"] if a else "-") / "build-info.json"
+        if not a or not info_path.exists():
+            return None, admin_page("This link has expired", "<p>It is no longer valid, or its pages have been "
+                                    "cleared away. The next weekly update sends a new one.</p>", 404)
+        return (a, json.loads(info_path.read_text())), None
+
+    def summary(info: dict) -> str:
+        from html import escape
+
+        new = info.get("new_file_titles") or []
+        failed = info.get("checks_failed") or []
+        parts = [f"<p>Built {escape(str(info.get('finished', '')))[:16].replace('T', ' ')}.</p>"]
+        parts.append("<h2>New files from the publishers</h2>" + (
+            "<ul>" + "".join(f"<li>{escape(t)}</li>" for t in new) + "</ul>" if new else
+            "<p>None: these pages have new code or wording.</p>"))
+        parts.append("<h2>Checks</h2>" + ("<p>All passed.</p>" if not failed else
+                     "<ul>" + "".join(f"<li>{escape(f)}</li>" for f in failed) + "</ul>"))
+        return "".join(parts)
+
+    @app.get("/admin/approve/{token}")
+    def approve_page(request: Request, token: str):
+        from landlords.publish import current
+
+        got, err = approval_or_404(request, token)
+        if err:
+            return err
+        a, info = got
+        if a["published_at"]:
+            live = current(settings) == a["build"] and not a["rolled_back_at"]
+            body = f"<p>These pages were published on {a['published_at'][:16].replace('T', ' ')}.</p>"
+            if a["rolled_back_at"]:
+                body += "<p>They were taken down again, and the pages before them put back.</p>"
+            elif live:
+                body += (f'<form method="post" action="/admin/rollback/{token}"><p><button type="submit">'
+                         "Undo: put back the previous pages</button></p></form>")
+            return admin_page("Published", body)
+        body = summary(info) + f'<p><a href="/admin/preview/{token}/index.html">Look at the new pages</a></p>'
+        if info.get("checks_failed"):
+            body += "<p>These pages can't be published until the failed checks are fixed.</p>"
+        else:
+            body += ('<form method="post"><p><button type="submit">Publish these pages</button></p></form>'
+                     "<p class=\"hint\">If you do nothing, the site keeps its current pages.</p>")
+        return admin_page("New pages to approve", body)
+
+    @app.post("/admin/approve/{token}")
+    def approve(request: Request, token: str):
+        from landlords import publish as publish_
+
+        got, err = approval_or_404(request, token)
+        if err:
+            return err
+        a, info = got
+        if not a["published_at"]:
+            if info.get("checks_failed"):
+                return admin_page("Not published", "<p>Its checks failed: it needs fixing first.</p>", 409)
+            publish_.publish(settings, a["build"])
+            state.mark(token, "published_at")
+        return RedirectResponse(f"/admin/approve/{token}", status_code=303)
+
+    @app.post("/admin/rollback/{token}")
+    def undo(request: Request, token: str):
+        from landlords import publish as publish_
+
+        got, err = approval_or_404(request, token)
+        if err:
+            return err
+        a, _ = got
+        if a["published_at"] and not a["rolled_back_at"] and publish_.current(settings) == a["build"]:
+            publish_.rollback(settings)
+            state.mark(token, "rolled_back_at")
+        return RedirectResponse(f"/admin/approve/{token}", status_code=303)
+
+    @app.get("/admin/preview/{token}/{path:path}")
+    def preview(request: Request, token: str, path: str):
+        got, err = approval_or_404(request, token)
+        if err:
+            return err
+        root = (settings.data_dir / "builds" / got[0]["build"]).resolve()
+        target = (root / path).resolve()
+        if target.is_dir():
+            target = target / "index.html"
+        if not target.is_relative_to(root) or not target.is_file():
+            return admin_page("Not found", "<p>That page isn't in this build.</p>", 404)
+        return FileResponse(target, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex"})
 
     app.mount("/", LiveFiles(settings), name="site")
     return app

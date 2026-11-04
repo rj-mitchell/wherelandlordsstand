@@ -126,14 +126,26 @@ def serve(port: int = typer.Option(8000), host: str = typer.Option("127.0.0.1", 
 
 
 @app.command()
-def update(no_fetch: bool = typer.Option(False, help="use the files already fetched")) -> None:
-    """The weekly update: fetch, load, check, score and build into data/builds/. Never changes the live site."""
+def update(no_fetch: bool = typer.Option(False, help="use the files already fetched"),
+           no_email: bool = typer.Option(False, help="don't send the weekly email")) -> None:
+    """The weekly update: fetch, load, check; build new pages if anything is new; then publish them before launch,
+    or email a link to approve them after it ([publish] in config/settings.toml)."""
     from landlords import publish
 
-    info = publish.update(load_settings(), fetch=not no_fetch)
-    typer.echo(json.dumps({k: info[k] for k in ("build", "needs_attention", "checks_failed")}
-                          | {"new_files": len(info.get("new_files", [])), "pages": info["pages"]}))
+    info = publish.update(load_settings(), fetch=not no_fetch, notify=not no_email)
+    typer.echo(json.dumps({k: info.get(k) for k in ("build", "needs_attention", "checks_failed", "published",
+                                                     "approval", "email")}
+                          | {"new_files": len(info.get("new_files", []))}))
     raise typer.Exit(1 if info["needs_attention"] else 0)
+
+
+@app.command()
+def email_test() -> None:
+    """Send a test email, to check the email settings in env/landlords.env."""
+    from landlords import notify
+
+    typer.echo(notify.send(load_settings(), "Where Landlords Stand: test email",
+                           "This is a test. The weekly update will send its report and approval link like this."))
 
 
 @app.command()

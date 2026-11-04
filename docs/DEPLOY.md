@@ -17,6 +17,10 @@ memory. Disk: about 30 MB per build, and the last six builds are kept (`landlord
 
 ## Steps
 
+0. **A `main` branch.** The repository was created empty, so its first branch (`claude/dazzling-bardeen-dwkkk1`)
+   became the default and there is no `main`. On GitHub: open a pull request from that branch, or create `main` from
+   it (Branches → New branch), then Settings → General → Default branch → `main`. The server follows `main`
+   (`update.sh` pulls the branch it was cloned on).
 1. **Choose the domain** (the name is a working title: docs/DECISIONS.md, 1), and set `[site] url` in
    `config/settings.toml`.
 2. **Cloudflare**, as for the other sites: an **A** record for `@` pointing at the server, **Proxied**, `www`

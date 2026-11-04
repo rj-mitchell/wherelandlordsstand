@@ -1,5 +1,6 @@
-# Where Landlords Stand on the shared server: the website and its small API. Where MPs Stand's web server is the
-# front door (HTTPS, Cloudflare): it passes this site's visitors to the app over the shared "sites" network.
+# Where Landlords Stand running ON ITS OWN, on a server of its own (docs/DEPLOY.md, "Running it on its own"). On Where
+# They Stand's shared server it runs from rj-mitchell/parentwheretheystand instead: never use this file there.
+# A web server in front (HTTPS) passes visitors to the app over the "sites" network.
 # The weekly update and the nightly backup run on timers, each in a one-off container (deploy/landlords-*.timer).
 # Install or update with: bash /opt/wherelandlordsstand/deploy/update.sh (docs/DEPLOY.md). NOT YET DEPLOYED.
 

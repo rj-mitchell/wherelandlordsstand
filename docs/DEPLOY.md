@@ -1,88 +1,67 @@
 # Putting the site on a server
 
-**Not deployed.** The site goes live only when the owner says so (docs/DECISIONS.md, ground rules). This page is
-ready for that day. Until then, `landlords serve` shows it on one computer only.
+**Not public yet.** The site is released only when the owner says so (docs/LAUNCH.md).
 
-Where Landlords Stand is planned to run on Where They Stand's shared server, beside Where MPs Stand, Where Councils
-Stand and Where Countries Stand, in its own folder (`/opt/wherelandlordsstand`) with its own container and data.
-Where MPs Stand's web server (Caddy) is the front door for every site on the server: it answers the site's domain
-through Cloudflare and passes visitors to this site's container over the shared Docker network (`sites`). See "Other
-sites on this server" in Where MPs Stand's `docs/HOSTING.md`.
+## On Where They Stand's shared server (the plan)
 
-## What it needs
+The Where They Stand sites share one server, set up by the private repository `rj-mitchell/parentwheretheystand`
+(`/opt/where-they-stand/server`). It runs every site in one Docker project behind one Caddy, with each site's jobs
+taking turns under one lock, nightly backups to the shared B2 bucket and a watchdog. Its README says which sites are
+public (`PUBLIC_SITES`) and how to release one. **That repository, not this one's `deploy/` folder, is how this site
+runs there**; never run both on the same server.
 
-Very little: the pages are static files built from a few megabytes of data. The container is limited to 1 GB of
-memory. Disk: about 30 MB per build, and the last six builds are kept (`landlords publish`), plus the raw files
-(about 25 MB a year). No API keys: it uses no AI and no paid services.
+Where Landlords Stand is added to it by a change to that repository (prepared 4 November 2026, to be reviewed and
+merged by the owner): its site and job containers (private port 8004), its Caddy site, `env/landlords.env`, a weekly
+update that builds but never publishes, its backups, and its place in `check.sh`. Its README section "Where Landlords
+Stand" has the commands. In short, on a server that has already moved in:
 
-## Steps
+```bash
+cd /opt/where-they-stand/server && git pull --ff-only
+git clone https://github.com/rj-mitchell/wherelandlordsstand ../apps/wherelandlordsstand
+cp env/landlords.env.example env/landlords.env && mkdir -p backups/landlords
+bash scripts/update.sh
+bash scripts/run-job.sh landlords-job landlords update
+bash scripts/run-job.sh landlords-job landlords publish
+```
 
-0. **A `main` branch.** The repository was created empty, so its first branch (`claude/dazzling-bardeen-dwkkk1`)
-   became the default and there is no `main`. On GitHub: open a pull request from that branch, or create `main` from
-   it (Branches → New branch), then Settings → General → Default branch → `main`. The server follows `main`
-   (`update.sh` pulls the branch it was cloned on).
-1. **Choose the domain** (the name is a working title: docs/DECISIONS.md, 1), and set `[site] url` in
-   `config/settings.toml`.
-2. **Cloudflare**, as for the other sites: an **A** record for `@` pointing at the server, **Proxied**, `www`
-   redirected to it; SSL/TLS **Full (strict)**; an **origin certificate** for the domain (leave its page open).
-3. **Code**, on the server, as root:
-   ```bash
-   git clone https://github.com/rj-mitchell/wherelandlordsstand /opt/wherelandlordsstand
-   cd /opt/wherelandlordsstand/deploy && cp .env.example .env
-   ```
-4. **Start it:**
-   ```bash
-   bash /opt/wherelandlordsstand/deploy/update.sh
-   ```
-   It builds and starts the container and installs the weekly update and nightly backup timers.
-5. **First data and pages** (a few minutes; the publishers' servers are asked one thing at a time):
-   ```bash
-   cd /opt/wherelandlordsstand/deploy
-   docker compose run --rm -T app landlords update      # fetch, load, check, score, build: data/builds/<time>
-   docker compose run --rm -T app landlords publish     # make that build live
-   ```
-6. **The front door:** add `<domain>=wherelandlordsstand` to `SITES` in `/opt/hansardgpt/deploy/.env`, then paste the
-   origin certificate:
-   ```bash
-   bash /opt/hansardgpt/deploy/cloudflare.sh site <domain>
-   ```
-7. **Check:** visit the site, search for a landlord, send a test report through the corrections form (then close it:
-   `landlords reports --close <id>`), and run `bash /opt/hansardgpt/deploy/check.sh`.
-8. **The launch switch** (docs/LAUNCH.md): set `[site] url` and `launched = true` in `config/settings.toml`, merge,
-   update the server, then `landlords update` and `landlords publish`. That takes off the "test version" line and
-   `noindex`, opens robots.txt and writes the sitemap. Until then the site can run on the server as a private test.
+Then look at it privately: `ssh -L 8004:127.0.0.1:8004 root@<server>` and open http://localhost:8004.
+
+**Releasing it:** a domain whose DNS A records point at the server; `LANDLORDS_DOMAIN`, `LANDLORDS_REDIRECTS` and
+`landlords` in `PUBLIC_SITES` in the server's `.env`; `LANDLORDS_SITE_URL` and `LANDLORDS_LAUNCHED=true` in
+`env/landlords.env` (they override `[site]` in `config/settings.toml`); `bash scripts/update.sh`; then rebuild and
+publish the pages: `bash scripts/run-job.sh landlords-job sh -c 'landlords update && landlords publish'`.
+
+**This repository's default branch must be `main`.** It was created empty, so its first branch
+(`claude/dazzling-bardeen-dwkkk1`) became the default and there is no `main`. On GitHub, create `main` from that branch
+(or merge a pull request into it) and make it the default (Settings → General → Default branch). The server pulls the
+branch it cloned.
 
 ## Running it
 
-Commands are run in `/opt/wherelandlordsstand/deploy`, each in a one-off container:
-`docker compose run --rm -T app landlords <command>`.
+Commands go through the shared server's job lock: `bash scripts/run-job.sh landlords-job landlords <command>`, in
+`/opt/where-they-stand/server`.
 
-* **Updates** run every Thursday morning (`landlords-update.timer`). They build into `data/builds/`; they never
-  publish. Read the change report, then publish by hand (docs/OPERATIONS.md):
+* **Updates** run every Thursday (`where-they-stand-landlords-update.timer`). They build into `/data/builds/`; they
+  never publish. Read the report, then publish by hand (docs/OPERATIONS.md):
   ```bash
-  docker compose run --rm -T app sh -c 'ls /data/builds; cat /data/builds/$(ls /data/builds | tail -1)/build-info.json'
-  docker compose run --rm -T app landlords publish
-  docker compose run --rm -T app landlords rollback   # if something is wrong
+  docker compose run --rm -T landlords-job sh -c 'cat /data/builds/$(ls /data/builds | tail -1)/build-info.json'
+  bash scripts/run-job.sh landlords-job landlords publish
+  bash scripts/run-job.sh landlords-job landlords rollback   # if something is wrong
   ```
 * **Readers' reports:** `landlords reports`; close one with `landlords reports --close <id> --outcome "..."`, which
   deletes the reporter's email address. Fixes to our own mistakes go in the public log, `data_static/corrections.csv`.
-* **Missed searches:** `landlords missed` lists the words people searched for without a result: candidates for new
-  aliases (docs/OPERATIONS.md, "The register and names").
-* **Backups:** the state database (reports, missed searches) is copied every night to
-  `/opt/wherelandlordsstand/deploy/backups`, the last 14 kept, and to the charity's Backblaze B2 bucket, the last 60
-  kept there beside the other sites' backups (each site's have their own names, and each deletes only its own).
-  Everything else can be rebuilt from the raw files. To set up the off-site copy, once, copy the bucket and key from
-  Where MPs Stand's settings and check them:
-  ```bash
-  cd /opt/wherelandlordsstand/deploy
-  for k in BUCKET KEY_ID APPLICATION_KEY; do v=$(grep "^HANSARD_B2_$k=" /opt/hansardgpt/deploy/.env | cut -d= -f2-); \
-    sed -i "/^LANDLORDS_B2_$k=/d" .env; echo "LANDLORDS_B2_$k=$v" >> .env; done
-  docker compose run --rm -T app landlords offsite                  # "ok": true
-  docker compose run --rm -T app landlords backup --to /backups     # ends "Off-site copy: stored in ..."
-  ```
-* **New code:** merge into `main` on GitHub, then `bash /opt/wherelandlordsstand/deploy/update.sh`.
+* **Missed searches:** `landlords missed`: candidates for new aliases (docs/OPERATIONS.md, "The register and names").
+* **Backups:** the shared server's `scripts/backup.sh` copies the state database (reports, missed searches) every
+  night to `backups/landlords/` and the shared B2 bucket. Everything else can be rebuilt from the raw files.
+* **New code:** merge into `main` on GitHub, then `bash scripts/update.sh` on the server (it updates every site).
 * **The privacy page** (`[privacy]` in `config/wording.toml`) names Cloudflare and says visits are not logged
   (`landlords serve` turns uvicorn's access log off). Keep it true.
+
+## Running it on its own, elsewhere
+
+`deploy/` (a compose file, timers, `update.sh`) runs the site alone on a server of its own, like each sibling's own
+`deploy/`. Its own nightly backup can send copies to B2 itself (`LANDLORDS_B2_…` in `deploy/.env`, `landlords
+offsite`). It is not for the shared server.
 
 ## On your own computer
 

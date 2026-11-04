@@ -28,3 +28,14 @@ def test_names_and_dates():
     assert as_date("17/04/2023") == date(2023, 4, 17)
     assert as_date("15 October 2026") == date(2026, 10, 15)
     assert as_date("-") is None
+
+
+def test_the_server_can_set_the_address_and_the_launch_switch(monkeypatch):
+    from landlords.config import load_settings
+
+    monkeypatch.setenv("LANDLORDS_SITE_URL", "https://example.org")
+    monkeypatch.setenv("LANDLORDS_LAUNCHED", "true")
+    s = load_settings()
+    assert s.section("site")["url"] == "https://example.org" and s.section("site")["launched"] is True
+    monkeypatch.setenv("LANDLORDS_LAUNCHED", "false")
+    assert load_settings().section("site")["launched"] is False

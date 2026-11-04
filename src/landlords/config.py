@@ -49,6 +49,13 @@ def load_settings(config_path: str | Path | None = None) -> Settings:
     with open(path, "rb") as fh:
         raw = tomllib.load(fh)
     data_dir = _resolve(os.environ.get("LANDLORDS_DATA_DIR") or raw.get("paths", {}).get("data_dir", "data"))
+    # On the shared server each site's settings live in its env file (parentwheretheystand: env/landlords.env), so
+    # the address and the launch switch can be set there without changing the repository.
+    site = raw.setdefault("site", {})
+    if os.environ.get("LANDLORDS_SITE_URL"):
+        site["url"] = os.environ["LANDLORDS_SITE_URL"].strip()
+    if os.environ.get("LANDLORDS_LAUNCHED"):
+        site["launched"] = os.environ["LANDLORDS_LAUNCHED"].strip().lower() in ("1", "true", "yes")
     return Settings(raw=raw, data_dir=data_dir, config_path=path)
 
 

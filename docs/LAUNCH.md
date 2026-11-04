@@ -43,16 +43,19 @@ launch. Ticked items are done in the repository; the rest need the owner, a revi
 
 ## On the server (docs/DEPLOY.md)
 
-1. Cloudflare and the origin certificate for the domain.
-2. Clone to `/opt/wherelandlordsstand`; `cp deploy/.env.example deploy/.env`; copy the B2 bucket and key across.
-3. `bash /opt/wherelandlordsstand/deploy/update.sh`. The first time, Docker builds the image: it has not been built
-   in the development environment, so watch the first build.
-4. While still a test: `landlords update`, `landlords publish`, add the domain to the front door, check the site
-   privately.
-5. **Launch**: set `[site] url = "https://<domain>"` and `launched = true` in `config/settings.toml`, merge, run
-   `update.sh`, then `landlords update` and `landlords publish`. Check: no "test version" line, `robots.txt` allows
-   crawling, `/sitemap.xml` lists the pages, a test report through the corrections form arrives and closes.
-6. `bash /opt/hansardgpt/deploy/check.sh`, and tell the sister sites' about pages.
+1. Make `main` this repository's default branch (docs/DEPLOY.md).
+2. Review and merge the change to `rj-mitchell/parentwheretheystand` that adds Where Landlords Stand (prepared
+   4 November 2026 as a patch; its README gains a section "Where Landlords Stand").
+3. On the server (already moved in to `/opt/where-they-stand`): pull, clone this repository into `apps/`, create
+   `env/landlords.env`, `bash scripts/update.sh`, then the first `landlords update` and `landlords publish` through
+   `scripts/run-job.sh`. Docker builds this site's image there for the first time: watch it.
+4. Look at it privately on port 8004 through an SSH tunnel; send a test report through the corrections form and close
+   it (`landlords reports --close <id>`); `bash scripts/check.sh`.
+5. **Launch**: point the domain's DNS at the server; set `LANDLORDS_DOMAIN`, `LANDLORDS_REDIRECTS` and add `landlords`
+   to `PUBLIC_SITES` in `.env`; set `LANDLORDS_SITE_URL` and `LANDLORDS_LAUNCHED=true` in `env/landlords.env`;
+   `bash scripts/update.sh`; then `landlords update && landlords publish`. Check: no "test version" line,
+   `robots.txt` allows crawling, `/sitemap.xml` lists the pages, `check.sh` shows https working.
+6. Tell the sister sites' about pages.
 
 ## After launch
 

@@ -24,7 +24,10 @@ name = "Where Landlords Stand"
 launched = false
 url = ""
 operator = "Rob Mitchell"
-contact = "admin@wheretheystand.uk"
+contact = "admin@wherelandlordsstand.com"
+# The alpha banner on every page, with where to send feedback. Remove `stage` (or set it to "") to take it down.
+stage = "alpha"
+feedback_email = "admin@wherelandlordsstand.com"
 parent_name = "Where They Stand"
 parent_url = "https://wheretheystand.uk"
 

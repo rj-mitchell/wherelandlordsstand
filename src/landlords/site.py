@@ -34,8 +34,8 @@ input[type=search],input[type=text],input[type=email],textarea{width:100%;paddin
 background:var(--card)}button{padding:.5rem 1rem;border:2px solid var(--ink);background:var(--ink);color:var(--paper);
 cursor:pointer}ul.results{list-style:none;padding:0}ul.results li{padding:.5rem 0;border-bottom:1px solid var(--rule)}
 .hint{color:var(--muted);font-size:.9rem}.cmp th{min-width:7rem}.scroll{overflow-x:auto}header p{margin:.25rem 0 .75rem;color:var(--muted);font-size:.9rem}
-.site{font-weight:700;text-decoration:none;color:var(--ink)}.test{background:var(--note);color:var(--note-ink);
-padding:.4rem .75rem;font-size:.9rem;margin:.5rem 0}
+.site{font-weight:700;text-decoration:none;color:var(--ink)}.test,.alpha{background:var(--note);color:var(--note-ink);
+padding:.4rem .75rem;font-size:.9rem;margin:.5rem 0}.alpha a{color:inherit}
 h1{font-size:1.9rem;line-height:1.2;margin:1.25rem 0 .25rem}h2{font-size:1.3rem;margin:2rem 0 .5rem}
 h3{font-size:1.05rem;margin:1.25rem 0 .25rem}.sub{color:var(--muted);margin:0 0 1rem}
 .card{background:var(--card);border:2px solid var(--ink);padding:1rem 1.1rem;margin:1rem 0}
@@ -106,6 +106,17 @@ NAV = [("index.html", "Find a landlord"), ("areas/index.html", "Areas"), ("compa
 
 
 _LAUNCHED = False
+_SITE: dict = {}
+
+
+def alpha_banner(words: dict) -> str:
+    """The alpha banner, while [site] stage = "alpha", with the feedback address as a link."""
+    if _SITE.get("stage") != "alpha" or not words.get("alpha"):
+        return ""
+    email = _SITE.get("feedback_email") or _SITE.get("contact", "")
+    before, _, after = words["alpha"].partition("{email}")
+    link = f'<a href="mailto:{esc(email)}">{esc(email)}</a>' if email else ""
+    return f'<p class="alpha"><strong>{esc(before.split(":", 1)[0])}:</strong>{esc(before.split(":", 1)[1])}{link}{esc(after)}</p>'
 
 
 def launched() -> bool:
@@ -127,7 +138,7 @@ def page(title: str, body: str, w: dict, depth: int, description: str = "", scri
 <link rel="stylesheet" href="{up}styles.css">{js}</head>
 <body><a class="skip" href="#main">Skip to content</a>
 <header><a class="site" href="{up}index.html">{esc(site['name'])}</a><p>{esc(site['tagline'])}</p>
-<nav aria-label="Main">{nav}</nav>{"" if live else f'<p class="test">{esc(site["not_live"])}</p>'}</header>
+<nav aria-label="Main">{nav}</nav>{alpha_banner(site)}{"" if live else f'<p class="test">{esc(site["not_live"])}</p>'}</header>
 <main id="main">{body}</main>
 <footer><p>{esc(site['independence'])}</p><p>{esc(site['parent'])}</p>
 <p><a href="{up}about/index.html">About</a> · <a href="{up}corrections/index.html">Report a mistake</a> ·
@@ -347,8 +358,9 @@ its file.</p>"""
 
 
 def build(settings: Settings, out: Path | None = None) -> dict[str, int]:
-    global _LAUNCHED
+    global _LAUNCHED, _SITE
     _LAUNCHED = bool(settings.section("site").get("launched"))
+    _SITE = settings.section("site")
     w = load_toml("wording.toml")
     out = out or settings.data_dir / "site"
     if out.exists():

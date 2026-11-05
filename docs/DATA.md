@@ -341,10 +341,21 @@ The regulator changed its download:
 * **Windows-1252 text** in three of its CSVs (LCRA, LCHO, management information) and the data dictionary, where the
   others are UTF-8.
 
-Seven landlords profiled from earlier years have no 2025/26 results, most after mergers: Estuary Housing Association,
-Flagship Housing, Octavia Housing, Origin Housing, Settle Group, Tower Hamlets Community Housing, and The Abbeyfield
-Society. Their pages say there are no results for 2025/26. Their status and successor are to be set from the
-regulator's statements (`data_static/landlords.csv`).
+Seven landlords profiled from earlier years have no 2025/26 results of their own. Each is accounted for from the
+regulator's own files (checked 5 November 2026), and its page says why, with a link to whoever reports now:
+
+| Landlord | Why | Now in |
+|---|---|---|
+| Octavia Housing | merged into Abri on 16 February 2026 (`status` merged, in `data_static/landlords.csv`) | Abri Group |
+| Flagship Housing | a subsidiary of Bromford Flagship LiveWest (current judgement) | Bromford Flagship LiveWest |
+| Origin Housing | a subsidiary of Places for People Group since 16 April 2024 (judgement) | Places for People Group |
+| Tower Hamlets Community Housing | a subsidiary of Hyde Housing Association since 1 April 2025 (current judgement) | Hyde Housing Association |
+| Settle Group | a subsidiary of Lifestone Homes, formerly Paradigm (2025/26 group structure, current judgement) | Lifestone Homes |
+| Estuary Housing Association | owned no homes in 2025/26; Delta Housing's return covers "Legacy Estuary Housing Association" | Delta Housing |
+| The Abbeyfield Society | 691 rented homes in 2025/26, under the 1,000 at which TSMs are required | (no longer reports) |
+
+All but Octavia are still registered and active, so they are not marked merged: `data_static/reporting.csv` records
+who reports for them, from which year, and the evidence. A test checks each row against the data.
 
 ## The name register
 

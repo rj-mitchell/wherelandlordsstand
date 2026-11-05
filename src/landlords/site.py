@@ -217,6 +217,15 @@ def profile_html(p: dict, w: dict) -> str:
         bs.append(f'<p class="src">{esc(w["bands"]["explain"])}</p>')
     else:
         bs.append(f'<p>{fill(w["bands"]["no_results"], name=name, period=b.get("period", ""))}</p>')
+        why = p.get("reporting")
+        if why and why["reason"] == "small":
+            bs.append(f'<p class="note">{fill(w["bands"]["too_small"], name=name, year="20" + why["from_period"][-2:])}</p>')
+        elif why and why.get("other"):
+            other = why["other"]
+            link = (f'<a href="../{esc(other["slug"])}/index.html">{esc(other["name"])}</a>' if other.get("slug")
+                    else esc(other["name"]))
+            key = "in_group" if why["reason"] == "group" else "in_other"
+            bs.append(f'<p class="note">{fill(w["bands"][key], name=name, period=why["from_period"], other="@@OTHER@@").replace("@@OTHER@@", link)}</p>')
     for n in p["regulator_notes"]:
         bs.append(f'<p class="note">{fill(w["bands"]["regulator_note"], note=n["note"])}</p>')
     if p["survey_note"]:

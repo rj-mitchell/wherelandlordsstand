@@ -7,6 +7,7 @@ published file and year. Nothing here changes a published figure; positions amon
 
 from __future__ import annotations
 
+import csv
 import json
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -225,6 +226,24 @@ def council_link(settings: Settings, gss: str) -> str:
     return sister["where_councils_stand"].format(gss=gss)
 
 
+def reporting_for(data: Data, lid: str) -> dict | None:
+    """Why a landlord has stopped publishing its own tenant survey results, and who publishes them now
+    (data_static/reporting.csv, written from the regulator's files)."""
+    from landlords.config import STATIC_DIR
+
+    path = STATIC_DIR / "reporting.csv"
+    if not path.exists():
+        return None
+    with open(path, newline="", encoding="utf-8") as fh:
+        row = next((r for r in csv.DictReader(fh) if r["landlord_id"] == lid), None)
+    if not row:
+        return None
+    other = data.reg.get(row["reported_by"] or "", {})
+    return {"reason": row["reason"], "from_period": row["from_period"],
+            "other": {"name": other.get("display_name") or other.get("legal_name"), "slug": other.get("slug")}
+            if other else None}
+
+
 def build_profile(data: Data, lid: str) -> dict:
     reg = data.reg[lid]
     al = data.aliases.get(lid, [])
@@ -241,6 +260,7 @@ def build_profile(data: Data, lid: str) -> dict:
         "ombudsman": ombudsman_for(data, lid), "areas": areas_for(data, lid),
         "regulator_notes": regulator_notes(data, lid),
         "council_link": council_link(data.settings, reg["gss"]) if reg["type"] == "council" else "",
+        "reporting": reporting_for(data, lid),
     }
     used = set()
 

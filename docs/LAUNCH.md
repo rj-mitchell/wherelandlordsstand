@@ -28,12 +28,15 @@ launch. Ticked items are done in the repository; the rest need the owner, a revi
 - [ ] **The Ombudsman's reuse terms** (docs/DECISIONS.md, 9): send the drafted email; record the answer.
 - [ ] **Display names**: check the 363 rule-made names in `data_static/landlords.csv`, and which name to lead with
       where adverts use another.
-- [ ] **Name and domain** (docs/DECISIONS.md, 1), and confirm the contact address on the about and terms pages
-      (`[site] contact`, now admin@wheretheystand.uk, as Where MPs Stand).
+- [x] **Name and domain** (docs/DECISIONS.md, 1): Where Landlords Stand, at wherelandlordsstand.com.
+- [ ] **The contact address** admin@wherelandlordsstand.com (`[site] contact` and `feedback_email`, on the alpha
+      banner, the about, terms and accessibility pages) must receive mail before launch: the owner is setting it up.
 
 ## Just before launch
 
 - [x] **TSM 2025/26**: published 5 November 2026; loaded and reconciled the same day (docs/DATA.md).
+- [x] **Landlords with no 2025/26 results of their own**: all seven accounted for from the regulator's files, and
+      their pages say who reports for them now (docs/DATA.md, `data_static/reporting.csv`).
 - [ ] **Rights page dates**: `landlords check` warns when a section is due. Due now: the Ombudsman's complaints
       section weekly while its IT incident lasts; Awaab's Law on 1 December 2026 (phase 2 should be in force).
 - [x] **Where Councils Stand's council list**: Barnsley's and Sheffield's codes fixed there (merged 4 November

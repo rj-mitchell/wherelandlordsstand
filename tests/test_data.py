@@ -107,8 +107,10 @@ def test_the_weekly_update_publishes_before_launch_and_asks_after(tmp_path, monk
 
     launched = dataclasses.replace(s, raw={**s.raw, "site": {**s.section("site"), "launched": True,
                                                              "url": "https://example.org"}})
-    monkeypatch.setattr(publish, "code_version", lambda: "a-new-version")
     asked = publish.update(launched, fetch=False, notify=False)
     assert asked["build"] and asked["approval"] and publish.current(s) == first["build"]   # waits for approval
     [(build,)] = State(data / "state.db").connect().execute("select build from approvals").fetchall()
-    assert build == asked["build"]
+    assert build == asked["build"]                # going public (deploy/.env) is enough for new pages
+
+    monkeypatch.setattr(publish, "code_version", lambda: "a-new-version")
+    assert publish.update(launched, fetch=False, notify=False)["build"]          # and so is a new version

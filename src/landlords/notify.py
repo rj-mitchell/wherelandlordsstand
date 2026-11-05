@@ -1,6 +1,6 @@
 """Email to the owner after each weekly update: what changed, and a link to approve the new pages.
 
-Sent with Python's own smtplib, through an SMTP account set in the server's env/landlords.env (never in git):
+Sent with Python's own smtplib, through an SMTP account set in the server's deploy/.env (never in git):
 
     LANDLORDS_SMTP_USER=        the account that sends (a Gmail address, say)
     LANDLORDS_SMTP_PASSWORD=    for Gmail, an app password (Google account → Security → App passwords)
@@ -40,7 +40,7 @@ def send(settings: Settings, subject: str, body: str) -> str:
     """Send one plain-text email. Returns what happened, for the update's report; never raises."""
     cfg = configured(settings)
     if not cfg:
-        return "not sent: email is not set up (LANDLORDS_SMTP_USER, LANDLORDS_SMTP_PASSWORD in env/landlords.env)"
+        return "not sent: email is not set up (LANDLORDS_SMTP_USER, LANDLORDS_SMTP_PASSWORD in deploy/.env)"
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = f"Where Landlords Stand <{cfg['user']}>"

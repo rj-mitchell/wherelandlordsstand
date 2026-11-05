@@ -141,7 +141,7 @@ def update(no_fetch: bool = typer.Option(False, help="use the files already fetc
 
 @app.command()
 def email_test() -> None:
-    """Send a test email, to check the email settings in env/landlords.env."""
+    """Send a test email, to check the email settings in deploy/.env."""
     from landlords import notify
 
     typer.echo(notify.send(load_settings(), "Where Landlords Stand: test email",

@@ -1,8 +1,10 @@
-# Where Landlords Stand running ON ITS OWN, on a server of its own (docs/DEPLOY.md, "Running it on its own"). On Where
-# They Stand's shared server it runs from rj-mitchell/parentwheretheystand instead: never use this file there.
-# A web server in front (HTTPS) passes visitors to the app over the "sites" network.
+# Where Landlords Stand on the charity's shared server, as Where Countries Stand and Where Councils Stand: the website
+# and its small API. Where MPs Stand's web server is the front door (HTTPS, Cloudflare): it passes this site's visitors
+# to the app over the shared "sites" network (SITES in /opt/hansardgpt/deploy/.env).
 # The weekly update and the nightly backup run on timers, each in a one-off container (deploy/landlords-*.timer).
-# Install or update with: bash /opt/wherelandlordsstand/deploy/update.sh (docs/DEPLOY.md). NOT YET DEPLOYED.
+# Install or update with: bash /opt/wherelandlordsstand/deploy/update.sh (docs/DEPLOY.md). Not public yet.
+
+# Its own name: every site keeps this file in a folder called "deploy", and Compose would otherwise mix them up
 
 name: wherelandlordsstand
 
@@ -26,6 +28,9 @@ services:
     mem_limit: 1g
     expose:
       - "8000"
+    # for looking at it before it is public, through an SSH tunnel (docs/DEPLOY.md): this server only, never the internet
+    ports:
+      - "127.0.0.1:8004:8000"
     networks:
       default:
       sites:

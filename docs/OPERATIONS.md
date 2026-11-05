@@ -98,10 +98,10 @@ Every Thursday the server runs `landlords update`. Nobody needs to run anything 
 
 `[publish] mode = "auto"` publishes every build whose checks pass, and the email just says what changed.
 
-Setting up the email, once, on the server (`env/landlords.env`): `LANDLORDS_SMTP_USER` (the Gmail address that
-sends it) and `LANDLORDS_SMTP_PASSWORD` (a Google **app password**: Google account → Security → 2-Step Verification
-→ App passwords; the account needs 2-Step Verification on). Then check it:
-`bash scripts/run-job.sh landlords-job landlords email-test`.
+Setting up the email, once, on the server: `LANDLORDS_SMTP_USER` (the Gmail address that sends it) and
+`LANDLORDS_SMTP_PASSWORD` (its Google **app password**) in `/opt/wherelandlordsstand/deploy/.env`. They are the
+server's own email account, so docs/DEPLOY.md (step 5) copies them from its mail settings and sends a test
+(`landlords email-test`).
 
 By hand, if ever needed:
 

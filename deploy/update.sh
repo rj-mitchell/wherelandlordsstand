@@ -17,7 +17,7 @@ if [[ -z "${UPDATE_RESTARTED:-}" && "$(sha1sum "$DIR/deploy/update.sh" | cut -d'
 fi
 
 cd "$DIR/deploy"
-[[ -f .env ]] || { echo "No settings yet: cp .env.example .env, fill it in, and run this again (docs/DEPLOY.md)."; exit 1; }
+[[ -f .env ]] || { echo "No settings yet: cp .env.example .env, and run this again (docs/DEPLOY.md)."; exit 1; }
 
 echo "==> Refreshing the update and backup timers"
 cp landlords-update.service landlords-update.timer landlords-backup.service landlords-backup.timer /etc/systemd/system/

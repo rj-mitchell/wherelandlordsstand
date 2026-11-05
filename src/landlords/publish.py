@@ -55,15 +55,18 @@ def _info(settings: Settings, build: str | None) -> dict:
 
 
 def update(settings: Settings, fetch: bool = True, notify: bool = True) -> dict:
-    """The weekly update. Builds new pages only when something is new (files from the publishers, or a new version
-    of the site); then, before launch, publishes them, and after launch asks the owner to approve them by email
+    """The weekly update. Builds new pages only when something is new (files from the publishers, a new version of
+    the site, or a new address or launch switch in the server's settings); then, before launch, publishes them, and after launch asks the owner to approve them by email
     ([publish] in config/settings.toml)."""
     from landlords import area, checks, load, register, score, site
     from landlords import fetch as fetch_
 
     started = datetime.now(UTC)
     info: dict = {"build": started.strftime("%Y%m%d-%H%M%S"), "started": started.isoformat(timespec="seconds"),
-                  "code_version": code_version()}
+                  "code_version": code_version(),
+                  # set on the server (deploy/.env), not in the code: going public must rebuild the pages too
+                  "site_settings": {"url": settings.section("site").get("url") or "",
+                                    "launched": bool(settings.section("site").get("launched"))}}
     if fetch:
         results = fetch_.run(settings)
         new = [n for r in results for n in r.new]
@@ -85,7 +88,7 @@ def update(settings: Settings, fetch: bool = True, notify: bool = True) -> dict:
     latest = sorted(p.name for p in builds_dir(settings).glob("*") if (p / "build-info.json").exists())
     last = _info(settings, latest[-1] if latest else None)
     something_new = (not latest or bool(info.get("new_files")) or last.get("code_version") != info["code_version"]
-                     or bool(info["register"].get("added")))
+                     or last.get("site_settings") != info["site_settings"] or bool(info["register"].get("added")))
     if something_new:
         area.build(settings)
         info["scores"] = score.run(settings)

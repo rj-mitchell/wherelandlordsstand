@@ -41,7 +41,7 @@ where_councils_stand = "https://wherecouncilsstand.com/councils/{gss}"
 #   "approve": before launch, publish them (nothing is public); after launch, email a link to approve them
 #   "auto":    publish them whenever their checks pass, and email what changed
 mode = "approve"
-# Who gets the weekly email. The account that sends it is set on the server, in env/landlords.env (src/landlords/notify.py).
+# Who gets the weekly email. The account that sends it is set on the server, in deploy/.env (src/landlords/notify.py).
 notify_to = "wheretheystanduk@gmail.com"
 # How long an approval link works, and how many builds are kept.
 approval_days = 14

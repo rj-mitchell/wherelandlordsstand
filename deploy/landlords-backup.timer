@@ -2,6 +2,7 @@
 Description=Where Landlords Stand: back up the state database every night
 
 [Timer]
+# UTC, between the charity's other sites' backups (Where MPs Stand 3.30am UK time, Where Councils Stand 4.30 UTC)
 OnCalendar=*-*-* 04:52:00 UTC
 Persistent=true
 

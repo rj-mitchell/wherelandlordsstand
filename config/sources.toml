@@ -60,8 +60,7 @@ govuk = "/government/statistics/tenant-satisfaction-measures-202324"
 match = "tenant satisfaction measures 2023/24"
 types = ["pdf"]
 
-# Not published yet (expected autumn 2026). `optional`: until the page exists, `landlords fetch` reports it as waiting.
-# Add its headline figures to config/reconciliation.toml when it appears.
+# Published 5 November 2026. The zip's files and fields were renamed (load/tsm.py, harmonise).
 [[file]]
 source = "tsm"
 role = "full-data"
@@ -69,6 +68,28 @@ period = "2025/26"
 publisher = "Regulator of Social Housing"
 licence = "Open Government Licence v3.0"
 govuk = "/government/statistics/tenant-satisfaction-measures-202526"
+match = "full data"
+types = ["xlsx", "zip"]
+
+[[file]]
+source = "tsm"
+role = "report"
+period = "2025/26"
+publisher = "Regulator of Social Housing"
+licence = "Open Government Licence v3.0"
+govuk = "/government/statistics/tenant-satisfaction-measures-202526"
+match = "headline report|data quality"
+types = ["pdf"]
+
+# Next year's release (expected autumn 2027). `optional`: until the page exists, `landlords fetch` reports it as
+# waiting. Add its headline figures to config/reconciliation.toml when it appears.
+[[file]]
+source = "tsm"
+role = "full-data"
+period = "2026/27"
+publisher = "Regulator of Social Housing"
+licence = "Open Government Licence v3.0"
+govuk = "/government/statistics/tenant-satisfaction-measures-202627"
 match = "full data"
 types = ["xlsx", "zip"]
 optional = true

@@ -317,6 +317,35 @@ by hand and added as aliases (kind "short" or "published", source "Housing Ombud
 figures are from before the Ombudsman began examining complaint handling in every case (October 2025), so they are
 shown separately, under "Earlier Ombudsman figures", and never compared with 2025-26.
 
+## TSM 2025/26 (published 5 November 2026)
+
+The third year, and now the one profiles show. It reconciles with its headline report: 356 submissions (294 rented
+only, 55 rented and shared ownership separately, 5 shared ownership only, 2 combined); TP01 (rented) quartiles 67.6,
+74.2 and 80.2 (published as 68%, 74.2%, 80%); and, for rented homes, each survey method's share of surveys and average
+satisfaction (telephone 65% at 73.0%, internet 16% at 64.5%, face to face 10% at 80.7%, postal 8% at 84.5%, SMS 1% at
+70.0%) within 0.1. The share of landlords mainly using telephone again differs slightly: 72.5% in the data; the report
+gives 73.5% in Figure 18, and 73% and 74% in its text.
+
+The regulator changed its download:
+
+* **Files renamed**: "Combined_Perception" for "COMB_perception", inside names such as
+  `2026_TSM_Full_Dataset_FINAL(TSM26_LCRA_Perception).csv`.
+* **Fields renamed**: survey fields end in `_a`, `_b`, `_c` for rented, shared ownership and combined, instead of
+  `_LCRA`, `_LCHO`, `_COMB`; and "Predominant method", "Estimated margin", "MinimumSample", "RSH Comments" and "Above
+  30% SH" lost their underscores or suffixes. The measures themselves (`TP01_Satisfied_Calc_LCRA`) are unchanged. The
+  loader turns the new names back into the old (`load/tsm.py`, `harmonise`).
+* **No exclusion lists.** The two "not included" files and the coverage table's columns for them are gone; exclusions
+  are marked `[E]` in the tables, with the regulator's comment. The data quality note lists six: Gosport (24UF),
+  Northumberland (00EM) and Kensington and Chelsea (00AW) RP01; Eastlight (L4499) and Bury (00BM) RP02; Rugby (44UD)
+  TP03 ("not part of the landlord's survey"). All six are marked.
+* **Windows-1252 text** in three of its CSVs (LCRA, LCHO, management information) and the data dictionary, where the
+  others are UTF-8.
+
+Seven landlords profiled from earlier years have no 2025/26 results, most after mergers: Estuary Housing Association,
+Flagship Housing, Octavia Housing, Origin Housing, Settle Group, Tower Hamlets Community Housing, and The Abbeyfield
+Society. Their pages say there are no results for 2025/26. Their status and successor are to be set from the
+regulator's statements (`data_static/landlords.csv`).
+
 ## The name register
 
 **`data_static/landlords.csv`** has one row for every registered provider (1,577) and every former provider still

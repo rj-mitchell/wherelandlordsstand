@@ -39,3 +39,17 @@ def test_the_server_can_set_the_address_and_the_launch_switch(monkeypatch):
     assert s.section("site")["url"] == "https://example.org" and s.section("site")["launched"] is True
     monkeypatch.setenv("LANDLORDS_LAUNCHED", "false")
     assert load_settings().section("site")["launched"] is False
+
+
+def test_2025_26_field_names_are_read_as_before():
+    from landlords.load.tsm import harmonise
+
+    assert harmonise("Relevant_ten_pop_size_a", "LCRA", "LCRA_perception") == "Relevant_ten_pop_size_LCRA"
+    assert harmonise("Total_sample_size_b", "LCHO", "LCHO_perception") == "Total_sample_size_LCHO"
+    assert harmonise("Responses_Telephone_c", "COMB", "COMB_perception") == "Responses_Telephone_COMB"
+    assert harmonise("Predominant method", "LCRA", "LCRA_perception") == "Predominant_method_LCRA"
+    assert harmonise("RSH Comments", "LCHO", "LCHO_perception") == "RSH_Comments_LCHO"
+    assert harmonise("Above 30% SH", None, "Management_info") == "Above_30_SH"
+    assert harmonise("RSH Comments", None, "Management_info") == "RSH Comments"      # not a survey table
+    assert harmonise("TP01_Satisfied_Calc_LCRA", "LCRA", "LCRA_perception") == "TP01_Satisfied_Calc_LCRA"
+    assert harmonise("Landlord code", None, "Table_coverage") == "Landlord_code"

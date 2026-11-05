@@ -118,15 +118,27 @@ def sheet_table(path: str | Path, sheet: str, first_header: str | tuple[str, ...
     raise LayoutChanged(f"{Path(path).name}: no header row starting {firsts} in sheet {sheet!r}")
 
 
-def zip_csv(path: str | Path, name_contains: str) -> tuple[list[str], list[dict]]:
+def zip_csv(path: str | Path, name_contains: str | tuple[str, ...]) -> tuple[list[str], list[dict]]:
+    """A CSV in a zip, found by part of its name (any of several). UTF-8, or Windows-1252 where a file isn't UTF-8
+    (some of the regulator's 2025/26 files)."""
+    wanted = (name_contains,) if isinstance(name_contains, str) else name_contains
     with zipfile.ZipFile(path) as z:
-        names = [n for n in z.namelist() if name_contains.lower() in n.lower()]
+        names = [n for n in z.namelist() if any(w.lower() in n.lower() for w in wanted)]
         if len(names) != 1:
-            raise LayoutChanged(f"{Path(path).name}: expected one file named like {name_contains!r}, found {names}")
-        with z.open(names[0]) as fh:
-            reader = csv.DictReader(io.TextIOWrapper(fh, "utf-8-sig"))
-            rows = list(reader)
-            return [h.strip() for h in reader.fieldnames or []], [{k.strip(): v for k, v in r.items()} for r in rows]
+            raise LayoutChanged(f"{Path(path).name}: expected one file named like {wanted}, found {names}")
+        raw = z.read(names[0])
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        text = raw.decode("cp1252")
+    reader = csv.DictReader(io.StringIO(text))
+    rows = list(reader)
+    return [h.strip() for h in reader.fieldnames or []], [{k.strip(): v for k, v in r.items()} for r in rows]
+
+
+def has_zip_file(path: str | Path, name_contains: str) -> bool:
+    with zipfile.ZipFile(path) as z:
+        return any(name_contains.lower() in n.lower() for n in z.namelist())
 
 
 # The staging store -----------------------------------------------------------------------------------------------

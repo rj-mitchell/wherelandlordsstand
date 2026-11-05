@@ -27,6 +27,7 @@ from landlords.load.common import (
     MissingFile,
     code,
     file_ref,
+    has_zip_file,
     parse_value,
     record_sources,
     require,
@@ -112,6 +113,29 @@ _SHEETS = {"Table_coverage": "Table_Coverage", "LCRA_perception": "LCRA_Percepti
            "LCHO_perception": "LCHO_Perception", "COMB_perception": "Combined_Perception",
            "Management_info": "Management_Info", "Perception_not_inc": "Perception_Not_Inc",
            "Man_not_inc": "Man_Info_Not_Inc"}
+
+
+# 2025/26 renamed the zip's files and many fields: "Combined_Perception" for "COMB_perception"; survey fields end in
+# _a, _b, _c for LCRA, LCHO, COMB; and a few gained spaces. They are turned back into the 2024/25 names.
+ZIP_NAMES = {"COMB_perception": ("COMB_perception", "Combined_Perception"),
+             "Table_coverage": ("Table_coverage",), "Management_info": ("Management_info",)}
+_SUFFIX = {"LCRA": "_a", "LCHO": "_b", "COMB": "_c"}
+
+
+def harmonise(field: str, stock: str | None, table: str) -> str:
+    """A CSV field name as the 2024/25 files have it, whichever year's file it comes from."""
+    if table == "Table_coverage" and field in ("Landlord name", "Landlord code", "Landlord type"):
+        return field.replace(" ", "_")
+    if field == "Above 30% SH":
+        return "Above_30_SH"
+    if stock:
+        for new, old in (("MinimumSample", "MinimumSample"), ("Estimated margin", "Estimated_margin"),
+                         ("RSH Comments", "RSH_Comments"), ("Predominant method", "Predominant_method")):
+            if field == new:
+                return f"{old}_{stock}"
+        if field.endswith(_SUFFIX[stock]) and not field.endswith(f"_{stock}"):
+            return field[: -len(_SUFFIX[stock])] + f"_{stock}"
+    return field
 
 
 def field_name(heading: str, stock: str | None) -> str:
@@ -210,10 +234,20 @@ def load_period(settings: Settings, period: str) -> tuple[list, list, list, dict
         path = note["path"]
 
         def read(name: str):
-            return zip_csv(path, name)
+            header, rows = zip_csv(path, ZIP_NAMES.get(name, name))
+            stock = {"LCRA_perception": "LCRA", "LCHO_perception": "LCHO", "COMB_perception": "COMB"}.get(name)
+            fields = [harmonise(h, stock, name) for h in header]
+            renamed = dict(zip(header, fields, strict=True))
+            return fields, [{renamed.get(k, k): v for k, v in r.items()} for r in rows]
+
+        def has(name: str) -> bool:
+            return has_zip_file(path, name)
     except MissingFile:
         note = source_file(settings, "tsm", "full-data", period, ext="xlsx")
         read = xlsx_tables(note["path"])
+
+        def has(name: str) -> bool:
+            return True
     ref = file_ref(note)
     tsm, survey, coverage = [], [], {}
 
@@ -225,6 +259,8 @@ def load_period(settings: Settings, period: str) -> tuple[list, list, list, dict
     resolved = {}
     for key, suffix in cov_cols.items():
         found = [h for h in header if h.endswith(suffix)]
+        if not found and key.endswith("_excluded"):
+            continue  # 2025/26 has no exclusion columns: exclusions are marked [E] in the tables instead
         if len(found) != 1:
             raise LayoutChanged(f"TSM coverage: no single column ending {suffix!r} in {header}")
         resolved[key] = found[0]
@@ -233,6 +269,7 @@ def load_period(settings: Settings, period: str) -> tuple[list, list, list, dict
         lid = code(r["Landlord_code"])
         coverage[lid] = {"landlord_id": lid, "name_published": text(r["Landlord_name"]),
                          "landlord_type": text(r["Landlord_type"]), "period": period,
+                         "perception_excluded": False, "management_excluded": False,
                          **{k: _yes(r[c]) for k, c in resolved.items()},
                          "group_size": "", "region": "", "above_30pc_supported": "", "publication_url": "",
                          "rsh_comment": "", "source_file": ref["source_file"]}
@@ -313,6 +350,8 @@ def load_period(settings: Settings, period: str) -> tuple[list, list, list, dict
 
     # The regulator's exclusion lists ---------------------------------------------------------------------------------
     for name in ("Perception_not_inc", "Man_not_inc"):
+        if not has(name):
+            continue  # not published separately from 2025/26: see the [E] markers and the regulator's comments
         header, rows = read(name)
         require(header, ["Landlord code", "Notes from RSH following TSM review"], f"TSM {name}")
         flag = "perception_excluded" if name == "Perception_not_inc" else "management_excluded"

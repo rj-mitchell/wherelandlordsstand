@@ -33,9 +33,7 @@ launch. Ticked items are done in the repository; the rest need the owner, a revi
 
 ## Just before launch
 
-- [ ] **TSM 2025/26**: last year's release came out on 4 November. When `landlords fetch` stops saying "waiting", add its
-      headline figures to `config/reconciliation.toml`, run `landlords update`, read the change report and the
-      reconciliation, and publish. Profiles then show 2025/26 with changes since 2024/25.
+- [x] **TSM 2025/26**: published 5 November 2026; loaded and reconciled the same day (docs/DATA.md).
 - [ ] **Rights page dates**: `landlords check` warns when a section is due. Due now: the Ombudsman's complaints
       section weekly while its IT incident lasts; Awaab's Law on 1 December 2026 (phase 2 should be in force).
 - [x] **Where Councils Stand's council list**: Barnsley's and Sheffield's codes fixed there (merged 4 November

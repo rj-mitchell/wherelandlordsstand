@@ -41,6 +41,46 @@ known_difference = "The data gives 245 of 358 landlords (68.4%) with telephone a
 "L0717" = ["RP02_1", "RP02_2"]
 "00AU" = ["CH02_1"]
 
+[tsm."2025/26"]
+source = "TSM 2025/26 Headline Report and data quality note (Regulator of Social Housing, 5 November 2026)"
+submissions = 356
+rented_only = 294
+rented_and_shared_ownership = 55
+shared_ownership_only = 5
+combined = 2
+tp01_rented_lower_quartile = 68     # paragraph 16 gives whole percentages; the median is 74.2 in the summary table
+tp01_rented_median = 74.2
+tp01_rented_upper_quartile = 80
+tolerance = 0.5
+
+[tsm."2025/26".by_method]
+# Headline Report 2025/26, Table 2: for rented homes (LCRA) only this year, as the share of surveys collected by each
+# method and the average satisfaction (TP01) across them.
+kind = "share"
+stock = "LCRA"
+tolerance = 0.15
+telephone = [65, 73.0]
+internet = [16, 64.5]
+"face to face" = [10, 80.7]
+postal = [8, 84.5]
+sms = [1, 70.0]
+
+[tsm."2025/26".telephone_main_method]
+# Figure 18 gives 73.5%; paragraph 71 says both "74% of landlords used telephone surveys as their principal survey
+# collection method" and "73% in 2025/26": the report disagrees with itself, so Figure 18 is the figure checked.
+percent = 73.5
+known_difference = "The data gives 258 of 356 landlords (72.5%) with telephone as the predominant method; Figure 18 gives 73.5% and the text 73% and 74%. The other bands of Figure 18 are within about a point. As in 2024/25, not yet explained; see docs/DATA.md."
+
+[tsm."2025/26".excluded]
+# The data quality note 2025/26 ("In 2025/26 the following providers' data has been excluded"). Rugby's TP03 was not
+# part of its survey.
+"24UF" = ["RP01"]
+"00EM" = ["RP01"]
+"00AW" = ["RP01"]
+"L4499" = ["RP02_1", "RP02_2"]
+"00BM" = ["RP02_1", "RP02_2"]
+"44UD" = ["TP03"]
+
 [tsm."2023/24"]
 source = "TSM 2023/24 Headline Report (Regulator of Social Housing, October 2024), which describes v1.0 of the data; the file loaded is v2.1 (December 2025), which includes resubmissions"
 submissions = 360

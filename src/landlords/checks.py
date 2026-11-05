@@ -135,8 +135,10 @@ def check_tsm_reconciliation(settings: Settings, rep: Report, expect: dict) -> N
 
         # Surveys by method count every response; satisfaction by method is weighted by the responses of the
         # landlords that report it (a method with fewer than 50 surveys at a landlord is suppressed, [S]).
+        bm = e.get("by_method", {})
+        only = bm.get("stock")  # 2025/26 reports rented homes only
         responses = {(x["landlord_id"], x["stock_type"]): json.loads(x["responses"]) for x in survey
-                     if x["period"] == period}
+                     if x["period"] == period and (not only or x["stock_type"] == only)}
         sums, sat, weight = defaultdict(float), defaultdict(float), defaultdict(float)
         for by_method in responses.values():
             for m, n in by_method.items():
@@ -148,9 +150,18 @@ def check_tsm_reconciliation(settings: Settings, rep: Report, expect: dict) -> N
                 weight[r["method"]] += n
         rows, ok = [], True
         has_by_method = any(weight.values())  # 2023/24's file has no satisfaction by method
-        for method, (count, pct) in e.get("by_method", {}).items():
+        total = sum(sums.values()) or 1
+        for method, spec in bm.items():
+            if not isinstance(spec, list):
+                continue  # kind, stock, tolerance
+            count, pct = spec
             got_pct = sat[method] / weight[method] if weight[method] else None
-            good = sums[method] == count and (not has_by_method or (got_pct is not None and _close(got_pct, pct, tol)))
+            mtol = bm.get("tolerance", tol)
+            if bm.get("kind") == "share":  # the share of surveys, in whole percentages
+                same_count = _close(100 * sums[method] / total, count, 0.5)
+            else:
+                same_count = sums[method] == count
+            good = same_count and (not has_by_method or (got_pct is not None and _close(got_pct, pct, mtol)))
             ok &= good
             rows.append({"method": method, "surveys": sums[method], "published_surveys": count,
                          "satisfaction": round(got_pct, 2) if got_pct else None, "published_satisfaction": pct})

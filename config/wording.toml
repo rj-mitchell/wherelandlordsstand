@@ -52,6 +52,11 @@ up = "Up from {old_band} in {old_period}."
 down = "Down from {old_band} in {old_period}."
 explain = "Top quarter means it did better than at least three in four similar landlords. Bottom quarter means it did worse than at least three in four."
 no_results = "There are no tenant survey results for {name} for {period}."
+# When a landlord stops publishing its own results (data_static/reporting.csv says why, from the regulator's files).
+# {other} becomes a link to that landlord's page.
+in_group = "From {period}, {name}'s tenant survey results are part of those for its group, {other}."
+in_other = "From {period}, the homes that were {name}'s are counted in {other}'s tenant survey results."
+too_small = "{name} owned fewer than 1,000 rented homes in {year}, so it no longer has to publish tenant survey results."
 regulator_note = "The regulator says: {note}"
 
 [method_note]

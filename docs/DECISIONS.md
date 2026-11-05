@@ -9,7 +9,7 @@ All the decisions proposed in the planning session of 3 November 2026 have now b
 
 | # | Topic | Decision |
 |---|---|---|
-| 1 | Name | **Where Landlords Stand**, a working title that may change to make "social housing" clear (owner, 3 November 2026). |
+| 1 | Name and domain | **Where Landlords Stand**, at **wherelandlordsstand.com** (proposed as a working title, 3 November 2026; the domain is registered and the site will go there, owner, 5 November 2026). The charity's hub links to www.wherelandlordsstand.com, which Cloudflare redirects to the bare domain. Contact: admin@wherelandlordsstand.com (owner, 5 November 2026). |
 | 2 | No league table | No single overall ranking of landlords. Only bands within a peer group (top quarter, upper middle, lower middle, bottom quarter) for overall satisfaction and each pillar, with the regulator's own grade beside them (owner, 3 November 2026). |
 | 3 | Coverage | England, landlords with **1,000 or more homes**: those in the latest Tenant Satisfaction Measures data. Smaller landlords get a "not covered" message that explains the threshold (owner, 3 November 2026). |
 | 4 | Councils | Council landlords get full profiles, linking to their page on Where Councils Stand (wherecouncilsstand.com/councils/<GSS code>) where that site covers the council (owner, 3 November 2026). |

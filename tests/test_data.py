@@ -38,6 +38,32 @@ SITE = settings.data_dir / "site"
 
 
 @pytest.mark.skipif(not (SITE / "index.html").exists(), reason="pages not built (`landlords build`)")
+def test_landlords_that_stopped_reporting_say_who_reports_now():
+    """data_static/reporting.csv: each row names a profiled landlord with no results of its own in the latest year,
+    and the landlord now reporting for it (except "small") has a page, which the sentence links to."""
+    import csv
+
+    import duckdb
+
+    from landlords.config import STATIC_DIR
+
+    with open(STATIC_DIR / "reporting.csv", encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
+    with open(STATIC_DIR / "landlords.csv", encoding="utf-8") as fh:
+        reg = {r["id"]: r for r in csv.DictReader(fh)}
+    latest = duckdb.sql(f"select max(period) from '{settings.staging_dir / 'tsm_coverage.parquet'}'").fetchall()[0][0]
+    reported = {r[0] for r in duckdb.sql(f"select landlord_id from '{settings.staging_dir / 'tsm_coverage.parquet'}' "
+                                        f"where period = '{latest}'").fetchall()}
+    assert rows
+    for r in rows:
+        assert reg[r["landlord_id"]]["profiled"] == "yes", r
+        assert r["landlord_id"] not in reported, f"{r['landlord_id']} has results of its own for {latest}"
+        assert r["reason"] in ("group", "other", "small"), r
+        assert r["evidence"], r
+        if r["reason"] != "small":
+            assert reg[r["reported_by"]]["slug"] and r["reported_by"] in reported, r
+
+
 def test_pages_are_small_self_contained_and_carry_the_warning():
     import re
 

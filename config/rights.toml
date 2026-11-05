@@ -66,9 +66,11 @@ sources = [
   ["When to get help from the Housing Ombudsman", "https://www.housing-ombudsman.org.uk/residents/when-to-get-help-from-the-housing-ombudsman/"],
   ["The Ombudsman's update on its IT security incident, 3 November 2026", "https://www.housing-ombudsman.org.uk/2026/11/03/it-security-incident-latest/"],
 ]
-checked = "2026-11-03"
+# 5 November 2026: no newer update; the notice on every page of its site still asks for new complaints by email or
+# phone.
+checked = "2026-11-05"
 # The Ombudsman's IT incident is changing fast: check how to complain every week until it is over.
-recheck = "2026-11-10"
+recheck = "2026-11-12"
 
 [[section]]
 heading = "If a landlord is not meeting the standards"

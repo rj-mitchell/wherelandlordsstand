@@ -358,7 +358,8 @@ def method_html(settings: Settings, w: dict) -> str:
     groups_html = "".join(f"<li>{esc(k)}: {v}</li>" for k, v in sorted(groups.items()))
     body = f"""<h1>How we compare landlords</h1>
 <p>This page explains every step. The rules are in one file, <code>config/scoring.toml</code>, and this page is made
-from it. The method is being checked by a housing data reviewer before the site goes live.</p>
+from it. This site is in alpha, which means it is still being tested. A housing data expert has not checked the
+method yet.</p>
 <h2>1. Similar landlords</h2>
 <p>We compare each landlord only with landlords of the same type (councils, or housing associations) and a similar
 size: {esc(", ".join(f"{e:,}" for e in r["peer_groups"]["size_bands"]))} homes are where the sizes change. Size is the number

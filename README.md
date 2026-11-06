@@ -15,7 +15,9 @@ England and Wales, like Where MPs Stand, Where Councils Stand and Where Countrie
 > Where Landlords Stand is independent. It is not affiliated with or endorsed by the Regulator of Social Housing, the
 > Housing Ombudsman Service or any landlord.
 
-**Not deployed.** The code is public, like the sibling sites; the site goes live only when the owner says so.
+**Public alpha.** The site is public while it is still being tested (docs/DECISIONS.md, 12). New pages go live only
+when the owner approves them by email, and search engines are kept out until launch. Its code is public, like the
+sibling sites' code.
 
 ## Status
 
@@ -41,8 +43,8 @@ Phase 2, profiles, is built and waiting for its gate, a review of the method by 
 - peer groups, percentiles and bands, by the rules in `config/scoring.toml` (`landlords score`);
 - a page for each of the 363 landlords, led by a "Before you bid" card: the regulator's grade, bands among similar
   landlords with changes since last year, the Ombudsman's figures and the safety checks. Every sentence comes from
-  `config/wording.toml`, and every figure links to its file. Static HTML, no JavaScript, under 11 KB a page
-  (`landlords build`), seen only on this computer (`landlords serve`).
+  `config/wording.toml`, and every figure links to its file. Static HTML, no JavaScript, about 12 KB a page
+  (`landlords build`).
 
 Phase 3, the bidder tools, is built and waiting for its gate, testing with applicants
 ([`docs/USER-TESTING.md`](docs/USER-TESTING.md) is the plan):
@@ -58,13 +60,13 @@ Phase 3, the bidder tools, is built and waiting for its gate, testing with appli
   that found nothing, so names can be added (`landlords serve`, the small API in `src/landlords/api.py`);
 - council profiles link to Where Councils Stand where it covers the council.
 
-Ready for phase 4, launch, which happens only when the owner says: a weekly `landlords update` builds into a new
-folder, `landlords publish` makes it live by hand, `landlords rollback` undoes it, and `deploy/` has the container,
-timers and [`docs/DEPLOY.md`](docs/DEPLOY.md). It runs on the charity's shared server at wherelandlordsstand.com, in
-alpha: public, but search engines are asked not to index it until the launch switch is on.
+It runs on the charity's shared server at wherelandlordsstand.com, in alpha: public, but search engines are asked not
+to index it until the launch switch is on. A weekly `landlords update` builds new pages into a new folder and emails
+the owner a link to approve them; the approval page's Undo button, or `landlords rollback`, puts back the pages
+before. `deploy/` has the container and timers, and [`docs/DEPLOY.md`](docs/DEPLOY.md) the steps.
 
 Phase 4, launch, is prepared: about, terms, accessibility and "not found" pages; an accessibility test (axe-core, WCAG
-2.2 AA, no failures); one switch that takes the site out of test mode (`[site] launched`); off-site backups; and a
+2.2 AA, no failures); one switch that lets search engines in (`[site] launched`); off-site backups; and a
 watch for new releases (TSM 2025/26 was loaded the day it came out). What is left needs people or the server: see
 [`docs/LAUNCH.md`](docs/LAUNCH.md).
 

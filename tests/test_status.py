@@ -108,6 +108,8 @@ def test_the_press_page_has_the_facts_a_citation_and_logo_files(settings, tmp_pa
     assert "admin@wherelandlordsstand.com" in text and "<script" not in html
     for name in re.findall(r'href="\.\./press/([^"/]+\.(?:svg|png))"', html):
         assert (out / "press" / name).stat().st_size > 100, name
-    assert len(re.findall(r'href="\.\./press/[^"]+\.(?:svg|png)"', html)) == 4
-    mark = (out / "press" / "where-landlords-stand-mark.svg").read_text()
-    assert mark.startswith("<svg xmlns=") and "var(" not in mark                    # its own colours, no stylesheet
+    assert len(re.findall(r'href="\.\./press/[^"]+\.(?:svg|png)"', html)) == 7
+    for name in ("mark.svg", "mark-dark.svg", "mark-small.svg", "mark-small-dark.svg"):
+        assert f'href="../press/{name}"' in html
+        mark = (out / "press" / name).read_text()
+        assert mark.startswith("<svg xmlns=") and "var(" not in mark                # its own colours, no stylesheet

@@ -115,4 +115,4 @@ def test_every_file_a_page_uses_is_fingerprinted_under_assets(tmp_path):
     assert (tmp_path / "favicon.ico").is_file()                    # browsers ask for it at the root
     assert json.loads((tmp_path / "assets.json").read_text()) == names
     assert site.write_assets(tmp_path / "again") == names          # the same files give the same names
-    assert 'width="46" height="46"' in site.MARK                    # stays small without the stylesheet
+    assert 'width="52" height="52"' in site.MARK                    # stays small without the stylesheet

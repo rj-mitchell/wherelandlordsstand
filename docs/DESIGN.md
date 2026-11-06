@@ -42,8 +42,31 @@ here (docs/OPERATIONS.md, "Scoring and the pages"):
 - **Links to a sister site show its spine:** a council's page and each area's page link to the council on Where
   Councils Stand with that site's brown spine beside the link.
 
-This site keeps its own picture mark (a roof over a bound volume with gilt bands, on a shelf), drawn in roof slate
-(the family plan, decision 4), beside its name.
+This site keeps its own picture mark beside its name (the family plan, decision 4): a front door open on a lit hall,
+on a roof-slate tile ("The mark", below).
+
+## The mark
+
+The front door swung wide towards you, on a tile of roof slate (`#40484D`) with rounded corners and a fine gilt edge
+(`#D9BC72`, the family's spine gilt, so the edge still shows at 16 pixels), drawn in the same manner as the sister
+sites' marks. The door is ivory (`#F3EAD6`), swung open towards you, with its two panels, letterbox and gilt knob in
+view; behind it, in the ivory frame, the hall is lit in gilt, and the light falls out over the step. The owner chose
+it on 6 November 2026 (docs/DECISIONS.md, 14). It has no book in it: the book is already the spine in "A Where They
+Stand project" under the name. It must stay distinct from Where Councils Stand's town hall.
+
+It is drawn inline in the masthead (`MARK` in `src/landlords/site.py`) at 52 px, as the sister sites' marks are, and
+44 px on a phone, where it fits beside the name and endorsement without making the masthead taller. Its colours are
+in the page, so it is drawn right without the stylesheet, and it is hidden from screen readers (the name beside it
+says the same) and isn't a link (the name is). In dark mode the tile and the door's lines are the kit's lifted cloth
+(`--wts-cloth-landlords`, `#5B666D`), at 3:1 against the page; the ivory and gilt keep their colours. In forced
+colours it is redrawn in the system's two colours: the frame and the door in the text colour, the doorway and the
+tile in the background colour, inside a ruled edge.
+
+The same drawing is in `src/landlords/static/` for others to use, and the press page offers it at `/press/` under
+those names (`mark.svg`, `mark-dark.svg` on the lifted slate, and `mark-small.svg` and `mark-small-dark.svg` for 16 to
+32 pixels, with a heavier edge and door outline, a plain knob and no panels or letterbox). A test checks the masthead's
+mark and `mark.svg` have the same shapes. The favicon, the touch icon and the link card come from the family kit
+("The family binding", above).
 
 ## Type and colour
 
@@ -51,9 +74,10 @@ This site keeps its own picture mark (a roof over a bound volume with gilt bands
 |---|---|---|---|
 | Paper and ink | page and text | `#f5f0e3` (the charity's paper) / `#1c2427` (the charity's ink) | `#14181a` / `#e9e6de` |
 | Slate | filled bands, the card's top rule, current tab, buttons | `#40484d` | `#b9c3c9` |
-| Roof slate, the cloth | the mark (the kit's `--wts-cloth-landlords`), the spines | `#40484D` | `#5B666D` |
+| Roof slate, the cloth | the mark's tile (the kit's `--wts-cloth-landlords`), the spines | `#40484D` | `#5B666D` |
 | Link | links | `#2f4a5e` | `#a9c6dc` |
-| Gilt | the mark's bands; the rule beside "Before you bid" | `#b08d3c` / `#7a5c1c` (text) | `#d9bc72` |
+| Gilt | the rule beside "Before you bid" | `#7a5c1c` | `#d9bc72` |
+| The mark's gilt and ivory | its edge, the lit hall and the knob; the door and its frame | `#D9BC72` / `#F3EAD6` | the same |
 
 - **Source Serif 4** (SIL Open Font License), the family's face, for everything people read. The files and their
   `@font-face` rules come with the family kit (`src/landlords/family/fonts/`, `fonts.css`) and are served from this
@@ -67,13 +91,16 @@ This site keeps its own picture mark (a roof over a bound volume with gilt bands
 - **The alpha strip** across the top, as on the siblings: a dark "ALPHA" label, the notice (that the site is still
   being tested, and to use it at your own risk), a link to the report form, then the email address (`[site] alpha`
   in `config/wording.toml`). On phones its type is a little smaller.
-- **The masthead:** the mark (a roof over a bound volume with gilt bands, on a shelf), the name in Source Serif, the
+- **The masthead:** the mark (the open front door, "The mark" above), the name in Source Serif, the
   family's endorsement under it, the tagline in italic, the independence line on the right, then the tabs, with the
   current page underlined in slate, over a double rule. On phones it is lighter, so a landlord's grade is on the first
   screen: a smaller mark, name and endorsement, no tagline (the home page says the same), the independence line in
   smaller type, and closer spacing. With the endorsement added, the grade is on the first screen at 390 x 844 for the
   same 326 of the 363 landlords as before (6 November 2026), with the alpha strip's type and the masthead's spacing
-  a little tighter on phones to make room.
+  a little tighter on phones to make room. With the door mark (44 px on a phone, up from the old mark's 34 px), the
+  masthead is no taller: measured by where the grade itself ends (or, for a landlord with no grade of its own, the
+  grade's heading), it is on the first screen at 390 x 844 for 356 of the 363 landlords both before and after the
+  change (6 November 2026).
 - **Section headings** (`h2`) in small capitals under a rule.
 - **The landlord's card:** a panel with a slate top rule. Its parts (grade, how it compares, complaints, safety) have
   small sans-serif headings between thin rules. "Before you bid" sits beside a gilt rule.

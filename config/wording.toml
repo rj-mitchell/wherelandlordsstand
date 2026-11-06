@@ -8,10 +8,12 @@ tagline = "What social landlords in England are like, from what the regulator an
 # The masthead's short form of the family's independence line (the family glossary). The full line is on the about
 # and terms pages (config/pages.toml).
 independence = "Independent. Not affiliated with the Regulator of Social Housing, the Housing Ombudsman Service or any landlord."
-# The phase banner at the top of every page while [site] stage = "alpha" (config/settings.toml), worded as on the
-# sister sites: one sentence and a link to the report form. The words before the colon become its label; {report}
-# becomes a link to the corrections page, with alpha_report as its words, and {email} a link to the address.
-alpha = "Alpha: this site is new and still being tested, so some things may be missing or wrong. {report}, or email {email}."
+# The phase banner at the top of every page while [site] stage = "alpha" (config/settings.toml), shaped as on the
+# sister sites: the notice, then a link to the report form, then the address. The "use it at your own risk" sentence is
+# the owner's (6 November 2026) and stays, although the family's banner is one sentence. The words before the colon
+# become its label; {report} becomes a link to the corrections page, with alpha_report as its words, and {email} a
+# link to the address.
+alpha = "Alpha: this site is new and still being tested, so some things may be missing or wrong. We can't promise that everything here is right, so use it at your own risk. {report}, or email {email}."
 alpha_report = "Tell us about a mistake"
 
 [footer]

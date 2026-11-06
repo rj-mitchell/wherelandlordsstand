@@ -35,8 +35,8 @@ here (docs/OPERATIONS.md, "Scoring and the pages"):
   also has Open Graph and Twitter tags and a canonical link to its own address.
 - **Headings in Source Serif 4** (`class="wts-headings"` on `<body>`, the family plan's decision 1). This site sets
   its body text in Source Serif 4 as well, so nothing changes to the eye.
-- **The same furniture, worded the same way:** the alpha banner is one sentence with a link to the report form (the
-  email address second); the footer's links follow the family's order (About · How it works · Corrections ·
+- **The same furniture, worded the same way:** the alpha banner links to the report form, with the email address
+  second (it keeps the owner's "use it at your own risk" sentence, so it is two sentences, not the family's one); the footer's links follow the family's order (About · How it works · Corrections ·
   Accessibility · Privacy · Terms · Data · Source code; the site has no press or status page yet), with the contact
   address, admin@wherelandlordsstand.com.
 - **Links to a sister site show its spine:** a council's page and each area's page link to the council on Where
@@ -64,14 +64,16 @@ This site keeps its own picture mark (a roof over a bound volume with gilt bands
 
 ## The parts
 
-- **The alpha strip** across the top, as on the siblings: a dark "ALPHA" label, one sentence, and a link to the
-  report form, then the email address (`[site] alpha` in `config/wording.toml`).
+- **The alpha strip** across the top, as on the siblings: a dark "ALPHA" label, the notice (that the site is still
+  being tested, and to use it at your own risk), a link to the report form, then the email address (`[site] alpha`
+  in `config/wording.toml`). On phones its type is a little smaller.
 - **The masthead:** the mark (a roof over a bound volume with gilt bands, on a shelf), the name in Source Serif, the
   family's endorsement under it, the tagline in italic, the independence line on the right, then the tabs, with the
   current page underlined in slate, over a double rule. On phones it is lighter, so a landlord's grade is on the first
   screen: a smaller mark, name and endorsement, no tagline (the home page says the same), the independence line in
   smaller type, and closer spacing. With the endorsement added, the grade is on the first screen at 390 x 844 for the
-  same 326 of the 363 landlords as before (6 November 2026), because the alpha strip is a line shorter.
+  same 326 of the 363 landlords as before (6 November 2026), with the alpha strip's type and the masthead's spacing
+  a little tighter on phones to make room.
 - **Section headings** (`h2`) in small capitals under a rule.
 - **The landlord's card:** a panel with a slate top rule. Its parts (grade, how it compares, complaints, safety) have
   small sans-serif headings between thin rules. "Before you bid" sits beside a gilt rule.

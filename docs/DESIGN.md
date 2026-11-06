@@ -41,6 +41,14 @@ colour. This site's cloth is **roof slate**, `#40484D`, as on the hub's United K
   small sans-serif headings between thin rules. "Before you bid" sits beside a gilt rule.
 - **The footer** under a double rule, like the masthead.
 
+## Where the look lives
+
+The stylesheet is `src/landlords/static/styles.css`, beside the scripts, the icon and the fonts. The build copies
+them all into `assets/`, each with a fingerprint of its content in its name (`assets/styles.3f9a2c1d.css`), and the
+pages name those files. A changed file gets a new address, so Cloudflare and browsers can keep anything in `assets/`
+for a year and still never serve a page with an old stylesheet. Pages themselves are checked with the server each
+time. The mark has its size in the page as well as in the stylesheet, so it stays small if the stylesheet fails.
+
 ## Shared with the siblings
 
 Square corners, ruled lists, colour only where it carries meaning, one fluid type scale, visible focus rings, hover

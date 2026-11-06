@@ -7,6 +7,8 @@ config/wording.toml. Every figure links to the published file it comes from, lis
 from __future__ import annotations
 
 import html
+import json
+import re
 import shutil
 from collections import Counter
 from datetime import date
@@ -73,9 +75,13 @@ NAV = [("index.html", "Find a landlord"), ("areas/index.html", "Areas"), ("compa
 
 _LAUNCHED = False
 _SITE: dict = {}
-# The stylesheet's, scripts' and icon's names for this build, each with a fingerprint of its content
-# ("styles.3f9a2c1d.css"): a changed file gets a new name, so no cache (Cloudflare's, a browser's) can serve the old one.
+# The files every page uses (stylesheet, scripts, icon, fonts), by their plain name, and where this build put them:
+# under assets/, with a fingerprint of their content in the name ("assets/styles.3f9a2c1d.css"). A changed file gets a
+# new address that no cache (Cloudflare's, a browser's) has seen, so a page never meets an old stylesheet, as it did
+# on 6 November 2026. The shared front door and the API tell caches to keep anything under /assets/ for a year.
 _ASSETS: dict[str, str] = {}
+ASSETS = "assets"
+STATIC = Path(__file__).parent / "static"
 
 
 def asset(name: str) -> str:
@@ -87,6 +93,33 @@ def fingerprint(name: str, content: bytes) -> str:
 
     stem, _, ext = name.rpartition(".")
     return f"{stem}.{hashlib.sha256(content).hexdigest()[:10]}.{ext}"
+
+
+def write_assets(out: Path) -> dict[str, str]:
+    """Copy the stylesheet, scripts, icon and fonts into ``out/assets/`` under fingerprinted names, and return where
+    each went. The fonts go first, because the stylesheet names them: it is written with their new names in it."""
+    folder = out / ASSETS
+    (folder / "fonts").mkdir(parents=True)
+    names: dict[str, str] = {}
+    css = CSS_FILE.read_text()
+    for font in sorted((STATIC / "fonts").glob("*.woff2")):
+        new = fingerprint(font.name, font.read_bytes())
+        shutil.copy(font, folder / "fonts" / new)
+        names[f"fonts/{font.name}"] = f"{ASSETS}/fonts/{new}"
+        css = css.replace(f"url(fonts/{font.name})", f"url(fonts/{new})")
+    missing = [u for u in re.findall(r"url\(fonts/([^)]+)\)", css) if f"{ASSETS}/fonts/{u}" not in names.values()]
+    if missing:
+        raise RuntimeError(f"styles.css names fonts that aren't in src/landlords/static/fonts/: {missing}")
+    data = css.encode()
+    names["styles.css"] = f"{ASSETS}/{fingerprint('styles.css', data)}"
+    (out / names["styles.css"]).write_bytes(data)
+    for name in ("search.js", "compare.js", "icon.svg"):
+        content = (STATIC / name).read_bytes()
+        names[name] = f"{ASSETS}/{fingerprint(name, content)}"
+        (out / names[name]).write_bytes(content)
+    # for the API's own pages (the approval page), which use this build's stylesheet
+    (out / "assets.json").write_text(json.dumps(names, indent=1) + "\n")
+    return names
 
 
 def alpha_banner(words: dict) -> str:
@@ -104,7 +137,8 @@ def alpha_banner(words: dict) -> str:
             f'{link}{esc(after)}</p></div>')
 
 
-MARK = ('<svg class="mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">'
+# width and height as well as the stylesheet's size, so the mark stays small even if the stylesheet doesn't load
+MARK = ('<svg class="mark" viewBox="0 0 64 64" width="46" height="46" aria-hidden="true" focusable="false">'
         '<path class="mk-roof" d="M8 29 32 10l24 19"/><rect class="mk-book" x="17" y="29" width="30" height="27"/>'
         '<path class="mk-band" d="M17 36h30M17 40h30"/><path class="mk-shelf" d="M6 57.5h52"/></svg>')
 
@@ -128,7 +162,7 @@ def page(title: str, body: str, w: dict, depth: int, description: str = "", scri
 <html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{esc(title)}</title><meta name="description" content="{esc(description or site['tagline'])}">
 {"" if live else '<meta name="robots" content="noindex">'}<link rel="icon" href="{up}{asset('icon.svg')}" type="image/svg+xml">
-<link rel="preload" href="{up}fonts/source-serif-4-normal-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="{up}{asset('fonts/source-serif-4-normal-latin.woff2')}" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{up}{asset('styles.css')}">{js}</head>
 <body><a class="skip" href="#main">Skip to content</a>{alpha_banner(site)}
 <header class="mast"><div class="wrap mast-in"><a class="brand" href="{up}index.html">{MARK}<span>
@@ -366,20 +400,13 @@ def build(settings: Settings, out: Path | None = None) -> dict[str, int]:
     global _LAUNCHED, _SITE, _ASSETS
     _LAUNCHED = bool(settings.section("site").get("launched"))
     _SITE = settings.section("site")
-    from landlords.site_pages import STATIC
-
-    css = CSS_FILE.read_bytes()
-    _ASSETS = {"styles.css": fingerprint("styles.css", css)}
-    for name in ("search.js", "compare.js", "icon.svg"):
-        _ASSETS[name] = fingerprint(name, (STATIC / name).read_bytes())
     w = load_toml("wording.toml")
     out = out or settings.data_dir / "site"
     if out.exists():
         shutil.rmtree(out)
     (out / "landlords").mkdir(parents=True)
     (out / "method").mkdir()
-    (out / asset("styles.css")).write_bytes(css)
-    (out / "styles.css").write_bytes(css)   # under its plain name too, for the API's own pages (src/landlords/api.py)
+    _ASSETS = write_assets(out)
     profiles = build_profiles(settings)
     sizes = []
     for p in profiles:

@@ -16,9 +16,6 @@ from landlords.register import normalise, slugify
 from landlords.score import rules
 from landlords.site import band_name, esc, fill, nice_date, page
 
-STATIC = Path(__file__).parent / "static"
-
-
 # Search ----------------------------------------------------------------------------------------------------------------
 
 
@@ -354,15 +351,10 @@ def robots_and_sitemap(settings: Settings, out: Path) -> None:
 
 
 def build_extra(settings: Settings, profiles: list[dict], out: Path, w: dict) -> dict:
-    """Write every page except the profiles and the method page."""
-    import shutil
-
+    """Write every page except the profiles and the method page (the stylesheet, scripts and fonts are in assets/,
+    written by ``site.write_assets``)."""
     from landlords.register import aliases, landlords
-    from landlords.site import asset
 
-    for name in ("search.js", "compare.js", "icon.svg"):
-        shutil.copy(STATIC / name, out / asset(name))   # fingerprinted (landlords.site.fingerprint)
-    shutil.copytree(STATIC / "fonts", out / "fonts", ignore=shutil.ignore_patterns("*.md"))
     (out / "names.json").write_text(json.dumps(names_json(profiles, landlords(), aliases(), w),
                                                separators=(",", ":")))
     (out / "index.html").write_text(index_html(profiles, w))

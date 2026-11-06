@@ -98,7 +98,7 @@ def test_the_launch_switch(tmp_path):
 
     test = build(launched=False)
     page = (test / "landlords" / "abri-group" / "index.html").read_text()
-    assert 'name="robots" content="noindex"' in page and 'class="test"' in page
+    assert 'name="robots" content="noindex"' in page
     assert "Disallow: /\n" in (test / "robots.txt").read_text() and not (test / "sitemap.xml").exists()
 
     with pytest.raises(RuntimeError, match="url"):
@@ -106,7 +106,7 @@ def test_the_launch_switch(tmp_path):
 
     live = build(launched=True, url="https://example.org")
     page = (live / "landlords" / "abri-group" / "index.html").read_text()
-    assert "noindex" not in page and 'class="test"' not in page
+    assert "noindex" not in page
     assert "Sitemap: https://example.org/sitemap.xml" in (live / "robots.txt").read_text()
     assert "<loc>https://example.org/landlords/abri-group/</loc>" in (live / "sitemap.xml").read_text()
     site.build(settings, settings.data_dir / "site")  # put the test-version pages back

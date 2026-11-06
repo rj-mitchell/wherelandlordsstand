@@ -6,9 +6,9 @@
 name = "Where Landlords Stand"
 tagline = "What social landlords in England are like, from what the regulator and the Housing Ombudsman publish."
 independence = "Independent. Not part of the Regulator of Social Housing, the Housing Ombudsman or any landlord."
-not_live = "This is a test version. It is not public yet."
-# Shown on every page while [site] stage = "alpha" (config/settings.toml). {email} becomes a link.
-alpha = "Alpha: this site is new and still being tested, so some things may be missing or wrong. Please send any feedback to {email}."
+# Shown at the top of every page while [site] stage = "alpha" (config/settings.toml). The words before the colon
+# become its label; {email} becomes a link.
+alpha = "Alpha: this site is new and still being tested, so some things may be missing or wrong. We can't promise that everything here is right, so use it at your own risk. Please send any feedback to {email}."
 parent = "A project of Where They Stand, which is applying to register as a charity in England and Wales."
 
 [card]

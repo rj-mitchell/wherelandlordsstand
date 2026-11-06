@@ -59,7 +59,7 @@ def index_html(profiles: list[dict], w: dict) -> str:
     for letter, ps in by_letter.items():
         items = "".join(f'<li><a href="landlords/{esc(p["slug"])}/index.html">{esc(p["name"])}</a></li>' for p in ps)
         parts.append(f'<h3>{esc(letter)}</h3><ul class="az">{items}</ul>')
-    return page(w["site"]["name"], "".join(parts), w, depth=0, scripts=("search.js",))
+    return page(w["site"]["name"], "".join(parts), w, depth=0, scripts=("search.js",), here="index.html")
 
 
 # Council areas ---------------------------------------------------------------------------------------------------------
@@ -105,7 +105,7 @@ def area_html(a: dict, w: dict, sources: dict) -> str:
             f'<p class="hint">{esc(t["notes"])}</p>'
             + (f'<p class="hint">* {esc(t["council_note"])}</p>' if any(x[2] == "council total" for x in a["landlords"]) else "")
             + f'<p class="warn">{esc(w["card"]["refusal"])}</p>' + src.ref(*a["sources"]) + src.html(w))
-    return page(f"{a['name']} – {w['site']['name']}", body, w, depth=2,
+    return page(f"{a['name']} – {w['site']['name']}", body, w, depth=2, here="areas/index.html",
                 description=fill(t["intro"], count=len(a["landlords"])))
 
 
@@ -115,7 +115,7 @@ def areas_index_html(areas: dict[str, dict], w: dict) -> str:
                     f'<span class="hint">({len(a["landlords"])})</span></li>'
                     for a in sorted(areas.values(), key=lambda a: a["name"]))
     body = f"<h1>{esc(t['heading'])}</h1><p>{esc(t['index_intro'])}</p><ul class=\"az\">{items}</ul>"
-    return page(f"{t['heading']} – {w['site']['name']}", body, w, depth=1)
+    return page(f"{t['heading']} – {w['site']['name']}", body, w, depth=1, here="areas/index.html")
 
 
 # Compare ---------------------------------------------------------------------------------------------------------------
@@ -153,7 +153,8 @@ def compare_html(w: dict) -> str:
             f'<ul id="picks" class="results"></ul><div id="table"></div></div>'
             f'<script type="application/json" id="compare-text">{json.dumps(text)}</script>'
             f'<noscript><p>{esc(t["noscript"])}</p></noscript><p class="warn">{esc(w["card"]["refusal"])}</p>')
-    return page(f"{t['heading']} – {w['site']['name']}", body, w, depth=1, scripts=("search.js", "compare.js"))
+    return page(f"{t['heading']} – {w['site']['name']}", body, w, depth=1, scripts=("search.js", "compare.js"),
+                here="compare/index.html")
 
 
 # Data downloads --------------------------------------------------------------------------------------------------------
@@ -297,7 +298,7 @@ def rights_html(w: dict) -> str:
         parts.append(f'<p class="src">Sources: {links}. Checked {esc(nice_date(sec["checked"]))}; to be checked again by '
                      f'{esc(nice_date(sec["recheck"]))}.</p>')
     parts.append(f'<p class="hint">{esc(r["not_advice"])}</p>')
-    return page(f"{r['heading']} – {w['site']['name']}", "".join(parts), w, depth=1)
+    return page(f"{r['heading']} – {w['site']['name']}", "".join(parts), w, depth=1, here="rights/index.html")
 
 
 # About, terms, accessibility, not found; robots.txt and the sitemap -------------------------------------------------
@@ -328,17 +329,19 @@ def not_found_html(w: dict) -> str:
     t = load_toml("pages.toml")["not_found"]
     # Served for any missing address, at any depth, so its links start from the site's root.
     body = f'<h1>{esc(t["heading"])}</h1><p>{esc(t["text"])}</p><p><a href="/index.html">{esc(w["search"]["heading"])}</a></p>'
-    return page(f"{t['heading']} – {w['site']['name']}", body, w, depth=0).replace('href="styles.css"', 'href="/styles.css"') \
-        .replace('href="icon.svg"', 'href="/icon.svg"').replace('href="index.html"', 'href="/index.html"')
+    import re
+
+    text = page(f"{t['heading']} – {w['site']['name']}", body, w, depth=0)
+    return re.sub(r'(href|src)="(?![a-z]+:|/|#)', r'\1="/', text)   # every link and file from the site's root
 
 
 def robots_and_sitemap(settings: Settings, out: Path) -> None:
-    """While the site is a test version, crawlers are asked to stay away. Once launched, they get a sitemap."""
+    """Until the site is launched, crawlers are asked to stay away. Once launched, they get a sitemap."""
     from landlords.site import launched
 
     site = settings.section("site")
     if not launched():
-        (out / "robots.txt").write_text("# A test version, not yet public.\nUser-agent: *\nDisallow: /\n")
+        (out / "robots.txt").write_text("# Not launched yet: please don't index.\nUser-agent: *\nDisallow: /\n")
         return
     url = (site.get("url") or "").rstrip("/")
     if not url.startswith("https://"):
@@ -358,6 +361,7 @@ def build_extra(settings: Settings, profiles: list[dict], out: Path, w: dict) ->
 
     for name in ("search.js", "compare.js", "icon.svg"):
         shutil.copy(STATIC / name, out / name)
+    shutil.copytree(STATIC / "fonts", out / "fonts", ignore=shutil.ignore_patterns("*.md"))
     (out / "names.json").write_text(json.dumps(names_json(profiles, landlords(), aliases(), w),
                                                separators=(",", ":")))
     (out / "index.html").write_text(index_html(profiles, w))

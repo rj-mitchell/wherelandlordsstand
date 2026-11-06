@@ -54,8 +54,7 @@ Where Councils Stand do.
    it (`landlords reports --close <id>`).
 4. **Launch** ("Releasing it" in docs/DEPLOY.md): Cloudflare and an origin certificate for the domain; the site in
    `SITES` and `cloudflare.sh site <domain>` on Where MPs Stand's side; `LANDLORDS_SITE_URL` and
-   `LANDLORDS_LAUNCHED=true` in `deploy/.env`; then `landlords update && landlords publish`. Check: no "test version"
-   line, `robots.txt` allows crawling, `/sitemap.xml` lists the pages, `check.sh` shows the site working.
+   `LANDLORDS_LAUNCHED=true` in `deploy/.env`; then `landlords update && landlords publish`. Check: `robots.txt` allows crawling, `/sitemap.xml` lists the pages, `check.sh` shows the site working.
 5. Tell the sister sites' about pages.
 
 ## After launch

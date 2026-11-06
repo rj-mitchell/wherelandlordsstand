@@ -68,7 +68,7 @@ When the owner says so, and once the name and domain are settled (docs/DECISIONS
    cd /opt/wherelandlordsstand/deploy && bash update.sh
    docker compose run --rm -T app sh -c 'landlords update && landlords publish'
    ```
-   Check: no "test version" line, `robots.txt` allows crawling, `/sitemap.xml` lists the pages, and
+   Check: `robots.txt` allows crawling, `/sitemap.xml` lists the pages, and
    `bash /opt/hansardgpt/deploy/check.sh` says the site works. From then on, new pages wait for approval by email.
 
 **This repository's default branch must be `main`** (GitHub: Settings → General → Default branch). The server pulls

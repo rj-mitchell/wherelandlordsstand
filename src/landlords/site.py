@@ -17,40 +17,113 @@ from landlords.profile import build_profiles
 from landlords.score import rules
 
 CSS = """
-:root{color-scheme:light dark;--paper:#fbfaf7;--ink:#1d1d1f;--muted:#5b5b62;--rule:#d9d6cf;--accent:#1f4f7a;
---band:#1f4f7a;--band-off:#dfe5ec;--card:#ffffff;--note:#fff6dc;--note-ink:#4a3b00}
-@media (prefers-color-scheme:dark){:root{--paper:#141518;--ink:#ecebe8;--muted:#a8a8b0;--rule:#34363c;--accent:#8fbbe6;
---band:#8fbbe6;--band-off:#2b3440;--card:#1b1d21;--note:#3a3216;--note-ink:#f3e3a8}}
-*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);
-font:1.0625rem/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-a{color:var(--accent)}a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+/* Where Landlords Stand: the Bound Volume family's look (docs/DESIGN.md). Source Serif 4 is served from this site. */
+@font-face{font-family:"Source Serif 4";font-style:normal;font-weight:400 700;font-display:swap;
+src:url(fonts/source-serif-4-normal-latin.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Source Serif 4";font-style:normal;font-weight:400 700;font-display:swap;
+src:url(fonts/source-serif-4-normal-latin-ext.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:"Source Serif 4";font-style:italic;font-weight:400 700;font-display:swap;
+src:url(fonts/source-serif-4-italic-latin.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Source Serif 4";font-style:italic;font-weight:400 700;font-display:swap;
+src:url(fonts/source-serif-4-italic-latin-ext.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}
+:root{color-scheme:light dark;--paper:#f7f5ef;--paper-hi:#fcfbf8;--ink:#1c2427;--muted:#4f565a;--rule:#d3cdbf;
+--rule-strong:#1c2427;--slate:#40484d;--link:#2f4a5e;--band-off:#e2e0d8;--gilt:#7a5c1c;--gilt-mark:#b08d3c;
+--note:#efeadf;--strip:#e7e2d5;--serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+--sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;--wrap:64rem}
+@media (prefers-color-scheme:dark){:root{--paper:#14181a;--paper-hi:#1a1f22;--ink:#e9e6de;--muted:#aab1b5;
+--rule:#353c40;--rule-strong:#e9e6de;--slate:#b9c3c9;--link:#a9c6dc;--band-off:#2c3337;--gilt:#d9bc72;
+--gilt-mark:#d9bc72;--note:#20262a;--strip:#1f2528}}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1.0625rem/1.6 var(--serif);
+font-optical-sizing:auto}
+a{color:var(--link);text-decoration-thickness:1px;text-underline-offset:.18em}
+a:hover{color:var(--ink);text-decoration-thickness:2px}
+:focus-visible{outline:3px solid var(--slate);outline-offset:2px}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-.skip{position:absolute;left:-999px}.skip:focus{left:1rem;top:1rem;background:var(--card);padding:.5rem}
-header,main,footer{max-width:46rem;margin:0 auto;padding:0 1rem}
-header{padding-top:1rem;border-bottom:1px solid var(--rule)}
-nav{display:flex;flex-wrap:wrap;gap:.25rem 1rem;font-size:.95rem;margin:.25rem 0 .5rem}
-label{display:block;font-weight:600;margin:.75rem 0 .25rem}input,textarea,select,button{font:inherit;color:inherit}
-input[type=search],input[type=text],input[type=email],textarea{width:100%;padding:.5rem;border:2px solid var(--ink);
-background:var(--card)}button{padding:.5rem 1rem;border:2px solid var(--ink);background:var(--ink);color:var(--paper);
-cursor:pointer}ul.results{list-style:none;padding:0}ul.results li{padding:.5rem 0;border-bottom:1px solid var(--rule)}
-.hint{color:var(--muted);font-size:.9rem}.cmp th{min-width:7rem}.scroll{overflow-x:auto}header p{margin:.25rem 0 .75rem;color:var(--muted);font-size:.9rem}
-.site{font-weight:700;text-decoration:none;color:var(--ink)}.test,.alpha{background:var(--note);color:var(--note-ink);
-padding:.4rem .75rem;font-size:.9rem;margin:.5rem 0}.alpha a{color:inherit}
-h1{font-size:1.9rem;line-height:1.2;margin:1.25rem 0 .25rem}h2{font-size:1.3rem;margin:2rem 0 .5rem}
-h3{font-size:1.05rem;margin:1.25rem 0 .25rem}.sub{color:var(--muted);margin:0 0 1rem}
-.card{background:var(--card);border:2px solid var(--ink);padding:1rem 1.1rem;margin:1rem 0}
-.card h2{margin-top:0}.card section{border-top:1px solid var(--rule);padding:.6rem 0}
-.card section:first-of-type{border-top:0}.warn{font-weight:600;border-left:4px solid var(--accent);padding-left:.75rem}
-.grade{font-size:1.6rem;font-weight:700}.band{display:flex;align-items:center;gap:.6rem;margin:.3rem 0}
-.meter{display:inline-flex;gap:3px;flex:none}.meter i{width:14px;height:14px;background:var(--band-off);display:block}
-.meter i.on{background:var(--band)}.trend{color:var(--muted);font-size:.95rem}
-.src{font-size:.85rem;color:var(--muted);margin:.25rem 0 0}
-table{border-collapse:collapse;width:100%;font-size:.95rem}th,td{text-align:left;padding:.35rem .4rem;
-border-bottom:1px solid var(--rule);vertical-align:top}td.n{text-align:right;white-space:nowrap}
-ol.sources{font-size:.9rem;padding-left:1.25rem}ol.sources li{margin:.4rem 0;word-break:break-word}
-.note{background:var(--note);color:var(--note-ink);padding:.5rem .75rem}
-footer{border-top:1px solid var(--rule);margin-top:2.5rem;padding:1rem;color:var(--muted);font-size:.85rem}
-ul.list{padding-left:1.1rem}ul.az{list-style:none;padding:0;columns:2 16rem}ul.az li{margin:.2rem 0;break-inside:avoid}
+.skip{position:absolute;left:-999px;font-family:var(--sans)}
+.skip:focus{left:1rem;top:1rem;background:var(--paper-hi);padding:.5rem;z-index:2}
+.wrap{max-width:var(--wrap);margin-inline:auto;padding-inline:clamp(1rem,4vw,2rem)}
+/* the alpha strip, as on the sibling sites */
+.strip{background:var(--strip);border-bottom:1px solid var(--rule);font:.85rem/1.45 var(--sans)}
+.strip p{margin-block:0;padding-block:.45rem}.strip a{color:inherit}
+.chip{display:inline-block;background:var(--ink);color:var(--paper);font-weight:700;font-size:.72rem;
+letter-spacing:.06em;text-transform:uppercase;padding:.05rem .4rem;margin-right:.45rem;vertical-align:.08em}
+/* the masthead */
+.mast{border-bottom:3px double var(--rule-strong)}
+.mast-in{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:.5rem 2rem;
+padding-block:1.4rem .9rem}
+.brand{display:flex;align-items:center;gap:.8rem;color:var(--ink);text-decoration:none;flex:1 1 26rem}
+.brand:hover{color:var(--ink)}.mark{width:46px;height:46px;flex:none}
+.mk-roof{fill:none;stroke:var(--slate);stroke-width:6}.mk-book{fill:var(--slate)}
+.mk-band{stroke:var(--gilt-mark);stroke-width:2}.mk-shelf{stroke:var(--ink);stroke-width:3}
+.name{display:block;font-size:clamp(1.45rem,1.1rem + 1.4vw,1.9rem);font-weight:600;line-height:1.1;
+letter-spacing:-.005em}
+.tag{display:block;font-style:italic;color:var(--muted);font-size:.95rem;line-height:1.35;margin-top:.15rem;
+max-width:34rem}
+.indep{margin:0;font-style:italic;color:var(--muted);font-size:.85rem;flex:0 1 18rem;text-align:right}
+@media (max-width:52rem){.indep{text-align:left;flex-basis:100%}}
+nav.tabs{display:flex;flex-wrap:wrap;gap:0 clamp(.9rem,2.5vw,1.4rem);font:500 .92rem/1 var(--sans)}
+nav.tabs a{color:var(--ink);text-decoration:none;padding:.75rem 0 .6rem;border-bottom:3px solid transparent}
+nav.tabs a:hover{border-bottom-color:var(--rule)}
+nav.tabs a[aria-current=page]{border-bottom-color:var(--slate);font-weight:700}
+/* text */
+main{padding-block:.5rem 1rem}
+main p,main li{max-width:44rem}
+h1{font-size:clamp(1.8rem,1.3rem + 2vw,2.5rem);line-height:1.15;font-weight:600;margin:1.6rem 0 .4rem;
+letter-spacing:-.01em}
+h2{font-size:1.2rem;font-weight:700;font-variant-caps:all-small-caps;letter-spacing:.08em;margin:2.4rem 0 .6rem;
+padding-top:.55rem;border-top:1px solid var(--rule-strong)}
+h3{font-size:1.1rem;font-weight:600;margin:1.4rem 0 .3rem}
+.sub{color:var(--muted);font-style:italic;margin:0 0 1.2rem}
+.hint,.src{font-family:var(--sans);color:var(--muted);font-size:.85rem}
+.src{margin:.3rem 0 0}.src a{color:var(--muted)}
+.note{background:var(--note);border-left:3px solid var(--slate);padding:.55rem .85rem;margin:.75rem 0}
+.warn{border-left:3px solid var(--gilt);padding:.15rem 0 .15rem .85rem;font-style:italic}
+/* forms */
+label{display:block;font:600 .95rem/1.4 var(--sans);margin:1rem 0 .35rem}
+input,textarea,select,button{font:inherit;color:inherit}
+input[type=search],input[type=text],input[type=email],textarea{width:100%;max-width:44rem;padding:.65rem .75rem;
+border:1px solid var(--muted);border-bottom:2px solid var(--ink);background:var(--paper-hi);font-family:var(--serif);
+font-size:1.05rem}
+button{font:600 .95rem/1 var(--sans);padding:.7rem 1.2rem;border:0;background:var(--slate);color:var(--paper);
+cursor:pointer}
+button:hover{background:var(--ink)}
+ul.results{list-style:none;padding:0;max-width:44rem}
+ul.results li{padding:.6rem 0;border-bottom:1px solid var(--rule)}
+/* the landlord's card */
+.card{background:var(--paper-hi);border:1px solid var(--rule);border-top:4px solid var(--slate);
+padding:.4rem clamp(1rem,3vw,1.6rem) 1rem;margin:1.2rem 0 1.6rem}
+.card>h2{border-top:0;margin-top:.8rem}
+.card section{border-top:1px solid var(--rule);padding:.4rem 0 .8rem}
+.card section:first-of-type{border-top:0}
+.card section h3{font:700 .8rem/1.3 var(--sans);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);
+margin:.9rem 0 .4rem}
+.grade{display:inline-block;font-size:2rem;font-weight:700;line-height:1;border:2px solid var(--ink);
+padding:.35rem .6rem;margin:.2rem 0 .4rem;letter-spacing:.02em}
+.band{display:flex;align-items:center;gap:.75rem;margin:.4rem 0}
+.meter{display:inline-flex;gap:3px;flex:none}
+.meter i{width:15px;height:15px;display:block;background:var(--band-off);border:1px solid var(--rule)}
+.meter i.on{background:var(--slate);border-color:var(--slate)}
+.trend{color:var(--muted);font-size:.92rem}
+/* tables, lists, sources */
+table{border-collapse:collapse;width:100%;font-size:.95rem;margin:.4rem 0}
+th,td{text-align:left;padding:.45rem .5rem;border-bottom:1px solid var(--rule);vertical-align:top}
+thead th{font:700 .78rem/1.3 var(--sans);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
+border-bottom:2px solid var(--rule-strong)}
+th[scope=colgroup]{font-weight:600;padding-top:.9rem}
+td.n,th.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto}.cmp th{min-width:8rem}
+ul.list{padding-left:1.2rem}
+ul.az{list-style:none;padding:0;columns:3 14rem;column-gap:2rem;max-width:none}
+ul.az li{margin:.2rem 0;break-inside:avoid}
+main>h3{font:700 1rem/1 var(--sans);margin:1.6rem 0 .5rem;padding-bottom:.3rem;border-bottom:1px solid var(--rule)}
+ol.sources{font-size:.9rem;padding-left:1.3rem}ol.sources li{margin:.45rem 0;word-break:break-word}
+/* the footer */
+footer{margin-top:3rem;border-top:3px double var(--rule-strong);padding-block:1.1rem 2rem;color:var(--muted);
+font:.85rem/1.5 var(--sans)}
+footer p{margin:.35rem 0}footer a{color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){a,nav.tabs a{transition:border-color .12s,color .12s}}
+@media (forced-colors:active){.meter i.on{background:CanvasText}.meter i{border-color:CanvasText}}
 """
 
 
@@ -110,13 +183,23 @@ _SITE: dict = {}
 
 
 def alpha_banner(words: dict) -> str:
-    """The alpha banner, while [site] stage = "alpha", with the feedback address as a link."""
+    """The alpha strip at the top of every page, while [site] stage = "alpha", as on the sibling sites: its label
+    (the words before the colon) as a chip, and the feedback address as a link."""
     if _SITE.get("stage") != "alpha" or not words.get("alpha"):
         return ""
     email = _SITE.get("feedback_email") or _SITE.get("contact", "")
     before, _, after = words["alpha"].partition("{email}")
+    label, _, rest = before.partition(":")
     link = f'<a href="mailto:{esc(email)}">{esc(email)}</a>' if email else ""
-    return f'<p class="alpha"><strong>{esc(before.split(":", 1)[0])}:</strong>{esc(before.split(":", 1)[1])}{link}{esc(after)}</p>'
+    rest = rest.strip()
+    rest = rest[:1].upper() + rest[1:]                       # "Alpha: this site…" reads "ALPHA This site…"
+    return (f'<div class="strip"><p class="wrap alpha"><span class="chip">{esc(label)}</span>{esc(rest)} '
+            f'{link}{esc(after)}</p></div>')
+
+
+MARK = ('<svg class="mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">'
+        '<path class="mk-roof" d="M8 29 32 10l24 19"/><rect class="mk-book" x="17" y="29" width="30" height="27"/>'
+        '<path class="mk-band" d="M17 36h30M17 40h30"/><path class="mk-shelf" d="M6 57.5h52"/></svg>')
 
 
 def launched() -> bool:
@@ -124,23 +207,29 @@ def launched() -> bool:
     return _LAUNCHED
 
 
-def page(title: str, body: str, w: dict, depth: int, description: str = "", scripts: tuple[str, ...] = ()) -> str:
-    """A whole page: our own stylesheet and scripts only, nothing from anywhere else."""
+def page(title: str, body: str, w: dict, depth: int, description: str = "", scripts: tuple[str, ...] = (),
+         here: str = "") -> str:
+    """A whole page: our own stylesheet, fonts and scripts only, nothing from anywhere else. ``here`` is the NAV entry
+    this page belongs to, marked as the current tab."""
     up = "../" * depth
     live = launched()
-    nav = "".join(f'<a href="{up}{href}">{esc(label)}</a>' for href, label in NAV)
+    nav = "".join(f'<a href="{up}{href}"{' aria-current="page"' if href == here else ""}>{esc(label)}</a>'
+                  for href, label in NAV)
     js = "".join(f'<script src="{up}{src}" defer></script>' for src in scripts)
     site = w["site"]
     return f"""<!doctype html>
 <html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{esc(title)}</title><meta name="description" content="{esc(description or site['tagline'])}">
 {"" if live else '<meta name="robots" content="noindex">'}<link rel="icon" href="{up}icon.svg" type="image/svg+xml">
+<link rel="preload" href="{up}fonts/source-serif-4-normal-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{up}styles.css">{js}</head>
-<body><a class="skip" href="#main">Skip to content</a>
-<header><a class="site" href="{up}index.html">{esc(site['name'])}</a><p>{esc(site['tagline'])}</p>
-<nav aria-label="Main">{nav}</nav>{alpha_banner(site)}{"" if live else f'<p class="test">{esc(site["not_live"])}</p>'}</header>
-<main id="main">{body}</main>
-<footer><p>{esc(site['independence'])}</p><p>{esc(site['parent'])}</p>
+<body><a class="skip" href="#main">Skip to content</a>{alpha_banner(site)}
+<header class="mast"><div class="wrap mast-in"><a class="brand" href="{up}index.html">{MARK}<span>
+<span class="name">{esc(site['name'])}</span><span class="tag">{esc(site['tagline'])}</span></span></a>
+<p class="indep">{esc(site['independence'])}</p></div>
+<nav class="tabs wrap" aria-label="Main">{nav}</nav></header>
+<main id="main" class="wrap">{body}</main>
+<footer class="wrap"><p>{esc(site['parent'])}</p>
 <p><a href="{up}about/index.html">About</a> · <a href="{up}corrections/index.html">Report a mistake</a> ·
 <a href="{up}data/index.html">Download the data</a> · <a href="{up}terms/index.html">Terms</a> ·
 <a href="{up}privacy/index.html">Privacy</a> · <a href="{up}accessibility/index.html">Accessibility</a></p></footer>
@@ -363,7 +452,7 @@ share of homes that had each check.</p>
 <p>The Regulator of Social Housing's Tenant Satisfaction Measures, regulatory judgements and statistical returns,
 and the Housing Ombudsman's tables of landlords with performance reports. Every figure on a landlord's page links to
 its file.</p>"""
-    return page(f"How we compare landlords – {w['site']['name']}", body, w, depth=1)
+    return page(f"How we compare landlords – {w['site']['name']}", body, w, depth=1, here="method/index.html")
 
 
 def build(settings: Settings, out: Path | None = None) -> dict[str, int]:

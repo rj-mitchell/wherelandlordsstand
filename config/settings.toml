@@ -18,8 +18,8 @@ min_homes = 1000
 
 [site]
 name = "Where Landlords Stand"
-# The launch switch (docs/LAUNCH.md). While false, every page says it is a test version, asks search engines not to
-# index it (noindex), and robots.txt asks crawlers to stay away. Set `url` (the domain, with https://) first: the
+# The launch switch (docs/LAUNCH.md). While false, every page asks search engines not to index it (noindex),
+# robots.txt asks crawlers to stay away, and new pages are published without asking for approval by email. Set `url` (the domain, with https://) first: the
 # sitemap needs it.
 launched = false
 url = ""

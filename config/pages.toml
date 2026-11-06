@@ -54,7 +54,7 @@ sections = [
 [accessibility]
 heading = "Accessibility"
 # Filled in from the latest accessibility test (docs/LAUNCH.md).
-tested = "2026-11-03"
+tested = "2026-11-06"
 tested_how = "Every kind of page (a landlord, a council, a merged landlord, one with no survey results, an area, the lists, compare with three landlords, search with and without results, rights, method, downloads, corrections, privacy, about, terms, this page and \"not found\") was checked with the axe-core automated checker against WCAG 2.2 AA, at phone and desktop sizes, in light and dark modes, with no failures. Keyboard use was checked by script."
 sections = [
   ["What you can expect", [

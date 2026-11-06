@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # Lint and the tests that need no data. The tests on the real data (tests/test_data.py: the 100 KB page budget, no
+  # scripts on landlords' pages, the family binding, reconciliation) skip themselves here; the next job runs them.
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.32"
+      - run: uv python install 3.12
+      - run: uv sync --frozen --python 3.12
+      - run: uv run ruff check .
+      - run: uv run pytest
+
+  # The real pages, built from the publishers' files, then the tests on them and the accessibility check. The files are
+  # kept in the Actions cache and fetched again only when config/sources.toml changes, so the publishers' servers are
+  # asked once, not on every push (docs/DECISIONS.md: being a good citizen).
+  pages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.32"
+      - run: uv python install 3.12
+      - run: uv sync --frozen --python 3.12
+      - name: The publishers' files, from the cache
+        id: raw
+        uses: actions/cache@v4
+        with:
+          path: data/raw
+          key: raw-${{ hashFiles('config/sources.toml') }}
+          restore-keys: raw-
+      - name: Fetch new files (only when config/sources.toml has changed)
+        if: steps.raw.outputs.cache-hit != 'true'
+        run: uv run landlords fetch || echo "::warning::Some sources could not be fetched (see above)"
+      - run: uv run landlords load
+      - run: uv run landlords build
+      - name: Tests on the real data and pages
+        run: uv run pytest tests/test_data.py
+      - name: Serve the pages
+        run: |
+          uv run landlords serve --port 8000 > serve.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8000/api/health && break; sleep 1; done
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Accessibility check (axe, WCAG 2.2 AA, light and dark, desktop and phone)
+        run: |
+          mkdir -p /tmp/a11y && cp scripts/a11y.mjs /tmp/a11y/
+          cd /tmp/a11y
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund playwright@1.47.2 axe-core@4.10.0
+          npx playwright install --with-deps chromium
+          node a11y.mjs http://127.0.0.1:8000
+      - name: Show the server's log if anything failed
+        if: failure()
+        run: cat serve.log || true
+
+  # The server's image must build, and its command must run inside it.
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: wherelandlordsstand:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - run: docker run --rm wherelandlordsstand:ci landlords --help

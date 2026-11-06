@@ -117,6 +117,10 @@ uv run landlords serve            # the site and its API at http://127.0.0.1:800
 uv run pytest
 ```
 
+GitHub Actions (`.github/workflows/ci.yml`) runs ruff and the tests on every pull request; builds the real pages from
+the publishers' files (kept in the Actions cache, fetched again only when `config/sources.toml` changes), runs the
+tests on them and checks them with axe-core (`scripts/a11y.mjs`); and builds the server's image.
+
 ## Known limitations
 
 - The method has not yet been reviewed by a housing-data expert, the tools have not been tested with applicants, and

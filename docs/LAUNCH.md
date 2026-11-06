@@ -41,8 +41,9 @@ engines in, comes when the owner says so. Ticked items are done; the rest need t
 - [x] **TSM 2025/26**: published 5 November 2026; loaded and reconciled the same day (docs/DATA.md).
 - [x] **Landlords with no 2025/26 results of their own**: all seven accounted for from the regulator's files, and
       their pages say who reports for them now (docs/DATA.md, `data_static/reporting.csv`).
-- [ ] **Rights page dates**: `landlords check` warns when a section is due. Due now: the Ombudsman's complaints
-      section weekly while its IT incident lasts; Awaab's Law on 1 December 2026 (phase 2 should be in force).
+- [ ] **Rights page dates**: `landlords check` warns when a section is due. The Ombudsman's complaints section is
+      due weekly while its IT incident lasts. Awaab's Law was brought up to date on 6 November 2026 (phase 2 is still
+      a draft); check it again on 1 December 2026, once phase 2 should be in force.
 - [x] **Where Councils Stand's council list**: Barnsley's and Sheffield's codes fixed there (merged 4 November
       2026), and the temporary mapping removed here.
 

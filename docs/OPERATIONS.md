@@ -141,5 +141,6 @@ A missed search that is really a landlord's name is added through `landlords mat
 ## The rights page
 
 Every section of `config/rights.toml` has a `recheck` date; `landlords check` warns once one has passed. The
-Ombudsman's complaints section is due weekly while its IT incident lasts; Awaab's Law on 1 December 2026, when phase 2
-should be in force; STAIRs by March 2027.
+Ombudsman's complaints section is due weekly while its IT incident lasts; Awaab's Law on 1 December 2026, to confirm
+that phase 2's regulations were made and are in force (on 6 November 2026 they were still a draft); STAIRs by March
+2027.

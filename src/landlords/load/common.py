@@ -17,7 +17,7 @@ import pyarrow.parquet as pq
 from python_calamine import CalamineWorkbook
 
 from landlords.config import Settings
-from landlords.fetch import latest
+from landlords.fetch import entries, latest
 
 
 class LayoutChanged(RuntimeError):
@@ -167,10 +167,14 @@ def file_ref(note: dict) -> dict:
 
 
 def record_sources(settings: Settings, notes: list[dict]) -> None:
-    """Keep the notes of the files a build read, in staging/sources.json, keyed by hash."""
+    """Keep the notes of the files a build read, in staging/sources.json, keyed by hash. The licence comes from
+    config/sources.toml as it is now, not as it was when the file was fetched, so a change to the terms reaches the
+    pages."""
+    licences = {(e.source, e.role, e.period): e.licence for e in entries()}
     path = settings.staging_dir / "sources.json"
     known = json.loads(path.read_text()) if path.exists() else {}
     for n in notes:
         known[n["sha256"]] = {k: n[k] for k in ("source", "role", "period", "title", "url", "page", "publisher",
                                                 "licence", "fetched_at", "file")}
+        known[n["sha256"]]["licence"] = licences.get((n["source"], n["role"], n["period"]), n["licence"])
     path.write_text(json.dumps(known, indent=2, sort_keys=True) + "\n")

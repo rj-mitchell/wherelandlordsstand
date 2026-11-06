@@ -131,6 +131,9 @@ uv run landlords missed                                    # searches that found
 uv run landlords backup --to backups                       # copy the state database
 ```
 
+The "report a mistake" form posts to the site's small API, so it works wherever the pages are served by `landlords
+serve` (on the server and on your own computer), but not when the built files are opened on their own.
+
 If a report shows a mistake of ours, fix it, add a line to `data_static/corrections.csv` (shown on the corrections
 page), rebuild and publish. If it is about a publisher's figure, we don't change it: reply and point to the publisher.
 A missed search that is really a landlord's name is added through `landlords match --accept` like any other alias.

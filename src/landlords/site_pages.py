@@ -246,8 +246,9 @@ def corrections_html(w: dict) -> str:
             f'<label for="message">{esc(t["message"])}</label><textarea id="message" name="message" rows="6" '
             f'maxlength="4000" required></textarea><label for="email">{esc(t["email"])}</label>'
             f'<input id="email" name="email" type="email" maxlength="200"><p class="hint">{esc(t["email_hint"])}</p>'
-            f'<p><button type="submit">{esc(t["send"])}</button></p></form>'
-            f'<p class="hint">{esc(t["offline"])}</p>')
+            f'<p><button type="submit">{esc(t["send"])}</button></p></form>')
+    # The form posts to the site's small API (src/landlords/api.py), which serves every page, so it always works for
+    # readers. Opened as plain files, without `landlords serve`, it can't send (docs/OPERATIONS.md).
     from landlords.config import STATIC_DIR
 
     with open(STATIC_DIR / "corrections.csv", newline="", encoding="utf-8") as fh:

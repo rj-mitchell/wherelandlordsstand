@@ -28,13 +28,16 @@ contact = "admin@wherelandlordsstand.com"
 # The alpha banner on every page, with where to send feedback. Remove `stage` (or set it to "") to take it down.
 stage = "alpha"
 feedback_email = "admin@wherelandlordsstand.com"
+# The charity, for {parent} in config/pages.toml. Its link, the endorsement under the site's name and the footer shelf
+# come from the Where They Stand family kit (src/landlords/family/; docs/DESIGN.md).
 parent_name = "Where They Stand"
-parent_url = "https://wheretheystand.uk"
 
 [sister_sites]
-# Council landlords link to their page on Where Councils Stand where it covers the council (docs/DECISIONS.md, 4):
-# councils whose Modern.gov service answered (modgov_status "ok" in data_static/councils.csv).
+# Council landlords, and each council area's page, link to the council's page on Where Councils Stand where it covers
+# the council (docs/DECISIONS.md, 4): the councils in data_static/councils_covered.csv, made from that site's own list
+# of councils by `landlords sister-councils` (src/landlords/sisters.py).
 where_councils_stand = "https://wherecouncilsstand.com/councils/{gss}"
+where_councils_stand_list = "https://wherecouncilsstand.com/api/councils"
 
 [publish]
 # What the weekly update (`landlords update`) does with new pages (docs/OPERATIONS.md):

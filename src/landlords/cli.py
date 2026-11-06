@@ -13,6 +13,7 @@
     landlords update                    # weekly: fetch, load, check, score, build into data/builds/; email to approve
     landlords publish                   # by hand: make the newest build live; `landlords rollback` undoes it
     landlords reports / missed          # readers' reports of mistakes; searches that found nothing
+    landlords sister-councils           # which councils Where Councils Stand covers, for the links to it
 """
 
 from __future__ import annotations
@@ -64,6 +65,15 @@ def register() -> None:
     from landlords import register as reg
 
     typer.echo(json.dumps(reg.build(load_settings()).__dict__))
+
+
+@app.command("sister-councils")
+def sister_councils() -> None:
+    """Update data_static/councils_covered.csv from Where Councils Stand's list of councils: a council's page here,
+    and its area's page, link to it there once it is covered. Review the change, then commit it."""
+    from landlords import sisters
+
+    typer.echo(json.dumps(sisters.refresh(load_settings())))
 
 
 @app.command()

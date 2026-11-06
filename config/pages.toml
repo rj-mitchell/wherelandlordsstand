@@ -118,7 +118,7 @@ sections = [
     [
       "[The site's mark, a front door open on a lit hall (SVG)](press/mark.svg), and [for dark backgrounds](press/mark-dark.svg)",
       "[The mark simplified for 16 to 32 pixels (SVG)](press/mark-small.svg), and [for dark backgrounds](press/mark-small-dark.svg)",
-      "[Its icon, the site's spine (SVG)](press/where-landlords-stand-icon.svg), and [as a picture, 512 by 512 pixels (PNG)](press/where-landlords-stand-icon-512.png)",
+      "[Its icon, the mark as a browser tab shows it (SVG)](press/where-landlords-stand-icon.svg), and [as a picture, 512 by 512 pixels (PNG)](press/where-landlords-stand-icon-512.png)",
       "[Its link card, 1200 by 630 pixels (PNG)](press/where-landlords-stand-card.png)",
     ],
   ]],

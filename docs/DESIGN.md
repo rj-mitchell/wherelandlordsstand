@@ -30,15 +30,16 @@ here (docs/OPERATIONS.md, "Scoring and the pages"):
 - **The family shelf** at the foot of every page, under the site's own footer links: the Where They Stand wordmark,
   the charity's line ("Where They Stand is applying to register as a charity in England and Wales."), links to
   wheretheystand.uk and its Donate page, and every project's spine with a link to it by name, this site's raised.
-- **Icons and the link card in the cloth:** the favicon and touch icon are this site's spine on roof slate,
-  `theme-color` is roof slate, and links shared in a chat or a feed show the family's card for this site. Every page
+- **Icons and the link card in the cloth:** the favicon and touch icon are this site's mark, the open front door on
+  roof slate ("The mark", below), drawn by the kit from the same drawing (from kit 1.1.0), `theme-color` is roof
+  slate, and links shared in a chat or a feed show the family's card for this site, with the mark on it. Every page
   also has Open Graph and Twitter tags and a canonical link to its own address.
 - **Headings in Source Serif 4** (`class="wts-headings"` on `<body>`, the family plan's decision 1). This site sets
   its body text in Source Serif 4 as well, so nothing changes to the eye.
 - **The same furniture, worded the same way:** the alpha banner links to the report form, with the email address
-  second (it keeps the owner's "use it at your own risk" sentence, so it is two sentences, not the family's one); the footer's links follow the family's order (About · How it works · Corrections ·
-  Accessibility · Privacy · Terms · Data · Source code; the site has no press or status page yet), with the contact
-  address, admin@wherelandlordsstand.com.
+  second (it keeps the owner's "use it at your own risk" sentence, so it is two sentences, not the family's one); the
+  footer's links follow the family's order (About · How it works · Corrections · Accessibility · Privacy · Terms ·
+  Data · Press · Status · Source code), with the contact address, admin@wherelandlordsstand.com.
 - **Links to a sister site show its spine:** a council's page and each area's page link to the council on Where
   Councils Stand with that site's brown spine beside the link.
 
@@ -66,7 +67,7 @@ The same drawing is in `src/landlords/static/` for others to use, and the press 
 those names (`mark.svg`, `mark-dark.svg` on the lifted slate, and `mark-small.svg` and `mark-small-dark.svg` for 16 to
 32 pixels, with a heavier edge and door outline, a plain knob and no panels or letterbox). A test checks the masthead's
 mark and `mark.svg` have the same shapes. The favicon, the touch icon and the link card come from the family kit
-("The family binding", above).
+("The family binding", above), which draws them from the same door.
 
 ## Type and colour
 

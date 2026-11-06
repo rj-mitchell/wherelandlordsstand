@@ -199,12 +199,28 @@ def alpha_banner(words: dict, up: str) -> str:
     return f'<div class="strip"><p class="wrap alpha"><span class="chip">{esc(label)}</span>{text}</p></div>'
 
 
-# The site's own mark, a roof over a bound volume with gilt bands, on a shelf, drawn in its cloth, roof slate (the
-# family plan, decision 4). Width and height as well as the stylesheet's size, so the mark stays small even if the
-# stylesheet doesn't load.
-MARK = ('<svg class="mark" viewBox="0 0 64 64" width="46" height="46" aria-hidden="true" focusable="false">'
-        '<path class="mk-roof" d="M8 29 32 10l24 19"/><rect class="mk-book" x="17" y="29" width="30" height="27"/>'
-        '<path class="mk-band" d="M17 36h30M17 40h30"/><path class="mk-shelf" d="M6 57.5h52"/></svg>')
+# The site's own mark, the front door swung wide towards you, the hall lit behind it, on a tile of roof slate with a
+# fine gilt edge (docs/DESIGN.md, "The mark"; docs/DECISIONS.md, 14). The same shapes as static/mark.svg, which the
+# press page offers (tests/test_site.py checks they agree). Its colours are in the page as well as the stylesheet, so
+# it is drawn right if the stylesheet doesn't load; the stylesheet lifts the slate in dark mode and redraws it in the
+# system's colours in forced colours. Width and height as well, so the mark stays small without the stylesheet.
+MARK = ('<svg class="mark" viewBox="0 0 64 64" width="52" height="52" aria-hidden="true" focusable="false">'
+        '<defs><linearGradient id="mk-fall" x1="0" y1="54" x2="0" y2="58" gradientUnits="userSpaceOnUse">'
+        '<stop offset="0" stop-color="#D9BC72" stop-opacity=".95"/>'
+        '<stop offset="1" stop-color="#D9BC72" stop-opacity=".12"/></linearGradient></defs>'
+        '<rect class="mk-tile" width="64" height="64" rx="7" fill="#40484D"/>'
+        '<rect class="mk-edge" x="4.5" y="4.5" width="55" height="55" rx="4" fill="none" stroke="#D9BC72"'
+        ' stroke-width="1.4"/>'
+        '<path class="mk-frame" d="M22 54V9H50V54H46V13H26V54z" fill="#F3EAD6"/>'
+        '<rect class="mk-hall" x="26" y="13" width="20" height="41" fill="#D9BC72"/>'
+        '<path class="mk-fall" d="M26 54L46 54L54 58H29z" fill="url(#mk-fall)"/>'
+        '<path class="mk-door" d="M11 9.5L26 13L26 54L11 57.6z" fill="#F3EAD6" stroke="#40484D" stroke-width="1.2"'
+        ' stroke-linejoin="round"/>'
+        '<path class="mk-line" d="M14,13.47L23,15.27L23,30.96L14,30.74zM14,37.27L23,36.9L23,51.33L14,53.15z"'
+        ' fill="none" stroke="#40484D" stroke-width="1.1"/>'
+        '<path class="mk-line" d="M15.5,33.76L21.5,33.73" stroke="#40484D" stroke-width="1.6"/>'
+        '<circle class="mk-knob" cx="12.8" cy="33.54" r="1.4" fill="#D9BC72" stroke="#40484D" stroke-width=".7"/>'
+        '</svg>')
 
 
 def launched() -> bool:

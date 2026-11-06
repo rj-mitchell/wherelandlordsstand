@@ -2,12 +2,12 @@
    (fonts.css) and the family's tokens, endorsement and footer shelf (family.css) come from the family kit, loaded
    before this file. */
 :root{color-scheme:light dark;--paper:#f5f0e3;--paper-hi:#fcfbf8;--ink:#1c2427;--muted:#4f565a;--rule:#d3cdbf;
---rule-strong:#1c2427;--slate:#40484d;--link:#2f4a5e;--band-off:#e2e0d8;--gilt:#7a5c1c;--gilt-mark:#b08d3c;
+--rule-strong:#1c2427;--slate:#40484d;--link:#2f4a5e;--band-off:#e2e0d8;--gilt:#7a5c1c;
 --note:#ece5d5;--strip:#e7e2d5;--serif:"Source Serif 4",Georgia,"Times New Roman",serif;
 --sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;--wrap:64rem}
 @media (prefers-color-scheme:dark){:root{--paper:#14181a;--paper-hi:#1a1f22;--ink:#e9e6de;--muted:#aab1b5;
 --rule:#353c40;--rule-strong:#e9e6de;--slate:#b9c3c9;--link:#a9c6dc;--band-off:#2c3337;--gilt:#d9bc72;
---gilt-mark:#d9bc72;--note:#20262a;--strip:#1f2528}}
+--note:#20262a;--strip:#1f2528}}
 *{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--paper);color:var(--ink);font:400 1.0625rem/1.6 var(--serif);
 font-optical-sizing:auto}
@@ -29,9 +29,9 @@ letter-spacing:.06em;text-transform:uppercase;padding:.05rem .4rem;margin-right:
 padding-block:1.4rem .9rem}
 /* the mark beside the name, the endorsement under it, then the tagline */
 .brand{display:grid;grid-template-columns:auto 1fr;column-gap:.8rem;align-items:center;flex:1 1 26rem}
-.mark{width:46px;height:46px;flex:none;grid-row:1 / span 2}
-.mk-roof{fill:none;stroke:var(--wts-cloth-landlords);stroke-width:6}.mk-book{fill:var(--wts-cloth-landlords)}
-.mk-band{stroke:var(--gilt-mark);stroke-width:2}.mk-shelf{stroke:var(--ink);stroke-width:3}
+/* the mark, the open front door (docs/DESIGN.md, "The mark"): its slate is the kit's cloth, lifted in dark mode */
+.mark{width:52px;height:52px;flex:none;grid-row:1 / span 2}
+.mk-tile{fill:var(--wts-cloth-landlords)}.mk-door,.mk-line,.mk-knob{stroke:var(--wts-cloth-landlords)}
 .name{justify-self:start;color:var(--ink);text-decoration:none;font-size:clamp(1.45rem,1.1rem + 1.4vw,1.9rem);
 font-weight:600;line-height:1.1;letter-spacing:-.005em}
 .name:hover{color:var(--ink);text-decoration:underline;text-decoration-thickness:1px}
@@ -108,7 +108,7 @@ footer .wts-shelf__inner{max-inline-size:calc(var(--wrap) - 4rem)}   /* in line 
 @media (max-width:40rem){
 .strip{font-size:.76rem;line-height:1.35}.strip p{padding-block:.3rem}
 .mast-in{padding-block:.6rem .35rem;gap:.3rem}
-.brand{column-gap:.6rem}.mark{width:34px;height:34px}
+.brand{column-gap:.6rem}.mark{width:44px;height:44px}
 .name{font-size:1.3rem}.brand .wts-endorse{margin-top:.1rem;font-size:.66rem}
 .tag{display:none}
 .indep{font-size:.78rem;line-height:1.35}
@@ -123,4 +123,8 @@ thead th{font-size:.7rem;letter-spacing:.03em}thead th.n{white-space:normal}
 td{overflow-wrap:anywhere}
 }
 @media (prefers-reduced-motion:no-preference){a,nav.tabs a{transition:border-color .12s,color .12s}}
-@media (forced-colors:active){.meter i.on{background:CanvasText}.meter i{border-color:CanvasText}}
+@media (forced-colors:active){.meter i.on{background:CanvasText}.meter i{border-color:CanvasText}
+/* the mark in the system's two colours: the doorway and the door drawn in the text colour on the background */
+.mark{forced-color-adjust:none}.mk-tile,.mk-hall{fill:Canvas}.mk-edge{stroke:CanvasText}.mk-fall{fill:none}
+.mk-frame{fill:CanvasText}.mk-door{fill:CanvasText;stroke:Canvas}.mk-line{stroke:Canvas}
+.mk-knob{fill:Canvas;stroke:Canvas}}

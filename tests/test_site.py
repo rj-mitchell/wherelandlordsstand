@@ -44,6 +44,29 @@ def test_the_kit_partials_name_their_files_at_their_fingerprinted_addresses(tmp_
     assert 'class="wts-endorse"' in parts["endorsement"] and 'class="wts-shelf"' in parts["shelf"]
 
 
+def test_the_masthead_mark_is_the_press_pages_mark():
+    """The mark drawn in the masthead (site.MARK) has the same shapes and colours as static/mark.svg, the file the
+    press page offers; mark-dark.svg is the same drawing on the lifted slate, and the small files are square too."""
+    import re
+
+    from landlords.site import MARK, STATIC
+
+    def shapes(svg: str) -> list[str]:
+        svg = re.sub(r' (class|id|width|height|viewBox|xmlns|aria-hidden|focusable)="[^"]*"', "", svg)
+        return re.findall(r"<(?:rect|path|circle|stop)[^>]*>", svg)
+
+    light = (STATIC / "mark.svg").read_text()
+    assert shapes(MARK) == shapes(light)
+    assert (STATIC / "mark-dark.svg").read_text() == light.replace("#40484D", "#5B666D")
+    small = (STATIC / "mark-small.svg").read_text()
+    assert (STATIC / "mark-small-dark.svg").read_text() == small.replace("#40484D", "#5B666D")
+    for svg in (light, small):
+        assert svg.startswith('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"')
+        assert "<title>Where Landlords Stand</title>" in svg
+        assert "href" not in svg and not re.search(r"url\((?!#)", svg)                    # nothing from outside
+    assert 'aria-hidden="true"' in MARK and 'width="52" height="52"' in MARK
+
+
 def test_sentences_with_links():
     from landlords.site import fill_html, rich
 

@@ -341,14 +341,10 @@ def text_page(settings: Settings, w: dict, key: str, extra: dict | None = None) 
 
 
 # The press page's logo files, at addresses that don't change, so they can be linked to. The mark is the one in the
-# masthead (site.MARK), drawn in its own colours rather than the stylesheet's; the icon and link card are the family
-# kit's.
-PRESS_MARK = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="512" height="512">'
-              "<title>Where Landlords Stand</title>"
-              '<path d="M8 29 32 10l24 19" fill="none" stroke="#40484D" stroke-width="6"/>'
-              '<rect x="17" y="29" width="30" height="27" fill="#40484D"/>'
-              '<path d="M17 36h30M17 40h30" stroke="#B08D3C" stroke-width="2"/>'
-              '<path d="M6 57.5h52" stroke="#1C2427" stroke-width="3"/></svg>\n')
+# masthead (site.MARK), in four files that keep their plain names (src/landlords/static/): mark.svg and mark-dark.svg
+# (on the lifted slate), and mark-small.svg and mark-small-dark.svg for 16 to 32 pixels. The icon and link card are
+# the family kit's.
+PRESS_MARKS = ("mark.svg", "mark-dark.svg", "mark-small.svg", "mark-small-dark.svg")
 PRESS_FILES = {"where-landlords-stand-icon.svg": "icon.svg", "where-landlords-stand-icon-512.png": "icon-512.png",
                "where-landlords-stand-card.png": "card.png"}
 
@@ -359,11 +355,12 @@ def press(settings: Settings, profiles: list[dict], areas: dict, out: Path, w: d
     import shutil
     from datetime import date
 
-    from landlords.site import FAMILY
+    from landlords.site import FAMILY, STATIC
 
     folder = out / "press"
     folder.mkdir(exist_ok=True)
-    (folder / "where-landlords-stand-mark.svg").write_text(PRESS_MARK)
+    for name in PRESS_MARKS:
+        shutil.copy(STATIC / name, folder / name)
     for name, kit in PRESS_FILES.items():
         shutil.copy(FAMILY / kit, folder / name)
     example = next((p for p in profiles if p["slug"] == "abri-group"), profiles[0] if profiles else None)

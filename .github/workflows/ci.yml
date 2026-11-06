@@ -65,6 +65,11 @@ jobs:
       - name: Show the server's log if anything failed
         if: failure()
         run: cat serve.log || true
+      # The server was started with `uv run`, which holds uv's cache lock while it runs; stop it, or setup-uv's clean-up
+      # at the end of the job waits for that lock and fails the job after five minutes
+      - name: Stop the server
+        if: always()
+        run: pkill -f "landlords serve" || true
 
   # The server's image must build, and its command must run inside it.
   docker:

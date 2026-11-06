@@ -102,14 +102,17 @@ def test_every_file_a_page_uses_is_fingerprinted_under_assets(tmp_path):
     from landlords import site
 
     names = site.write_assets(tmp_path)
-    assert set(names) >= {"styles.css", "search.js", "compare.js", "icon.svg",
-                          "fonts/source-serif-4-normal-latin.woff2"}
+    assert set(names) >= {"styles.css", "fonts.css", "family.css", "search.js", "compare.js", "icon.svg",
+                          "favicon.ico", "apple-touch-icon.png", "card.png", "fonts/source-serif-4-normal-latin.woff2"}
     for built in names.values():
         assert built.startswith("assets/") and re.search(r"\.[0-9a-f]{10}\.\w+$", built), built
         assert (tmp_path / built).is_file(), built
-    css = (tmp_path / names["styles.css"]).read_text()
-    for url in re.findall(r"url\(([^)]+)\)", css):
-        assert (tmp_path / "assets" / url).is_file(), url
+    fonts = (tmp_path / names["fonts.css"]).read_text()
+    assert len(re.findall(r"url\(([^)]+)\)", fonts)) == 4
+    for css in ("styles.css", "fonts.css", "family.css"):
+        for url in re.findall(r"url\(([^)]+)\)", (tmp_path / names[css]).read_text()):
+            assert (tmp_path / "assets" / url).is_file(), url
+    assert (tmp_path / "favicon.ico").is_file()                    # browsers ask for it at the root
     assert json.loads((tmp_path / "assets.json").read_text()) == names
     assert site.write_assets(tmp_path / "again") == names          # the same files give the same names
     assert 'width="46" height="46"' in site.MARK                    # stays small without the stylesheet

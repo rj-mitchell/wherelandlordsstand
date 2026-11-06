@@ -17,6 +17,7 @@ from landlords.config import Settings
 from landlords.load.common import read_table
 from landlords.register import aliases, landlords
 from landlords.score import rules
+from landlords.sisters import council_url
 
 ALSO_KNOWN = ("short", "trading", "logo label", "managing body", "group")
 
@@ -210,22 +211,6 @@ def regulator_notes(data: Data, lid: str) -> list[dict]:
             if c["period"] == latest and c["rsh_comment"]]
 
 
-def council_link(settings: Settings, gss: str) -> str:
-    """The council's page on Where Councils Stand, if that site covers it."""
-    import csv
-
-    from landlords.config import STATIC_DIR
-
-    sister = settings.section("sister_sites")
-    if not gss or not sister.get("where_councils_stand"):
-        return ""
-    with open(STATIC_DIR / "councils.csv", newline="", encoding="utf-8") as fh:
-        ok = {r["gss"] for r in csv.DictReader(fh) if r.get("modgov_status") == "ok"}
-    if gss not in ok:
-        return ""
-    return sister["where_councils_stand"].format(gss=gss)
-
-
 def reporting_for(data: Data, lid: str) -> dict | None:
     """Why a landlord has stopped publishing its own tenant survey results, and who publishes them now
     (data_static/reporting.csv, written from the regulator's files)."""
@@ -259,7 +244,7 @@ def build_profile(data: Data, lid: str) -> dict:
         "survey_note": survey_note(data, lid), "safety": safety_for(data, lid),
         "ombudsman": ombudsman_for(data, lid), "areas": areas_for(data, lid),
         "regulator_notes": regulator_notes(data, lid),
-        "council_link": council_link(data.settings, reg["gss"]) if reg["type"] == "council" else "",
+        "council_link": council_url(data.settings, reg["gss"]) if reg["type"] == "council" else "",
         "reporting": reporting_for(data, lid),
     }
     used = set()
@@ -278,9 +263,17 @@ def build_profile(data: Data, lid: str) -> dict:
                 collect(v)
 
     collect(p)
-    p["sources"] = [{"sha": s, **data.sources.get(s, {})} for s in sorted(used, key=lambda s: (
-        data.sources.get(s, {}).get("source", ""), data.sources.get(s, {}).get("period", "")))]
+    p["sources"] = [{"sha": s, **data.sources.get(s, {})} for s in sorted(used, key=lambda s: source_order(data, s))]
     return p
+
+
+def source_order(data: Data, sha: str) -> tuple[str, ...]:
+    """Where a file comes in a page's numbered list of sources: by source and period, then by title, file name and
+    hash, so that two files from the same source and period (the regulator's council and housing association stock
+    files, say) are always numbered the same way. Left in the order of a Python set, which changes from one run to the
+    next, they made two builds of the same data differ."""
+    s = data.sources.get(sha, {})
+    return (s.get("source", ""), s.get("period", ""), s.get("title", ""), s.get("file", ""), sha)
 
 
 def build_profiles(settings: Settings) -> list[dict]:

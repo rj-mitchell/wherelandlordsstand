@@ -1,5 +1,7 @@
 # The about, terms, accessibility and "not found" pages. Like config/wording.toml, every sentence lives here.
 # {contact}, {operator}, {parent}, {site} and {url} are filled from config/settings.toml ([site]).
+# [Words](address) in a sentence become a link: an address that doesn't start with https:// or mailto: is a page on this
+# site, from its root ("corrections/index.html"). A paragraph that is a list of sentences is shown as a bulleted list.
 
 [about]
 heading = "About"
@@ -13,27 +15,37 @@ sections = [
     "It never changes the publishers' figures. Where we work something out, such as how a landlord compares with similar landlords, we say so and explain how on the method page.",
   ]],
   ["Who runs it", [
-    "{site} is a project of {parent}, which is applying to register as a charity in England and Wales. Its sister sites are Where MPs Stand, on the record of the UK Parliament, Where Councils Stand, on what councils discuss and decide, and Where Countries Stand, on the record of the United Nations.",
-    "It is independent. It is not part of the Regulator of Social Housing, the Housing Ombudsman Service or any landlord, and no landlord pays to be on it. It shows no logos: landlords are named, nothing more.",
-    "The code is open source, under the GNU Affero General Public License (AGPL-3.0).",
+    "{site} is a Where They Stand project. Where They Stand is applying to register as a charity in England and Wales. Until it is registered, the site is run by its founder, {operator}.",
+    "Where Landlords Stand is independent. It is not affiliated with or endorsed by the Regulator of Social Housing, the Housing Ombudsman Service or any landlord. No landlord pays to be on it. It shows no logos: landlords are named, nothing more.",
+    "The code is open source, under the GNU Affero General Public License (AGPL-3.0). You can [read the source code](https://github.com/rj-mitchell/wherelandlordsstand).",
+  ]],
+  ["In the family", [
+    "{site} is a Where They Stand project. Its sister sites are [Where MPs Stand](https://wherempsstand.com/), [Where Councils Stand](https://wherecouncilsstand.com/), [Where Countries Stand](https://wherecountriesstand.com/) and [Where Lives Stand](https://wherelivesstand.com/); the charity's own site is [wheretheystand.uk](https://wheretheystand.uk/).",
+    [
+      "Where MPs Stand shows what MPs and peers have said and done in Parliament.",
+      "Where Councils Stand shows what councils have decided and said in their meetings.",
+      "Where Countries Stand shows what countries have said and how they have voted at the United Nations.",
+      "Where Lives Stand shows how life compares from one country to another, using published figures.",
+    ],
+    "Each council's page here, and each council area's page, links to that council's page on Where Councils Stand, where that site covers the council. Where Councils Stand links back here.",
   ]],
   ["Contact", [
-    "Email {contact}. To report a mistake, use the form on the corrections page.",
+    "Email [{contact}](mailto:{contact}). To report a mistake, use the form on the [corrections page](corrections/index.html).",
   ]],
 ]
 
 [terms]
 heading = "Terms of use"
 short = "The short version: use it freely, check the sources, and credit the site if you reuse its work."
-updated = "2026-11-03"
+updated = "2026-11-06"
 sections = [
   ["About these terms", [
-    "{site} is a project of {parent}, run by {operator}. By using the site you agree to these terms. Contact: {contact}.",
+    "{site} is a Where They Stand project. Where They Stand is applying to register as a charity in England and Wales. Until it is registered, the site is run by its founder, {operator}. By using the site you agree to these terms. Contact: [{contact}](mailto:{contact}).",
   ]],
   ["What the service is, and is not", [
     "The site shows figures published by the Regulator of Social Housing and the Housing Ombudsman, and where each landlord comes among similar landlords. Every figure links to the file it comes from. Always check the source before relying on a figure.",
     "It is general information, not legal or housing advice, and not a recommendation to bid for, accept or refuse any home.",
-    "The site is independent. It is not affiliated with or endorsed by the Regulator of Social Housing, the Housing Ombudsman Service or any landlord.",
+    "Where Landlords Stand is independent. It is not affiliated with or endorsed by the Regulator of Social Housing, the Housing Ombudsman Service or any landlord.",
     "The service is free and provided \"as is\". It may change, be paused or stop.",
   ]],
   ["Reusing our work", [

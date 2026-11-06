@@ -21,6 +21,7 @@ All the decisions proposed in the planning session of 3 November 2026 have now b
 | 10 | Ombudsman figures | Only the Ombudsman's own published figures are shown: findings, the share found at fault (its maladministration rate), severe findings and compensation. No rate per 1,000 homes is worked out by us, because the Ombudsman doesn't publish one (owner, 3 November 2026). |
 | 11 | Licence for our own work | Our own work (the text we write, bands, peer groups, homes by council area, the method) is licensed under **CC BY 4.0**, as on Where MPs Stand. Publishers' figures stay under their own terms; the name and mark are not covered (owner, 3 November 2026). |
 | 12 | Public alpha | The site is public at wherelandlordsstand.com, **in alpha**, and is called that. New pages from the weekly update are published only when the owner approves them by email, whether or not the launch switch is on. The alpha banner stays. The three gates still open (the method review, testing with applicants, an adviser's sign-off of the wording) are the conditions for beta. The launch switch (`[site] launched`) now only lets search engines in (owner, 6 November 2026; the family plan's decision 11). |
+| 13 | The alpha banner's wording | The banner keeps the owner's "We can't promise that everything here is right, so use it at your own risk." sentence, although the family's phase banner is one sentence. Otherwise it follows the family's shape: the notice, a link to the report form, then the email address (owner, 6 November 2026). |
 
 ## Ground rules from the brief
 

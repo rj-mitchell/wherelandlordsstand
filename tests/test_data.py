@@ -1,5 +1,7 @@
 """Checks on the real data. Skipped unless the files have been fetched and loaded (`landlords fetch`, `load`)."""
 
+import re
+
 import pytest
 
 from landlords import checks
@@ -65,8 +67,6 @@ def test_landlords_that_stopped_reporting_say_who_reports_now():
 
 
 def test_pages_are_small_self_contained_and_carry_the_warning():
-    import re
-
     from landlords.config import load_toml
 
     refusal = load_toml("wording.toml")["card"]["refusal"].replace("'", "&#x27;")
@@ -77,10 +77,55 @@ def test_pages_are_small_self_contained_and_carry_the_warning():
         assert len(text.encode()) < 100 * 1024, path
         assert refusal in text, path
         assert "<script" not in text, path                       # readable without JavaScript, nothing third-party
-        assert not re.search(r'<link[^>]+href="https?:', text), path
+        # nothing loaded from another site (a canonical link names this page's own address; it loads nothing)
+        assert not re.search(r'<link(?![^>]*rel="canonical")[^>]+href="https?:', text), path
+        assert not re.search(r'src="https?:', text), path
         assert 'id="sources"' in text, path                      # every page lists its sources
         for ref in re.findall(r'href="#source-(\d+)"', text):    # every figure's link goes to a listed file
             assert f'id="source-{ref}"' in text, (path, ref)
+
+
+@pytest.mark.skipif(not (SITE / "index.html").exists(), reason="pages not built (`landlords build`)")
+def test_every_page_carries_the_family_binding():
+    """The Where They Stand family's binding (docs/DESIGN.md): the endorsement under the name, the footer shelf with
+    the charity's line and every sister site, the kit's icons and link card, headings in Source Serif 4, and the
+    footer's links in the family's order."""
+    from landlords.config import load_toml
+
+    w = load_toml("wording.toml")
+    pages = sorted(SITE.rglob("*.html"))
+    assert len(pages) > 600
+    for path in pages:
+        text = path.read_text()
+        assert '<body class="wts-headings">' in text, path
+        assert '<a class="wts-endorse" href="https://wheretheystand.uk/">' in text, path
+        assert '<nav class="wts-shelf"' in text and "applying to register as a charity in England and Wales" in text
+        for site in ("wherempsstand.com", "wherecouncilsstand.com", "wherecountriesstand.com", "wherelivesstand.com"):
+            assert f'href="https://{site}/"' in text, (path, site)
+        assert 'rel="apple-touch-icon"' in text and 'property="og:image"' in text, path
+        assert 'name="theme-color" content="#40484D"' in text, path
+        assert "/family/" not in text, path                         # every kit file at its address under assets/
+        assert w["site"]["independence"].replace("'", "&#x27;") in text, path
+        labels = [label for label, _ in w["footer"]["links"]]
+        found = [text.find(f">{label}</a></li>") for label in labels]
+        assert all(i > 0 for i in found) and found == sorted(found), (path, found)
+    assert (SITE / "favicon.ico").is_file()
+    profile = (SITE / "landlords" / "abri-group" / "index.html").read_text()
+    assert '<link rel="canonical" href="https://wherelandlordsstand.com/landlords/abri-group/">' in profile
+
+
+@pytest.mark.skipif(not (SITE / "index.html").exists(), reason="pages not built (`landlords build`)")
+def test_area_pages_link_to_the_council_on_where_councils_stand_where_it_is_covered():
+    from landlords.sisters import councils_covered
+
+    covered = councils_covered()
+    linked = 0
+    for path in (SITE / "areas").glob("*/index.html"):
+        text = path.read_text()
+        links = set(re.findall(r'href="https://wherecouncilsstand\.com/councils/(E\d{8})"', text))
+        assert links <= set(covered), path
+        linked += bool(links)
+    assert linked > 200
 
 
 @pytest.mark.skipif(not (settings.staging_dir / "scores.parquet").exists(), reason="data not scored")

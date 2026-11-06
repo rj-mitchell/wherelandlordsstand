@@ -53,15 +53,17 @@ The site runs beside the others, with Where MPs Stand's web server as the front 
 Where Councils Stand do.
 
 - [x] Steps 1–4 of docs/DEPLOY.md: cloned into `/opt/wherelandlordsstand`, `deploy/update.sh`, the first pages.
-- [x] Steps 1 and 2 of "Releasing it": Cloudflare and an origin certificate for the domain, and the site in `SITES`
-      on Where MPs Stand's side. The site is public, in alpha.
+- [x] Step 6 of docs/DEPLOY.md, the domain: Cloudflare and an origin certificate for the domain, and the site in
+      `SITES` on Where MPs Stand's side. The site is public, in alpha.
 - [ ] Step 5 of docs/DEPLOY.md, **the weekly email**: check it with `landlords email-test`. New pages are approved
       from it, so without it nothing new is published (and each update fails to say so).
 - [x] `main` is this repository's default branch (docs/DEPLOY.md).
-- [ ] **Launch**, when the owner says so (step 3 of "Releasing it"): `LANDLORDS_LAUNCHED=true` in `deploy/.env`,
+- [ ] **Launch**, when the owner says so ("Launch" in docs/DEPLOY.md): `LANDLORDS_LAUNCHED=true` in `deploy/.env`,
       then `landlords update`, and approve the new pages. Check: `robots.txt` allows crawling, `/sitemap.xml` lists
       the pages, `check.sh` shows the site working.
-- [ ] Tell the sister sites' about pages.
+- [x] The family binding (6 November 2026): every page carries "A Where They Stand project" and the family shelf,
+      which links every sister site, and the about page names them all.
+- [ ] Where Councils Stand's council pages link back here (being added there, 6 November 2026).
 
 ## Every week
 

@@ -431,9 +431,13 @@ between 31 March 2025 (TSM) and 31 March 2026 (stock):
 have at least one profiled landlord; the median area has 22.
 
 **Area codes.** Every English area code in the stock data is a council in `data_static/councils.csv`, a copy of Where
-Councils Stand's council list, after one correction to our copy: **Where Councils Stand's file has Barnsley and
-Sheffield under their pre-2019 codes (E08000016, E08000019)**. The regulator uses the current codes (E08000038,
-E08000039), and so does our copy now. Where Councils Stand now uses the current codes too (fixed there on 4 November 2026).
+Councils Stand's council list (both use the post-2019 codes for Barnsley and Sheffield, E08000038 and E08000039, as
+the regulator does).
+
+**Links to Where Councils Stand.** `data_static/councils_covered.csv` lists the councils whose meetings Where Councils
+Stand has loaded, from its own list (`landlords sister-councils`, reading wherecouncilsstand.com/api/councils): 295
+of 383 on 6 November 2026, 262 of them in England. A council's page and each council area's page here link to the
+council's page there (`/councils/<code>`) when it is on that list.
 
 ## Checks
 

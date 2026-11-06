@@ -75,13 +75,22 @@ NAV = [("index.html", "Find a landlord"), ("areas/index.html", "Areas"), ("compa
 
 _LAUNCHED = False
 _SITE: dict = {}
-# The files every page uses (stylesheet, scripts, icon, fonts), by their plain name, and where this build put them:
-# under assets/, with a fingerprint of their content in the name ("assets/styles.3f9a2c1d.css"). A changed file gets a
-# new address that no cache (Cloudflare's, a browser's) has seen, so a page never meets an old stylesheet, as it did
-# on 6 November 2026. The shared front door and the API tell caches to keep anything under /assets/ for a year.
+# The files every page uses (stylesheets, scripts, icons, fonts, the link card), by their plain name, and where this
+# build put them: under assets/, with a fingerprint of their content in the name ("assets/styles.3f9a2c1d.css"). A
+# changed file gets a new address that no cache (Cloudflare's, a browser's) has seen, so a page never meets an old
+# stylesheet, as it did on 6 November 2026. The shared front door and the API tell caches to keep anything under
+# /assets/ for a year.
 _ASSETS: dict[str, str] = {}
 ASSETS = "assets"
 STATIC = Path(__file__).parent / "static"
+# The Where They Stand family kit, copied in by the kit's own script and never edited here (docs/DESIGN.md, "The
+# family binding"): the endorsement, the footer shelf, the head partial (icons, theme colour, link card), the family
+# stylesheet and Source Serif 4. The kit's partials name their files under /family/; the build serves those files
+# under assets/ with fingerprinted names instead, like the site's own, and changes the addresses in the partials.
+FAMILY = Path(__file__).parent / "family"
+FAMILY_FILES = ("fonts.css", "family.css", "icon.svg", "favicon.ico", "apple-touch-icon.png", "card.png")
+_PARTS: dict[str, str] = {}
+UP = "@@UP@@"   # stands for the way up to the site's root ("../../") in the head partial, filled in per page
 
 
 def asset(name: str) -> str:
@@ -96,48 +105,103 @@ def fingerprint(name: str, content: bytes) -> str:
 
 
 def write_assets(out: Path) -> dict[str, str]:
-    """Copy the stylesheet, scripts, icon and fonts into ``out/assets/`` under fingerprinted names, and return where
-    each went. The fonts go first, because the stylesheet names them: it is written with their new names in it."""
+    """Copy the stylesheets, scripts, icons, fonts and link card into ``out/assets/`` under fingerprinted names, and
+    return where each went. The fonts go first, because the kit's fonts.css names them: it is written with their new
+    names in it. The kit's favicon is also copied to the root, where browsers ask for it whatever a page says."""
     folder = out / ASSETS
     (folder / "fonts").mkdir(parents=True)
     names: dict[str, str] = {}
-    css = CSS_FILE.read_text()
-    for font in sorted((STATIC / "fonts").glob("*.woff2")):
+    fonts_css = (FAMILY / "fonts.css").read_text()
+    for font in sorted((FAMILY / "fonts").glob("*.woff2")):
         new = fingerprint(font.name, font.read_bytes())
         shutil.copy(font, folder / "fonts" / new)
         names[f"fonts/{font.name}"] = f"{ASSETS}/fonts/{new}"
-        css = css.replace(f"url(fonts/{font.name})", f"url(fonts/{new})")
-    missing = [u for u in re.findall(r"url\(fonts/([^)]+)\)", css) if f"{ASSETS}/fonts/{u}" not in names.values()]
+        fonts_css = fonts_css.replace(f"url(fonts/{font.name})", f"url(fonts/{new})")
+    missing = [u for u in re.findall(r"url\((fonts/[^)]+)\)", fonts_css) if f"{ASSETS}/{u}" not in names.values()]
     if missing:
-        raise RuntimeError(f"styles.css names fonts that aren't in src/landlords/static/fonts/: {missing}")
-    data = css.encode()
-    names["styles.css"] = f"{ASSETS}/{fingerprint('styles.css', data)}"
-    (out / names["styles.css"]).write_bytes(data)
-    for name in ("search.js", "compare.js", "icon.svg"):
-        content = (STATIC / name).read_bytes()
+        raise RuntimeError(f"the kit's fonts.css names fonts that aren't in src/landlords/family/fonts/: {missing}")
+    if re.search(r"url\(", CSS_FILE.read_text()):
+        raise RuntimeError("styles.css names a file: fonts come from the family kit's fonts.css")
+    files = {"fonts.css": fonts_css.encode()}
+    files |= {name: (FAMILY / name).read_bytes() for name in FAMILY_FILES if name != "fonts.css"}
+    files |= {"styles.css": CSS_FILE.read_bytes()}
+    files |= {name: (STATIC / name).read_bytes() for name in ("search.js", "compare.js")}
+    for name, content in files.items():
         names[name] = f"{ASSETS}/{fingerprint(name, content)}"
         (out / names[name]).write_bytes(content)
-    # for the API's own pages (the approval page), which use this build's stylesheet
+    shutil.copy(FAMILY / "favicon.ico", out / "favicon.ico")
+    # for the API's own pages (the approval page), which use this build's stylesheets
     (out / "assets.json").write_text(json.dumps(names, indent=1) + "\n")
     return names
 
 
-def alpha_banner(words: dict) -> str:
-    """The alpha strip at the top of every page, while [site] stage = "alpha", as on the sibling sites: its label
-    (the words before the colon) as a chip, and the feedback address as a link."""
+def family_parts(names: dict[str, str]) -> dict[str, str]:
+    """The kit's three partials for this build: the head (with each /family/ file at its address under assets/), the
+    endorsement and the footer shelf (which name no files of ours)."""
+    head = (FAMILY / "head.html").read_text().strip()
+    origin = re.search(r'"(https://[^"/]+)/family/card\.png"', head)
+    for name in FAMILY_FILES:
+        if origin:
+            head = head.replace(f'"{origin[1]}/family/{name}"', f'"{origin[1]}/{names[name]}"')
+        head = head.replace(f'"/family/{name}"', f'"{UP}{names[name]}"')
+    if "/family/" in head:
+        raise RuntimeError(f"the kit's head.html names a file the build doesn't copy: {head}")
+    parts = {"head": head}
+    for part in ("endorsement", "shelf"):
+        parts[part] = (FAMILY / f"{part}.html").read_text().strip()
+        if "/family/" in parts[part]:
+            raise RuntimeError(f"the kit's {part}.html names a file the build doesn't copy")
+    return parts
+
+
+def spine(project: str) -> str:
+    """A sister site's spine, as the footer shelf draws it, to show beside a link to that site (the family plan: a link
+    to a sister site names it and shows its spine)."""
+    found = re.search(rf'<svg class="wts-spine wts-cloth--{project}".*?</svg>', _PARTS.get("shelf", ""))
+    return found[0] if found else ""
+
+
+def sister_link(url: str, text: str, project: str = "councils") -> str:
+    """A link to the same thing on a sister site, with that site's spine, so the reader can see they are going
+    to another site of the family."""
+    return f'<p class="sister"><a href="{esc(url)}">{spine(project)}<span>{text}</span></a></p>' if url else ""
+
+
+def fill_html(template: str, **parts: str) -> str:
+    """A wording.toml sentence, escaped for HTML, with some {placeholders} filled with HTML (a link, say)."""
+    pieces = re.split(r"\{(\w+)\}", template)
+    return "".join(parts[x] if i % 2 else esc(x) for i, x in enumerate(pieces))
+
+
+def rich(text: str, up: str = "") -> str:
+    """A sentence from config/pages.toml, escaped for HTML, with its [words](address) made into links. An address that
+    doesn't start with https:// or mailto: is a page on this site, from its root ("corrections/index.html")."""
+    def link(m: re.Match) -> str:
+        href = html.unescape(m[2])
+        if not re.match(r"https://|mailto:", href):
+            href = up + href
+        return f'<a href="{esc(href)}">{m[1]}</a>'
+
+    return re.sub(r"\[([^\]]+)\]\(([^)\s]+)\)", link, esc(text))
+
+
+def alpha_banner(words: dict, up: str) -> str:
+    """The phase banner at the top of every page, while [site] stage = "alpha", worded as on the sister sites: its
+    label (the words before the colon) as a chip, then one sentence, a link to the report form and the address."""
     if _SITE.get("stage") != "alpha" or not words.get("alpha"):
         return ""
     email = _SITE.get("feedback_email") or _SITE.get("contact", "")
-    before, _, after = words["alpha"].partition("{email}")
-    label, _, rest = before.partition(":")
-    link = f'<a href="mailto:{esc(email)}">{esc(email)}</a>' if email else ""
+    label, _, rest = words["alpha"].partition(":")
     rest = rest.strip()
     rest = rest[:1].upper() + rest[1:]                       # "Alpha: this site…" reads "ALPHA This site…"
-    return (f'<div class="strip"><p class="wrap alpha"><span class="chip">{esc(label)}</span>{esc(rest)} '
-            f'{link}{esc(after)}</p></div>')
+    text = fill_html(rest, report=f'<a href="{up}corrections/index.html">{esc(words["alpha_report"])}</a>',
+                     email=f'<a href="mailto:{esc(email)}">{esc(email)}</a>')
+    return f'<div class="strip"><p class="wrap alpha"><span class="chip">{esc(label)}</span>{text}</p></div>'
 
 
-# width and height as well as the stylesheet's size, so the mark stays small even if the stylesheet doesn't load
+# The site's own mark, a roof over a bound volume with gilt bands, on a shelf, drawn in its cloth, roof slate (the
+# family plan, decision 4). Width and height as well as the stylesheet's size, so the mark stays small even if the
+# stylesheet doesn't load.
 MARK = ('<svg class="mark" viewBox="0 0 64 64" width="46" height="46" aria-hidden="true" focusable="false">'
         '<path class="mk-roof" d="M8 29 32 10l24 19"/><rect class="mk-book" x="17" y="29" width="30" height="27"/>'
         '<path class="mk-band" d="M17 36h30M17 40h30"/><path class="mk-shelf" d="M6 57.5h52"/></svg>')
@@ -148,32 +212,50 @@ def launched() -> bool:
     return _LAUNCHED
 
 
+def footer(w: dict, up: str) -> str:
+    """The footer: the site's own links, in the family's order, and its contact address; then the family shelf, which
+    carries the charity's line and links to wheretheystand.uk and every sister site."""
+    links = "".join(f'<li><a href="{esc(href if href.startswith("https://") else up + href)}">{esc(label)}</a></li>'
+                    for label, href in w["footer"]["links"])
+    email = _SITE.get("contact", "")
+    contact = fill_html(w["footer"]["contact"], email=f'<a href="mailto:{esc(email)}">{esc(email)}</a>')
+    return (f'<footer><div class="wrap foot"><nav aria-label="{esc(w["footer"]["label"])}"><ul class="foot-links">'
+            f'{links}</ul></nav><p>{contact}</p></div>\n{_PARTS.get("shelf", "")}</footer>')
+
+
 def page(title: str, body: str, w: dict, depth: int, description: str = "", scripts: tuple[str, ...] = (),
-         here: str = "") -> str:
-    """A whole page: our own stylesheet, fonts and scripts only, nothing from anywhere else. ``here`` is the NAV entry
-    this page belongs to, marked as the current tab."""
+         here: str = "", path: str | None = None) -> str:
+    """A whole page: our own stylesheets, fonts and scripts only, nothing from anywhere else. ``here`` is the NAV entry
+    this page belongs to, marked as the current tab. ``path`` is the page's address from the site's root
+    ("landlords/abri-group/"), for its canonical link and link card; None for a page with no address of its own."""
     up = "../" * depth
     live = launched()
     nav = "".join(f'<a href="{up}{href}"{' aria-current="page"' if href == here else ""}>{esc(label)}</a>'
                   for href, label in NAV)
     js = "".join(f'<script src="{up}{asset(src)}" defer></script>' for src in scripts)
     site = w["site"]
+    description = description or site["tagline"]
+    url = (_SITE.get("url") or "").rstrip("/")
+    card = (f'<meta property="og:type" content="website"><meta property="og:site_name" content="{esc(site["name"])}">'
+            f'<meta property="og:locale" content="en_GB"><meta property="og:title" content="{esc(title)}">'
+            f'<meta property="og:description" content="{esc(description)}">'
+            '<meta name="twitter:card" content="summary_large_image">')
+    if url and path is not None:
+        card = f'<link rel="canonical" href="{esc(url)}/{esc(path)}"><meta property="og:url" content="{esc(url)}/{esc(path)}">' + card
     return f"""<!doctype html>
 <html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{esc(title)}</title><meta name="description" content="{esc(description or site['tagline'])}">
-{"" if live else '<meta name="robots" content="noindex">'}<link rel="icon" href="{up}{asset('icon.svg')}" type="image/svg+xml">
+<title>{esc(title)}</title><meta name="description" content="{esc(description)}">
+{"" if live else '<meta name="robots" content="noindex">'}{card}
+{_PARTS.get("head", "").replace(UP, up)}
 <link rel="preload" href="{up}{asset('fonts/source-serif-4-normal-latin.woff2')}" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{up}{asset('styles.css')}">{js}</head>
-<body><a class="skip" href="#main">Skip to content</a>{alpha_banner(site)}
-<header class="mast"><div class="wrap mast-in"><a class="brand" href="{up}index.html">{MARK}<span>
-<span class="name">{esc(site['name'])}</span><span class="tag">{esc(site['tagline'])}</span></span></a>
+<body class="wts-headings"><a class="skip" href="#main">Skip to content</a>{alpha_banner(site, up)}
+<header class="mast"><div class="wrap mast-in"><div class="brand">{MARK}<a class="name" href="{up}index.html">{esc(site['name'])}</a>
+{_PARTS.get("endorsement", "")}<p class="tag">{esc(site['tagline'])}</p></div>
 <p class="indep">{esc(site['independence'])}</p></div>
 <nav class="tabs wrap" aria-label="Main">{nav}</nav></header>
 <main id="main" class="wrap">{body}</main>
-<footer class="wrap"><p>{esc(site['parent'])}</p>
-<p><a href="{up}about/index.html">About</a> · <a href="{up}corrections/index.html">Report a mistake</a> ·
-<a href="{up}data/index.html">Download the data</a> · <a href="{up}terms/index.html">Terms</a> ·
-<a href="{up}privacy/index.html">Privacy</a> · <a href="{up}accessibility/index.html">Accessibility</a></p></footer>
+{footer(w, up)}
 </body></html>
 """
 
@@ -327,7 +409,7 @@ def profile_html(p: dict, w: dict) -> str:
     if p["type"] == "council":
         out.append(f'<h2>{esc(w["areas"]["heading"])}</h2><p>{fill(w["areas"]["council"], name=name)}</p>')
         if p.get("council_link"):
-            out.append(f'<p><a href="{esc(p["council_link"])}">{fill(w["council_link"]["text"], name=name)}</a></p>')
+            out.append(sister_link(p["council_link"], fill(w["council_link"]["text"], name=name)))
     elif p["areas"]:
         top = p["areas"][:12]
         items = "".join(f'<li>{esc(a["area_name"])}: {a["rented_homes"]:,.0f}</li>' for a in top)
@@ -338,7 +420,7 @@ def profile_html(p: dict, w: dict) -> str:
     if p["formerly"]:
         out.append(f'<p class="src">Earlier names: {esc(", ".join(p["formerly"]))}.</p>')
     out.append(src.html(w))
-    return page(f"{name} – {w['site']['name']}", "".join(out), w, depth=2,
+    return page(f"{name} – {w['site']['name']}", "".join(out), w, depth=2, path=f"landlords/{p['slug']}/",
                 description=f"{name}: grade, tenant satisfaction compared with similar landlords, Ombudsman complaints and safety checks.")
 
 
@@ -393,8 +475,11 @@ share of homes that had each check.</p>
 <h2>Where the figures come from</h2>
 <p>The Regulator of Social Housing's Tenant Satisfaction Measures, regulatory judgements and statistical returns,
 and the Housing Ombudsman's tables of landlords with performance reports. Every figure on a landlord's page links to
-its file.</p>"""
-    return page(f"How we compare landlords – {w['site']['name']}", body, w, depth=1, here="method/index.html")
+its file.</p>
+<h2>{esc(w["method"]["sister_heading"])}</h2>
+<p>{rich(w["method"]["sister"])}</p>"""
+    return page(f"How we compare landlords – {w['site']['name']}", body, w, depth=1, here="method/index.html",
+                path="method/")
 
 
 def build(settings: Settings, out: Path | None = None) -> dict[str, int]:
@@ -408,6 +493,7 @@ def build(settings: Settings, out: Path | None = None) -> dict[str, int]:
     (out / "landlords").mkdir(parents=True)
     (out / "method").mkdir()
     _ASSETS = write_assets(out)
+    _PARTS.update(family_parts(_ASSETS))
     profiles = build_profiles(settings)
     sizes = []
     for p in profiles:

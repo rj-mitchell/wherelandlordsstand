@@ -157,12 +157,14 @@ def cache_control(path: str) -> str:
     return "no-cache"
 
 
-def stylesheet(settings: Settings) -> str:
-    """The live build's stylesheet, for the API's own pages (assets.json, written by the build)."""
+def stylesheets(settings: Settings) -> list[str]:
+    """The live build's stylesheets, for the API's own pages (assets.json, written by the build): the family kit's
+    fonts and styles, then the site's own."""
     try:
-        return "/" + json.loads((site_dir(settings) / "assets.json").read_text())["styles.css"]
+        names = json.loads((site_dir(settings) / "assets.json").read_text())
+        return ["/" + names[n] for n in ("fonts.css", "family.css", "styles.css") if n in names]
     except (OSError, ValueError, KeyError):
-        return "/styles.css"   # a build made before assets/ (it kept its stylesheet at the top)
+        return ["/styles.css"]   # a build made before assets/ (it kept its stylesheet at the top)
 
 
 class LiveFiles(StaticFiles):
@@ -238,7 +240,9 @@ def create_app(settings: Settings, behind_proxy: bool = False) -> FastAPI:
 
         html = (f'<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" '
                 f'content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">'
-                f'<title>{escape(title)}</title><link rel="stylesheet" href="{stylesheet(settings)}"></head><body>'
+                f'<title>{escape(title)}</title>'
+                + "".join(f'<link rel="stylesheet" href="{href}">' for href in stylesheets(settings))
+                + '</head><body>'
                 f'<main id="main"><h1>{escape(title)}</h1>{body}</main></body></html>')
         return HTMLResponse(html, status_code=status, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex"})
 

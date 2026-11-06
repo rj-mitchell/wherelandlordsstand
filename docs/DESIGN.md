@@ -18,7 +18,7 @@ colour. This site's cloth is **roof slate**, `#40484D`, as on the hub's United K
 
 | Token | Use | Light | Dark |
 |---|---|---|---|
-| Paper and ink | page and text | `#f7f5ef` / `#1c2427` (the charity's ink) | `#14181a` / `#e9e6de` |
+| Paper and ink | page and text | `#f5f0e3` (the charity's paper) / `#1c2427` (the charity's ink) | `#14181a` / `#e9e6de` |
 | Slate | the mark, filled bands, the card's top rule, current tab, buttons | `#40484d` | `#b9c3c9` |
 | Link | links | `#2f4a5e` | `#a9c6dc` |
 | Gilt | the mark's bands; the rule beside "Before you bid" | `#b08d3c` / `#7a5c1c` (text) | `#d9bc72` |

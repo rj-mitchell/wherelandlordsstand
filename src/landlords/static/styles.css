@@ -7,9 +7,9 @@ src:url(fonts/source-serif-4-normal-latin-ext.woff2) format("woff2");unicode-ran
 src:url(fonts/source-serif-4-italic-latin.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 @font-face{font-family:"Source Serif 4";font-style:italic;font-weight:400 700;font-display:swap;
 src:url(fonts/source-serif-4-italic-latin-ext.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}
-:root{color-scheme:light dark;--paper:#f7f5ef;--paper-hi:#fcfbf8;--ink:#1c2427;--muted:#4f565a;--rule:#d3cdbf;
+:root{color-scheme:light dark;--paper:#f5f0e3;--paper-hi:#fcfbf8;--ink:#1c2427;--muted:#4f565a;--rule:#d3cdbf;
 --rule-strong:#1c2427;--slate:#40484d;--link:#2f4a5e;--band-off:#e2e0d8;--gilt:#7a5c1c;--gilt-mark:#b08d3c;
---note:#efeadf;--strip:#e7e2d5;--serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+--note:#ece5d5;--strip:#e7e2d5;--serif:"Source Serif 4",Georgia,"Times New Roman",serif;
 --sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;--wrap:64rem}
 @media (prefers-color-scheme:dark){:root{--paper:#14181a;--paper-hi:#1a1f22;--ink:#e9e6de;--muted:#aab1b5;
 --rule:#353c40;--rule-strong:#e9e6de;--slate:#b9c3c9;--link:#a9c6dc;--band-off:#2c3337;--gilt:#d9bc72;

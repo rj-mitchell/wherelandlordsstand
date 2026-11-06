@@ -10,7 +10,7 @@
     landlords score                     # peer groups and bands (config/scoring.toml)
     landlords build                     # the pages, in data/site/
     landlords serve                     # the site and its API at http://127.0.0.1:8000/ (this computer only)
-    landlords update                    # weekly: fetch, load, check, score, build into data/builds/ (not live)
+    landlords update                    # weekly: fetch, load, check, score, build into data/builds/; email to approve
     landlords publish                   # by hand: make the newest build live; `landlords rollback` undoes it
     landlords reports / missed          # readers' reports of mistakes; searches that found nothing
 """
@@ -128,8 +128,8 @@ def serve(port: int = typer.Option(8000), host: str = typer.Option("127.0.0.1", 
 @app.command()
 def update(no_fetch: bool = typer.Option(False, help="use the files already fetched"),
            no_email: bool = typer.Option(False, help="don't send the weekly email")) -> None:
-    """The weekly update: fetch, load, check; build new pages if anything is new; then publish them before launch,
-    or email a link to approve them after it ([publish] in config/settings.toml)."""
+    """The weekly update: fetch, load, check; build new pages if anything is new; then email a link to approve them
+    ([publish] in config/settings.toml). Exits 1 if something needs attention, or the approval email wasn't sent."""
     from landlords import publish
 
     info = publish.update(load_settings(), fetch=not no_fetch, notify=not no_email)

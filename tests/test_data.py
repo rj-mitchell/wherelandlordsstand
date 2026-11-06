@@ -113,13 +113,17 @@ def test_the_launch_switch(tmp_path):
 
 
 @pytest.mark.skipif(not (settings.raw_dir / "tsm").exists(), reason="data not fetched")
-def test_the_weekly_update_publishes_before_launch_and_asks_after(tmp_path, monkeypatch):
+def test_the_weekly_update_publishes_the_first_pages_and_asks_for_the_rest(tmp_path, monkeypatch):
+    """The site is public, in alpha (docs/DECISIONS.md, 12): once pages are live, new ones wait for the owner's
+    approval, whether or not the launch switch is on."""
     import dataclasses
     import shutil
 
     from landlords import publish
     from landlords.api import State
 
+    for k in ("LANDLORDS_SMTP_USER", "LANDLORDS_SMTP_PASSWORD"):
+        monkeypatch.delenv(k, raising=False)                        # never a real email from a test
     data = tmp_path / "data"
     shutil.copytree(settings.raw_dir, data / "raw")
     shutil.copytree(settings.staging_dir, data / "staging", ignore=shutil.ignore_patterns("*.part"))
@@ -131,12 +135,15 @@ def test_the_weekly_update_publishes_before_launch_and_asks_after(tmp_path, monk
     again = publish.update(s, fetch=False, notify=False)
     assert again["build"] is None                                   # nothing new: no new pages
 
-    launched = dataclasses.replace(s, raw={**s.raw, "site": {**s.section("site"), "launched": True,
-                                                             "url": "https://example.org"}})
-    asked = publish.update(launched, fetch=False, notify=False)
+    assert not s.section("site").get("launched")
+    monkeypatch.setattr(publish, "code_version", lambda: "a-new-version")
+    asked = publish.update(s, fetch=False, notify=False)            # a new version of the site, before launch
     assert asked["build"] and asked["approval"] and publish.current(s) == first["build"]   # waits for approval
     [(build,)] = State(data / "state.db").connect().execute("select build from approvals").fetchall()
-    assert build == asked["build"]                # going public (deploy/.env) is enough for new pages
+    assert build == asked["build"]
 
-    monkeypatch.setattr(publish, "code_version", lambda: "a-new-version")
-    assert publish.update(launched, fetch=False, notify=False)["build"]          # and so is a new version
+    launched = dataclasses.replace(s, raw={**s.raw, "site": {**s.section("site"), "launched": True,
+                                                             "url": "https://example.org"}})
+    after = publish.update(launched, fetch=False, notify=True)      # launching is enough for new pages, which wait too
+    assert after["build"] and publish.current(s) == first["build"]
+    assert after["email"].startswith("not sent") and after["needs_attention"]   # no email set up: the update fails

@@ -56,8 +56,10 @@ def _info(settings: Settings, build: str | None) -> dict:
 
 def update(settings: Settings, fetch: bool = True, notify: bool = True) -> dict:
     """The weekly update. Builds new pages only when something is new (files from the publishers, a new version of
-    the site, or a new address or launch switch in the server's settings); then, before launch, publishes them, and after launch asks the owner to approve them by email
-    ([publish] in config/settings.toml)."""
+    the site, or a new address or launch switch in the server's settings); then asks the owner to approve them by
+    email ([publish] in config/settings.toml). The site is public, in alpha, so nothing new goes live without the
+    owner's approval, whether or not it has launched (docs/DECISIONS.md, 12). Only the very first pages, when no
+    pages are live, are published at once."""
     from landlords import area, checks, load, register, score, site
     from landlords import fetch as fetch_
 
@@ -103,12 +105,11 @@ def update(settings: Settings, fetch: bool = True, notify: bool = True) -> dict:
 
     # What happens to a new build -------------------------------------------------------------------------------
     cfg = settings.section("publish")
-    launched = bool(settings.section("site").get("launched"))
     links = None
     if info["build"] and not info["checks_failed"]:
-        if not live or not launched or cfg.get("mode") == "auto":
-            why = ("the first pages" if not live else "the site is not public yet, so nothing needs approving"
-                   if not launched else "pages are published without approval ([publish] mode = \"auto\")")
+        if not live or cfg.get("mode") == "auto":
+            why = ("the first pages, as no pages were live" if not live
+                   else "pages are published without approval ([publish] mode = \"auto\")")
             (builds_dir(settings) / info["build"] / "build-info.json").write_text(json.dumps(info, default=str))
             publish(settings, info["build"])
             info["published"] = f"The new pages are live: {why}."
@@ -141,6 +142,10 @@ def update(settings: Settings, fetch: bool = True, notify: bool = True) -> dict:
 
         subject, body = notify_.report({**info, "build": info["build"] or "no new pages"}, links, extra)
         info["email"] = notify_.send(settings, subject, body)
+        if links and not info["email"].startswith("sent"):
+            # Nobody will hear of the new pages, so they would never be approved: fail, which emails the alerts address
+            info["needs_attention"] = True
+            info["approval"] = f"waiting for approval, but the email was {info['email']}"
     else:
         info["email"] = "nothing to report" if notify else "not sent (--no-email)"
 

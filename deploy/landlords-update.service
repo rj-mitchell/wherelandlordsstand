@@ -1,5 +1,5 @@
-# Fetch new published files, load and check them, and build the pages into a new folder in /data/builds. Before
-# launch it publishes them at once; after launch it emails a link to approve them (docs/OPERATIONS.md).
+# Fetch new published files, load and check them, and build the pages into a new folder in /data/builds, then email
+# a link to approve them: nothing new goes live without the owner's approval (docs/OPERATIONS.md).
 # Installed by deploy/update.sh with landlords-update.timer.
 [Unit]
 Description=Where Landlords Stand: weekly update

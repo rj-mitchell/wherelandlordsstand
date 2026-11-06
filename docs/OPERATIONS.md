@@ -1,7 +1,8 @@
 # Operations
 
-How the data is fetched, loaded, checked and turned into pages. Everything runs by hand for now; the weekly update
-and publishing come later.
+How the data is fetched, loaded, checked and turned into pages, and how new pages are published. On the server the
+weekly update runs by itself and asks the owner to approve new pages ("The weekly update, the email, and
+publishing"). Every step can also be run by hand, as below.
 
 ## Fetching
 
@@ -75,24 +76,30 @@ uv run landlords serve                 # http://127.0.0.1:8000/ on this computer
 ```
 
 The rules are in `config/scoring.toml` and every sentence in `config/wording.toml`; change them there, not in the
-code. `landlords build` replaces `data/site/` each time. Nothing is deployed: `serve` listens on 127.0.0.1 only.
+code. `landlords build` replaces `data/site/` each time. On your own computer `serve` listens on 127.0.0.1 only.
 
-`uv run pytest` checks the built pages: each under 100 KB, with the line about turning down offers, no scripts or
-outside resources, and every source link pointing to a listed file.
+The stylesheet is `src/landlords/static/styles.css`. The build copies it, the scripts and the fonts into
+`data/site/assets/`, each with a fingerprint of its content in its name, so a cache never serves an old copy
+(docs/DESIGN.md, "Where the look lives").
+
+`uv run pytest` checks the built pages: each landlord's page under 100 KB, with the line about turning down offers,
+no scripts or outside resources, and every source link pointing to a listed file.
 
 ## The weekly update, the email, and publishing
 
-Every Thursday the server runs `landlords update`. Nobody needs to run anything by hand:
+Every Thursday the server runs `landlords update`. The owner only needs to approve the new pages:
 
 1. It fetches any new files, loads and checks them.
 2. If anything is new (files from the publishers, or a new version of the site), it builds a new set of pages in
    `data/builds/<time>/`. If nothing is new, it builds nothing.
-3. **Before launch** (`[site] launched` false) it publishes them at once: nothing is public, so there is nothing to
-   approve. **After launch** it emails `[publish] notify_to` (wheretheystanduk@gmail.com) a report and two links:
-   one to look at the new pages, and one to approve them. The approve link opens a page with the report and a
-   **Publish these pages** button; opening the link never publishes on its own (email scanners open links). After
-   publishing, the same page has an **Undo** button while those pages are live. Links work for 14 days; if nobody
-   approves, the site keeps its current pages. A build whose checks failed can't be approved.
+3. It emails `[publish] notify_to` (wheretheystanduk@gmail.com) a report and two links: one to look at the new
+   pages, and one to approve them. The site is public, in alpha, so this happens whether or not the launch switch is
+   on (docs/DECISIONS.md, 12). Only the very first pages, when none are live, are published at once. The approve
+   link opens a page with the report and a **Publish these pages** button; opening the link never publishes on its
+   own (email scanners open links). After publishing, the same page has an **Undo** button while those pages are
+   live. Links work for 14 days; if nobody approves, the site keeps its current pages. A build whose checks failed
+   can't be approved. If the email can't be sent, the update fails, so the server's alert says so: otherwise nobody
+   would hear of the new pages.
 4. The email also goes out, without links, when something else needs attention: checks failed, a new kind of release
    appeared, a section of the rights page is due to be checked again, or readers' reports are waiting.
 

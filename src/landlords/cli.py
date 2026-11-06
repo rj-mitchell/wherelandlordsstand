@@ -183,6 +183,7 @@ def reports(close: int = typer.Option(None, help="close this report (its email a
 def backup(to: Path = typer.Option(..., help="folder for the copies"), keep: int = typer.Option(14)) -> None:
     """Copy the state database (readers' reports, missed searches): the one thing that can't be rebuilt."""
     import gzip
+    import os
     import shutil
     import sqlite3
     from datetime import UTC, datetime
@@ -194,10 +195,17 @@ def backup(to: Path = typer.Option(..., help="folder for the copies"), keep: int
     to.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
     tmp = to / f"landlords-state-{stamp}.sqlite"
-    with sqlite3.connect(src) as a, sqlite3.connect(tmp) as b:
-        a.backup(b)  # a consistent copy, even while the site is writing
-    with open(tmp, "rb") as fi, gzip.open(f"{tmp}.gz", "wb") as fo:
-        shutil.copyfileobj(fi, fo)
+    # Readers' reports can hold their email addresses: the copies are readable by their owner only, as the other
+    # sites' backups are.
+    old_umask = os.umask(0o077)
+    try:
+        with sqlite3.connect(src) as a, sqlite3.connect(tmp) as b:
+            a.backup(b)  # a consistent copy, even while the site is writing
+        with open(tmp, "rb") as fi, gzip.open(f"{tmp}.gz", "wb") as fo:
+            shutil.copyfileobj(fi, fo)
+    finally:
+        os.umask(old_umask)
+    os.chmod(f"{tmp}.gz", 0o600)
     tmp.unlink()
     copies = sorted(to.glob("landlords-state-*.sqlite.gz"))
     for old in copies[:-keep]:

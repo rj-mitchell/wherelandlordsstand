@@ -98,3 +98,22 @@ def test_sites_sharing_a_bucket_keep_their_own_backups(tmp_path):
     for day in ("2026-10-11", "2026-10-12"):
         out = send(archive(tmp_path, day), keep=1, env=ENV, client=client)
     assert out["stored"] == 1 and "where-they-stand-2026-10-01.tar.gz" in b2.files
+
+
+def test_the_backup_can_be_read_by_its_owner_only(settings, tmp_path, monkeypatch):
+    """Readers' reports can hold email addresses, so the copy is mode 600, as the other sites' backups are."""
+    import stat
+
+    from typer.testing import CliRunner
+
+    from landlords.api import State
+    from landlords.cli import app
+
+    for k in ENV:
+        monkeypatch.delenv(k, raising=False)
+    State(settings.data_dir / "state.db").add_report("page", "a mistake", "reader@example.org")
+    result = CliRunner().invoke(app, ["backup", "--to", str(tmp_path / "backups")])
+    assert result.exit_code == 0, result.output
+    [copy] = (tmp_path / "backups").glob("landlords-state-*.sqlite.gz")
+    assert stat.S_IMODE(copy.stat().st_mode) == 0o600
+    assert not list((tmp_path / "backups").glob("*.sqlite"))      # the uncompressed copy is gone

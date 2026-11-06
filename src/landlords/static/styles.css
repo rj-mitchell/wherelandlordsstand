@@ -103,5 +103,23 @@ ol.sources{font-size:.9rem;padding-left:1.3rem}ol.sources li{margin:.45rem 0;wor
 footer{margin-top:3rem;border-top:3px double var(--rule-strong);padding-block:1.1rem 2rem;color:var(--muted);
 font:.85rem/1.5 var(--sans)}
 footer p{margin:.35rem 0}footer a{color:var(--muted)}
+/* phones: a lighter masthead, so a landlord's grade is on the first screen, and tables that fit */
+@media (max-width:40rem){
+.strip{font-size:.8rem;line-height:1.4}.strip p{padding-block:.35rem}
+.mast-in{padding-block:.75rem .35rem;gap:.3rem}
+.brand{gap:.6rem}.mark{width:34px;height:34px}
+.name{font-size:1.3rem}
+.tag{display:none}
+.indep{font-size:.78rem;line-height:1.35}
+nav.tabs{gap:0 .9rem;font-size:.86rem}
+nav.tabs a{padding:.5rem 0 .4rem}
+h1{margin-top:1rem;font-size:1.65rem}
+.sub{margin-bottom:.7rem}
+.card{margin-top:.7rem}.card>h2{margin-top:.5rem;padding-top:.3rem}.card p{margin-block:.6rem}
+.card section{padding-bottom:.5rem}
+th,td{padding:.4rem .3rem}
+thead th{font-size:.7rem;letter-spacing:.03em}thead th.n{white-space:normal}
+td{overflow-wrap:anywhere}
+}
 @media (prefers-reduced-motion:no-preference){a,nav.tabs a{transition:border-color .12s,color .12s}}
 @media (forced-colors:active){.meter i.on{background:CanvasText}.meter i{border-color:CanvasText}}

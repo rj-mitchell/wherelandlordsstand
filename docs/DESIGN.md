@@ -35,7 +35,8 @@ colour. This site's cloth is **roof slate**, `#40484D`, as on the hub's United K
   `config/wording.toml`).
 - **The masthead:** the mark (a roof over a bound volume with gilt bands, on a shelf), the name in Source Serif, the
   tagline in italic, the independence line on the right, then the tabs, with the current page underlined in slate,
-  over a double rule.
+  over a double rule. On phones it is lighter, so a landlord's grade is on the first screen: a smaller mark and
+  name, no tagline (the home page says the same), the independence line in smaller type, and closer spacing.
 - **Section headings** (`h2`) in small capitals under a rule, as Where Councils Stand's are.
 - **The landlord's card:** a panel with a slate top rule. Its parts (grade, how it compares, complaints, safety) have
   small sans-serif headings between thin rules. "Before you bid" sits beside a gilt rule.
@@ -53,7 +54,7 @@ time. The mark has its size in the page as well as in the stylesheet, so it stay
 
 Square corners, ruled lists, colour only where it carries meaning, one fluid type scale, visible focus rings, hover
 styles that need a mouse, animation only when reduced motion isn't requested, and no sideways scrolling on phones
-(checked at 390 px).
+(checked at 390 px, where the area tables fit without scrolling).
 
 ## Checking a change
 

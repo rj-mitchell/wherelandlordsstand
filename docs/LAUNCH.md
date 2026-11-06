@@ -55,7 +55,7 @@ Where Councils Stand do.
 - [x] Steps 1–4 of docs/DEPLOY.md: cloned into `/opt/wherelandlordsstand`, `deploy/update.sh`, the first pages.
 - [x] Step 6 of docs/DEPLOY.md, the domain: Cloudflare and an origin certificate for the domain, and the site in
       `SITES` on Where MPs Stand's side. The site is public, in alpha.
-- [ ] Step 5 of docs/DEPLOY.md, **the weekly email**: check it with `landlords email-test`. New pages are approved
+- [ ] Step 5 of docs/DEPLOY.md, **the weekly email**: check it with `landlords email-test` and `deploy/send-mail.sh`. New pages are approved
       from it, so without it nothing new is published (and each update fails to say so).
 - [x] `main` is this repository's default branch (docs/DEPLOY.md).
 - [ ] **Launch**, when the owner says so ("Launch" in docs/DEPLOY.md): `LANDLORDS_LAUNCHED=true` in `deploy/.env`,

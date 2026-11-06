@@ -10,3 +10,5 @@ deploy/backups
 *.png
 # the family kit's icons and link card, which the pages use
 !src/landlords/family/*.png
+.github
+tests

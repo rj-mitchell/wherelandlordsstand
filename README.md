@@ -39,7 +39,7 @@ What it has:
 - **data downloads**: CSV files whose rows carry their source and licence;
 - **report a mistake**, a form that works without JavaScript, with a public log of our fixes, and a count of searches
   that found nothing, so names can be added;
-- about, terms, privacy, accessibility (axe-core, WCAG 2.2 AA, no failures) and "not found" pages; one switch that lets
+- about, terms, privacy, accessibility (axe-core, WCAG 2.2 AA, no failures), press, status and "not found" pages; one switch that lets
   search engines in (`[site] launched`); off-site backups; and a watch for new releases.
 
 A weekly `landlords update` builds new pages into a new folder and emails the owner a link to approve them; the
@@ -116,6 +116,10 @@ uv run landlords build            # peer groups, bands and every page, in data/s
 uv run landlords serve            # the site and its API at http://127.0.0.1:8000/, on this computer only
 uv run pytest
 ```
+
+GitHub Actions (`.github/workflows/ci.yml`) runs ruff and the tests on every pull request; builds the real pages from
+the publishers' files (kept in the Actions cache, fetched again only when `config/sources.toml` changes), runs the
+tests on them and checks them with axe-core (`scripts/a11y.mjs`); and builds the server's image.
 
 ## Known limitations
 

@@ -46,7 +46,7 @@ nav.tabs a:hover{border-bottom-color:var(--rule)}
 nav.tabs a[aria-current=page]{border-bottom-color:var(--slate);font-weight:700}
 /* text */
 main{padding-block:.5rem 1rem}
-main p,main li{max-width:44rem}
+main p,main li{max-width:44rem;overflow-wrap:break-word}
 h1{font-size:clamp(1.8rem,1.3rem + 2vw,2.5rem);line-height:1.15;font-weight:600;margin:1.6rem 0 .4rem;
 letter-spacing:-.01em}
 h2{font-size:1.2rem;font-weight:700;font-variant-caps:all-small-caps;letter-spacing:.08em;margin:2.4rem 0 .6rem;

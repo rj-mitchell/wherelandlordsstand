@@ -87,6 +87,74 @@ sections = [
   ]],
 ]
 
+[press]
+heading = "Press"
+# {profiles}, {areas}, {today} and the example landlord ({example_name}, {example_url}) are filled in by the build.
+sections = [
+  ["Contact", [
+    "If you are writing about {site}, email [{contact}](mailto:{contact}). We will reply as soon as we can.",
+    "To tell us about a mistake on a page, use the form on the [corrections page](corrections/index.html).",
+  ]],
+  ["Facts in brief", [
+    [
+      "{site} shows what social landlords in England are like, from what the Regulator of Social Housing and the Housing Ombudsman publish.",
+      "It has a page for each of {profiles} councils, housing associations and for-profit landlords with 1,000 or more homes, and a page for each of {areas} council areas.",
+      "A landlord's page shows the regulator's grade, how its tenants' answers compare with similar landlords, what the Ombudsman found about complaints, and safety checks.",
+      "Every figure links to the published file it comes from. We never change a published figure.",
+      "It is free. It has no adverts, sets no cookies and needs no account.",
+      "It is in alpha: it is new and still being tested.",
+      "It is a Where They Stand project. Where They Stand is applying to register as a charity in England and Wales.",
+      "Its code is open source (AGPL-3.0), and our own work on it is under the CC BY 4.0 licence.",
+    ],
+  ]],
+  ["How to cite a landlord's page", [
+    "Give the landlord's name, the site's name, the page's address and the day you looked at it. For example:",
+    "{example_name}. {site}. {example_url} (seen on {today}).",
+    "The figures belong to the publishers: the regulator's are under the Open Government Licence v3.0. The bands and the groups of similar landlords are our own work, under CC BY 4.0: credit {site} and link to the page. The [terms](terms/index.html) say more.",
+    "Pages change when new figures come out. The [status page](status/index.html) says when they were last made.",
+  ]],
+  ["Logo files", [
+    "You can use these to show the site in a story about it. Please don't change them, or use them in a way that suggests the site supports you or your work.",
+    [
+      "[The site's mark, a roof over a book (SVG)](press/where-landlords-stand-mark.svg)",
+      "[Its icon, the site's spine (SVG)](press/where-landlords-stand-icon.svg), and [as a picture, 512 by 512 pixels (PNG)](press/where-landlords-stand-icon-512.png)",
+      "[Its link card, 1200 by 630 pixels (PNG)](press/where-landlords-stand-card.png)",
+    ],
+  ]],
+  ["Independence", [
+    "Where Landlords Stand is independent. It is not affiliated with or endorsed by the Regulator of Social Housing, the Housing Ombudsman Service or any landlord.",
+  ]],
+]
+
+[status]
+heading = "Site status"
+intro = [
+  "This page shows how up to date the site is. Every Thursday the site looks for new files from the regulator and the Housing Ombudsman. This page is made again each time.",
+]
+now_heading = "The pages"
+# {date} is filled in as "6 November 2026".
+built = "These pages were made on {date}."
+checked = "The site last looked for new files on {date}."
+not_checked = "The site has not looked for new files yet."
+check_failed = "Last time, the site could not look for new files from: {sources}. We are looking into it."
+waiting = "New pages, made on {date}, are waiting to be checked by a person before they go live."
+not_waiting = "No new pages are waiting to be checked."
+sources_heading = "Where the figures come from"
+sources_intro = "For each set of files: the newest file in these pages, when we downloaded it, and when we read it into the site."
+columns = ["Files", "Newest file", "Downloaded", "Read in"]
+never = "not yet"
+notes = [
+  "New pages never go live on their own: a person checks them first. Until then, the site keeps the pages it has.",
+]
+
+# The sets of files, in the order shown, by their folder in config/sources.toml.
+[status.sources]
+tsm = "Tenant Satisfaction Measures"
+judgements = "Grades and other judgements"
+providers = "List of social landlords"
+stock = "Homes each landlord owns"
+ombudsman = "Housing Ombudsman's figures"
+
 [not_found]
 heading = "Page not found"
 text = "We couldn't find that page. It may have moved. Try searching for the landlord."

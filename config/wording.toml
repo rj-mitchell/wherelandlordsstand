@@ -30,6 +30,8 @@ links = [
   ["Privacy", "privacy/index.html"],
   ["Terms", "terms/index.html"],
   ["Data", "data/index.html"],
+  ["Press", "press/index.html"],
+  ["Status", "status/index.html"],
   ["Source code", "https://github.com/rj-mitchell/wherelandlordsstand"],
 ]
 contact = "Contact: {email}"

@@ -125,22 +125,23 @@ Every Thursday the server runs `landlords update`. The owner only needs to appro
 
 `[publish] mode = "auto"` publishes every build whose checks pass, and the email just says what changed.
 
-Setting up the email, once, on the server: `LANDLORDS_SMTP_USER` (the Gmail address that sends it) and
-`LANDLORDS_SMTP_PASSWORD` (its Google **app password**) in `/opt/wherelandlordsstand/deploy/.env`. They are the
-server's own email account, so docs/DEPLOY.md (step 5) copies them from its mail settings and sends a test
-(`landlords email-test`).
+**How the email is sent.** The site keeps no mail password. `landlords update` runs in a one-off container and
+writes its email as a letter to the outbox in its data folder, `data/outbox/` (`/data/outbox` in the container): "To:"
+and "Subject:" lines, a blank line, then the text (`src/landlords/notify.py`). On the server,
+`deploy/run-update.sh` (which the weekly unit runs) then sends every letter in the outbox with the charity's shared
+`mail.sh` in Where MPs Stand's checkout (`deploy/send-mail.sh`), which reads the one copy of the password in
+`/etc/wheretheystand/mail.env`, and moves each one sent to `data/outbox/sent/`. A letter that can't be sent stays in the
+outbox, and the unit fails, so the server's alert says so; `bash deploy/send-mail.sh` tries again. `landlords
+email-test` leaves a test letter in the outbox the same way (docs/DEPLOY.md, step 5).
 
-**To be consolidated.** Unlike the other sites, this one sends its email itself (`src/landlords/notify.py`, with
-Python's smtplib), so it keeps its own copy of the server's Gmail app password in its `.env`. Every other job on the
-server sends mail through the shared `deploy/mail.sh` in Where MPs Stand's checkout, which reads the one copy in
-`/etc/wheretheystand/mail.env`. The charity's family plan (section 5, "Retire") wants this site moved onto
-`mail.sh`, so there is one copy of the password and one way of sending. Until then, when the app password changes,
-copy it again (docs/DEPLOY.md, step 5): otherwise the weekly update fails for want of its email.
+On your own computer, letters just collect in `data/outbox/`. To send them for real while developing, set
+`LANDLORDS_MAIL=smtp` with `LANDLORDS_SMTP_USER` and `LANDLORDS_SMTP_PASSWORD` for an account of your own (the
+docstring of `src/landlords/notify.py`). Never on the server.
 
 By hand, if ever needed:
 
 ```bash
-uv run landlords update                # as above (`--no-email` to skip the email)
+uv run landlords update                # as above (`--no-email` to skip the email; on the server, deploy/run-update.sh)
 uv run landlords publish               # make the newest build live
 uv run landlords publish 20261103-232550
 uv run landlords rollback              # put back the build that was live before

@@ -35,22 +35,23 @@ On the server, as root:
 2. **Start it:** `bash /opt/wherelandlordsstand/deploy/update.sh` builds and starts the site, and installs its weekly
    update and nightly backup timers.
 3. **The first pages** (a few minutes: it downloads the regulator's and the Ombudsman's files, then builds and
-   publishes the pages, as none are live yet; every later build waits for approval):
+   publishes the pages, as none are live yet; every later build waits for approval). It is the weekly update, run
+   now: it waits for any other site's update to finish, then sends its email (step 5):
    ```bash
-   cd /opt/wherelandlordsstand/deploy && docker compose run --rm -T app landlords update
+   bash /opt/wherelandlordsstand/deploy/run-update.sh
    ```
 4. **Look at it privately** from another computer: `ssh -L 8004:127.0.0.1:8004 root@<server>`, then open
    http://localhost:8004. The port answers on the server itself only.
-5. **The weekly email**, once the server's own email is set up (see above). New pages are approved from this email, so
-   without it nothing new is published, and each update fails to say so. The site sends it itself
-   (`src/landlords/notify.py`), with its own copy of the server's mail account (docs/OPERATIONS.md, "The weekly update, the email, and publishing"). This
-   copies the account into this site's settings, then sends a test:
+5. **The weekly email**, once the server's own email is set up (`mail.sh setup`; see above). New pages are approved
+   from this email, so without it nothing new is published, and each update fails to say so. The site keeps no mail
+   password of its own: the update, in its container, leaves the email in the outbox in its data volume, and
+   `deploy/run-update.sh` then sends it on the server with the shared `mail.sh` (`deploy/send-mail.sh`;
+   docs/OPERATIONS.md, "The weekly update, the email, and publishing"). Send a test the same way:
    ```bash
    cd /opt/wherelandlordsstand/deploy
-   for k in FROM:USER APP_PASSWORD:PASSWORD; do v=$(grep "^MAIL_${k%%:*}=" /etc/wheretheystand/mail.env | cut -d= -f2-); \
-     sed -i "/^LANDLORDS_SMTP_${k#*:}=/d" .env; echo "LANDLORDS_SMTP_${k#*:}=$v" >> .env; done
-   bash update.sh && docker compose run --rm -T app landlords email-test
+   docker compose run --rm -T app landlords email-test && bash send-mail.sh
    ```
+   It arrives from the charity's account, as "Where They Stand", with a subject starting "Where Landlords Stand".
 6. **The domain:** Cloudflare and the front door, as for any site on the server ("Adding a site", linked above), with
    `wherelandlordsstand.com=wherelandlordsstand` in `SITES` and
    `bash /opt/hansardgpt/deploy/cloudflare.sh site wherelandlordsstand.com`. Done: the site is public, in alpha.
@@ -61,8 +62,7 @@ On the server, as root:
 When the owner says so (docs/LAUNCH.md): in `/opt/wherelandlordsstand/deploy/.env`, set `LANDLORDS_LAUNCHED=true`,
 then rebuild the pages:
 ```bash
-cd /opt/wherelandlordsstand/deploy && bash update.sh
-docker compose run --rm -T app landlords update
+cd /opt/wherelandlordsstand/deploy && bash update.sh && bash run-update.sh
 ```
 and approve them from the email. Check that `robots.txt` allows crawling, `/sitemap.xml` lists the pages and
 `check.sh` says the site works.
@@ -75,9 +75,11 @@ the branch it cloned.
 Commands are run in `/opt/wherelandlordsstand/deploy`. Any `landlords` command runs in a one-off container:
 `docker compose run --rm -T app landlords <command>`.
 
-* **Updates** run every Thursday at 11.40 UK time (`landlords-update.timer`), and wait for any other site's update
-  first (the shared lock). Each emails a link to approve the new pages, with Publish and Undo buttons
-  (docs/OPERATIONS.md, "The weekly update"). Nothing to run by hand.
+* **Updates** run every Thursday at 11.40 UK time (`landlords-update.timer`, which runs `deploy/run-update.sh`), and
+  wait for any other site's update first (the shared lock). Each emails a link to approve the new pages, with Publish
+  and Undo buttons (docs/OPERATIONS.md, "The weekly update"). Nothing to run by hand. The email waits in the outbox
+  until it is sent: `bash send-mail.sh` sends anything still there (after a mail failure, say), and sent ones are kept
+  in the volume's `outbox/sent/` for 30 days.
 * **Readers' reports:** `landlords reports`; close one with `landlords reports --close <id> --outcome "..."`, which
   deletes the reporter's email address. Fixes to our own mistakes go in the public log, `data_static/corrections.csv`.
 * **Missed searches:** `landlords missed`: candidates for new aliases (docs/OPERATIONS.md, "The register and names").

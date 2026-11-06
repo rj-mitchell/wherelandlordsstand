@@ -150,6 +150,11 @@ def update(settings: Settings, fetch: bool = True, notify: bool = True) -> dict:
     else:
         info["email"] = "nothing to report" if notify else "not sent (--no-email)"
 
+    # The status page in the live pages says when the site last looked, and whether new pages are waiting, every week
+    from landlords import status
+
+    info["status_page"] = "written" if status.refresh(settings) else "not written (no live pages with one)"
+
     with (settings.data_dir / "updates.jsonl").open("a") as fh:
         fh.write(json.dumps({k: info.get(k) for k in ("build", "finished", "needs_attention", "email", "published",
                                                         "approval")}
@@ -188,7 +193,15 @@ def publish(settings: Settings, build: str | None = None, force: bool = False, k
         fh.write(json.dumps({"published": build, "previous": previous,
                              "at": datetime.now(UTC).isoformat(timespec="seconds"), "forced": force}) + "\n")
     _prune(settings, keep, {build, previous})
+    _refresh_status(settings)
     return {"live": build, "previous": previous}
+
+
+def _refresh_status(settings: Settings) -> None:
+    """The live pages' status page, written again: it says whether new pages are waiting (src/landlords/status.py)."""
+    from landlords import status
+
+    status.refresh(settings)
 
 
 def rollback(settings: Settings) -> dict:
@@ -203,6 +216,7 @@ def rollback(settings: Settings) -> dict:
     with path.open("a") as fh:
         fh.write(json.dumps({"published": last["previous"], "previous": last["published"],
                              "at": datetime.now(UTC).isoformat(timespec="seconds"), "rollback": True}) + "\n")
+    _refresh_status(settings)
     return {"live": last["previous"], "rolled_back_from": last["published"]}
 
 

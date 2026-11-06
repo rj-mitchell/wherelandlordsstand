@@ -482,18 +482,24 @@ its file.</p>
                 path="method/")
 
 
-def build(settings: Settings, out: Path | None = None) -> dict[str, int]:
+def use_build(settings: Settings, names: dict[str, str], launched: bool) -> None:
+    """Write pages for a build whose files are at ``names`` (its assets.json): ``build`` uses it for a new build, and
+    the status page (src/landlords/status.py) to write itself again in the live one."""
     global _LAUNCHED, _SITE, _ASSETS
-    _LAUNCHED = bool(settings.section("site").get("launched"))
+    _LAUNCHED = launched
     _SITE = settings.section("site")
+    _ASSETS = names
+    _PARTS.update(family_parts(names))
+
+
+def build(settings: Settings, out: Path | None = None) -> dict[str, int]:
     w = load_toml("wording.toml")
     out = out or settings.data_dir / "site"
     if out.exists():
         shutil.rmtree(out)
     (out / "landlords").mkdir(parents=True)
     (out / "method").mkdir()
-    _ASSETS = write_assets(out)
-    _PARTS.update(family_parts(_ASSETS))
+    use_build(settings, write_assets(out), bool(settings.section("site").get("launched")))
     profiles = build_profiles(settings)
     sizes = []
     for p in profiles:

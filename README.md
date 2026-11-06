@@ -39,7 +39,7 @@ What it has:
 - **data downloads**: CSV files whose rows carry their source and licence;
 - **report a mistake**, a form that works without JavaScript, with a public log of our fixes, and a count of searches
   that found nothing, so names can be added;
-- about, terms, privacy, accessibility (axe-core, WCAG 2.2 AA, no failures) and "not found" pages; one switch that lets
+- about, terms, privacy, accessibility (axe-core, WCAG 2.2 AA, no failures), press, status and "not found" pages; one switch that lets
   search engines in (`[site] launched`); off-site backups; and a watch for new releases.
 
 A weekly `landlords update` builds new pages into a new folder and emails the owner a link to approve them; the

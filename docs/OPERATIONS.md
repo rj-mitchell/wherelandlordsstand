@@ -125,6 +125,12 @@ Every Thursday the server runs `landlords update`. The owner only needs to appro
 
 `[publish] mode = "auto"` publishes every build whose checks pass, and the email just says what changed.
 
+**The status page** (`/status/`, `src/landlords/status.py`) says when the pages were made, when each set of files was
+last downloaded and read in, when the site last looked for new files, and whether new pages are waiting for approval.
+Every build writes it, with `status.json` beside it; every weekly update, publish and undo then writes it again in the
+live pages, so it is right even in a week with nothing new. Its sentences are in `config/pages.toml` ([status]), with
+the press page's ([press]: contact, facts in brief, how to cite a landlord's page, and the logo files in `/press/`).
+
 **How the email is sent.** The site keeps no mail password. `landlords update` runs in a one-off container and
 writes its email as a letter to the outbox in its data folder, `data/outbox/` (`/data/outbox` in the container): "To:"
 and "Subject:" lines, a blank line, then the text (`src/landlords/notify.py`). On the server,

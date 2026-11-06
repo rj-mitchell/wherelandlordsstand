@@ -340,6 +340,40 @@ def text_page(settings: Settings, w: dict, key: str, extra: dict | None = None) 
     return page(f"{t['heading']} – {w['site']['name']}", "".join(parts), w, depth=1, path=f"{key}/")
 
 
+# The press page's logo files, at addresses that don't change, so they can be linked to. The mark is the one in the
+# masthead (site.MARK), drawn in its own colours rather than the stylesheet's; the icon and link card are the family
+# kit's.
+PRESS_MARK = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="512" height="512">'
+              "<title>Where Landlords Stand</title>"
+              '<path d="M8 29 32 10l24 19" fill="none" stroke="#40484D" stroke-width="6"/>'
+              '<rect x="17" y="29" width="30" height="27" fill="#40484D"/>'
+              '<path d="M17 36h30M17 40h30" stroke="#B08D3C" stroke-width="2"/>'
+              '<path d="M6 57.5h52" stroke="#1C2427" stroke-width="3"/></svg>\n')
+PRESS_FILES = {"where-landlords-stand-icon.svg": "icon.svg", "where-landlords-stand-icon-512.png": "icon-512.png",
+               "where-landlords-stand-card.png": "card.png"}
+
+
+def press(settings: Settings, profiles: list[dict], areas: dict, out: Path, w: dict) -> None:
+    """The press page (config/pages.toml, [press]): contact, facts in brief, how to cite a landlord's page, and the
+    logo files beside it."""
+    import shutil
+    from datetime import date
+
+    from landlords.site import FAMILY
+
+    folder = out / "press"
+    folder.mkdir(exist_ok=True)
+    (folder / "where-landlords-stand-mark.svg").write_text(PRESS_MARK)
+    for name, kit in PRESS_FILES.items():
+        shutil.copy(FAMILY / kit, folder / name)
+    example = next((p for p in profiles if p["slug"] == "abri-group"), profiles[0] if profiles else None)
+    (folder / "index.html").write_text(text_page(settings, w, "press", {
+        "profiles": f"{len(profiles):,}", "areas": f"{len(areas):,}", "today": nice_date(date.today()),
+        "example_name": example["name"] if example else "",
+        "example_url": f"{(settings.section('site').get('url') or '').rstrip('/')}/landlords/{example['slug']}/"
+                       if example else ""}))
+
+
 def not_found_html(w: dict) -> str:
     t = load_toml("pages.toml")["not_found"]
     # Served for any missing address, at any depth, so its links start from the site's root.
@@ -405,6 +439,10 @@ def build_extra(settings: Settings, profiles: list[dict], out: Path, w: dict) ->
         (out / name / "index.html").write_text(text_page(settings, w, name, {
             "tested": nice_date(acc["tested"]) if acc.get("tested") else "not yet",
             "tested_how": acc.get("tested_how", "")}))
+    press(settings, profiles, areas, out, w)
+    from landlords import status
+
+    status.write(settings, out, w)
     (out / "404.html").write_text(not_found_html(w))
     robots_and_sitemap(settings, out)
     return {"areas": len(areas), "downloads": len(files)}

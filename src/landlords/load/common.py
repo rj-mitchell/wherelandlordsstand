@@ -8,7 +8,7 @@ import json
 import re
 import zipfile
 from collections.abc import Iterable
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -178,3 +178,9 @@ def record_sources(settings: Settings, notes: list[dict]) -> None:
                                                 "licence", "fetched_at", "file")}
         known[n["sha256"]]["licence"] = licences.get((n["source"], n["role"], n["period"]), n["licence"])
     path.write_text(json.dumps(known, indent=2, sort_keys=True) + "\n")
+    # when each source was last loaded, for the status page (src/landlords/status.py)
+    loaded_path = settings.staging_dir / "loaded.json"
+    loaded = json.loads(loaded_path.read_text()) if loaded_path.exists() else {}
+    now = datetime.now(UTC).isoformat(timespec="seconds")
+    loaded.update({n["source"]: now for n in notes})
+    loaded_path.write_text(json.dumps(loaded, indent=2, sort_keys=True) + "\n")

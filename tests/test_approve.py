@@ -76,7 +76,7 @@ def test_only_a_hash_of_the_token_is_stored(site):
     assert all(token not in row[0] for row in stored)
 
 
-def test_the_email(settings, monkeypatch):
+def test_the_email_by_smtp_for_development(settings, monkeypatch):
     sent = []
 
     class FakeSMTP:
@@ -96,7 +96,8 @@ def test_the_email(settings, monkeypatch):
             sent.append(msg)
 
     monkeypatch.setattr(notify.smtplib, "SMTP_SSL", FakeSMTP)
-    assert notify.send(settings, "s", "b").startswith("not sent: email is not set up")
+    monkeypatch.setenv("LANDLORDS_MAIL", "smtp")                       # for development only (src/landlords/notify.py)
+    assert notify.send(settings, "s", "b").startswith("not sent: email by SMTP is not set up")
     monkeypatch.setenv("LANDLORDS_SMTP_USER", "sender@example.org")
     monkeypatch.setenv("LANDLORDS_SMTP_PASSWORD", "app-password")
     subject, body = notify.report({"build": "b1", "new_file_titles": ["RSH: TSM 2025/26"], "checks_failed": []},

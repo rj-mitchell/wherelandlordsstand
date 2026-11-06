@@ -45,7 +45,8 @@ where_councils_stand_list = "https://wherecouncilsstand.com/api/councils"
 #              public, in alpha: docs/DECISIONS.md, 12). Only the very first pages, when none are live, go live at once.
 #   "auto":    publish them whenever their checks pass, and email what changed
 mode = "approve"
-# Who gets the weekly email. The account that sends it is set on the server, in deploy/.env (src/landlords/notify.py).
+# Who gets the weekly email. The server sends it from the charity's account, with the shared mail.sh
+# (src/landlords/notify.py, deploy/send-mail.sh).
 notify_to = "wheretheystanduk@gmail.com"
 # How long an approval link works, and how many builds are kept.
 approval_days = 14

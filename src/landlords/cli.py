@@ -11,6 +11,7 @@
     landlords build                     # the pages, in data/site/
     landlords serve                     # the site and its API at http://127.0.0.1:8000/ (this computer only)
     landlords update                    # weekly: fetch, load, check, score, build into data/builds/; email to approve
+    landlords email-test                # a test email, through the outbox like the weekly one
     landlords publish                   # by hand: make the newest build live; `landlords rollback` undoes it
     landlords reports / missed          # readers' reports of mistakes; searches that found nothing
     landlords sister-councils           # which councils Where Councils Stand covers, for the links to it
@@ -151,11 +152,15 @@ def update(no_fetch: bool = typer.Option(False, help="use the files already fetc
 
 @app.command()
 def email_test() -> None:
-    """Send a test email, to check the email settings in deploy/.env."""
+    """A test email, by the same way as the weekly update's: on the server it waits in the outbox until
+    deploy/send-mail.sh sends it (docs/DEPLOY.md). Exits 1 if it couldn't be written or sent."""
     from landlords import notify
 
-    typer.echo(notify.send(load_settings(), "Where Landlords Stand: test email",
-                           "This is a test. The weekly update will send its report and approval link like this."))
+    result = notify.send(load_settings(), "Where Landlords Stand: test email",
+                         "This is a test. The weekly update will send its report and approval link like this.",
+                         kind="test")
+    typer.echo(result)
+    raise typer.Exit(0 if notify.delivered(result) else 1)
 
 
 @app.command()

@@ -6,6 +6,13 @@ from landlords import register
 from landlords.config import load_settings
 
 
+@pytest.fixture(autouse=True)
+def no_real_email(monkeypatch):
+    """Never a real email from a test: no SMTP account, and letters go to each test's own outbox."""
+    for k in ("LANDLORDS_MAIL", "LANDLORDS_SMTP_USER", "LANDLORDS_SMTP_PASSWORD", "LANDLORDS_NOTIFY_TO"):
+        monkeypatch.delenv(k, raising=False)
+
+
 @pytest.fixture
 def settings(tmp_path, monkeypatch):
     monkeypatch.setenv("LANDLORDS_DATA_DIR", str(tmp_path / "data"))

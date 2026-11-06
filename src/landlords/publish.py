@@ -142,8 +142,9 @@ def update(settings: Settings, fetch: bool = True, notify: bool = True) -> dict:
 
         subject, body = notify_.report({**info, "build": info["build"] or "no new pages"}, links, extra)
         info["email"] = notify_.send(settings, subject, body)
-        if links and not info["email"].startswith("sent"):
-            # Nobody will hear of the new pages, so they would never be approved: fail, which emails the alerts address
+        if links and not notify_.delivered(info["email"]):
+            # Nobody will hear of the new pages, so they would never be approved: fail, which emails the alerts address.
+            # A letter left in the outbox is sent by the server after the update; if that fails, the unit fails too.
             info["needs_attention"] = True
             info["approval"] = f"waiting for approval, but the email was {info['email']}"
     else:

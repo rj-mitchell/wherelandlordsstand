@@ -167,8 +167,6 @@ def test_the_weekly_update_publishes_the_first_pages_and_asks_for_the_rest(tmp_p
     from landlords import publish
     from landlords.api import State
 
-    for k in ("LANDLORDS_SMTP_USER", "LANDLORDS_SMTP_PASSWORD"):
-        monkeypatch.delenv(k, raising=False)                        # never a real email from a test
     data = tmp_path / "data"
     shutil.copytree(settings.raw_dir, data / "raw")
     shutil.copytree(settings.staging_dir, data / "staging", ignore=shutil.ignore_patterns("*.part"))
@@ -191,4 +189,14 @@ def test_the_weekly_update_publishes_the_first_pages_and_asks_for_the_rest(tmp_p
                                                              "url": "https://example.org"}})
     after = publish.update(launched, fetch=False, notify=True)      # launching is enough for new pages, which wait too
     assert after["build"] and publish.current(s) == first["build"]
-    assert after["email"].startswith("not sent") and after["needs_attention"]   # no email set up: the update fails
+    assert after["email"].startswith("queued") and after["needs_attention"] == bool(after["checks_failed"])
+    [letter] = (data / "outbox").glob("*.txt")                      # for the server's mail.sh (deploy/send-mail.sh)
+    assert letter.read_text().startswith("To: wheretheystanduk@gmail.com\nSubject: Where Landlords Stand: new pages")
+    assert "https://example.org/admin/approve/" in letter.read_text()
+
+    from landlords import notify
+
+    monkeypatch.setattr(notify, "send", lambda *a, **k: "not sent: the outbox is full")
+    monkeypatch.setattr(publish, "code_version", lambda: "another-version")
+    unsent = publish.update(launched, fetch=False, notify=True)
+    assert unsent["needs_attention"] and "not sent" in unsent["approval"]   # nobody would hear: the update fails

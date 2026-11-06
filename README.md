@@ -1,7 +1,7 @@
 # Where Landlords Stand
 
 **How England's larger social landlords compare, from the regulator's and the Housing Ombudsman's published data.**
-(A working title: docs/DECISIONS.md, 1.)
+At [wherelandlordsstand.com](https://wherelandlordsstand.com), in alpha.
 
 Where Landlords Stand will profile every social landlord in England with 1,000 or more homes, about 360 housing
 associations, councils and for-profit providers, and show where each stands against similar landlords. It is for
@@ -60,11 +60,12 @@ Phase 3, the bidder tools, is built and waiting for its gate, testing with appli
 
 Ready for phase 4, launch, which happens only when the owner says: a weekly `landlords update` builds into a new
 folder, `landlords publish` makes it live by hand, `landlords rollback` undoes it, and `deploy/` has the container,
-timers and [`docs/DEPLOY.md`](docs/DEPLOY.md). **Nothing is deployed.**
+timers and [`docs/DEPLOY.md`](docs/DEPLOY.md). It runs on the charity's shared server at wherelandlordsstand.com, in
+alpha: public, but search engines are asked not to index it until the launch switch is on.
 
 Phase 4, launch, is prepared: about, terms, accessibility and "not found" pages; an accessibility test (axe-core, WCAG
 2.2 AA, no failures); one switch that takes the site out of test mode (`[site] launched`); off-site backups; and a
-watch for new releases (TSM 2025/26 is due any day). What is left needs people or the server: see
+watch for new releases (TSM 2025/26 was loaded the day it came out). What is left needs people or the server: see
 [`docs/LAUNCH.md`](docs/LAUNCH.md).
 
 | File | What it is |
@@ -74,7 +75,8 @@ watch for new releases (TSM 2025/26 is due any day). What is left needs people o
 | [`docs/METHOD.md`](docs/METHOD.md) | How landlords are compared, with a worked example and questions for the reviewer |
 | [`docs/OPERATIONS.md`](docs/OPERATIONS.md) | Fetching, loading, matching names, checking, updating and publishing |
 | [`docs/USER-TESTING.md`](docs/USER-TESTING.md) | The plan for testing the bidder tools with applicants (phase 3's gate) |
-| [`docs/DEPLOY.md`](docs/DEPLOY.md) | Putting the site on the shared server, when the owner says so |
+| [`docs/DESIGN.md`](docs/DESIGN.md) | The look: a volume in the Where They Stand family, in roof slate |
+| [`docs/DEPLOY.md`](docs/DEPLOY.md) | Putting the site on the shared server, and releasing it |
 | [`docs/LAUNCH.md`](docs/LAUNCH.md) | The launch checklist: what is done, and what needs the owner, reviewers or the server |
 
 ## How it works

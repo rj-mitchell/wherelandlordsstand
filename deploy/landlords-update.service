@@ -1,5 +1,5 @@
-# Fetch new published files, load and check them, and build the pages into a new folder in /data/builds. Before
-# launch it publishes them at once; after launch it emails a link to approve them (docs/OPERATIONS.md).
+# Fetch new published files, load and check them, and build the pages into a new folder in /data/builds, then email
+# a link to approve them: nothing new goes live without the owner's approval (docs/OPERATIONS.md).
 # Installed by deploy/update.sh with landlords-update.timer.
 [Unit]
 Description=Where Landlords Stand: weekly update
@@ -12,6 +12,8 @@ OnFailure=alert@%n.service
 Type=oneshot
 WorkingDirectory=/opt/wherelandlordsstand/deploy
 # Exits 1 when something needs attention; each run's summary is appended to /data/updates.jsonl.
-ExecStart=/usr/bin/docker compose run --rm -T app landlords update
+# One update at a time on the whole server: every site's update takes the same lock, and this one waits for any other
+# to finish rather than fail (Where MPs Stand's sync can take up to 6 hours), so the time allowed covers the wait.
+ExecStart=/usr/bin/flock /var/lock/wheretheystand-update.lock /usr/bin/docker compose run --rm -T app landlords update
 Nice=10
-TimeoutStartSec=1h
+TimeoutStartSec=8h

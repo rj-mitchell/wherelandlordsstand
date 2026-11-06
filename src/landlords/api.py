@@ -13,7 +13,6 @@ other sites.
 from __future__ import annotations
 
 import json
-import re
 import sqlite3
 import time
 from collections import defaultdict, deque
@@ -147,17 +146,23 @@ def site_dir(settings: Settings) -> Path:
     return live if live.exists() else settings.data_dir / "site"
 
 
-FINGERPRINTED = re.compile(r"\.[0-9a-f]{10}\.(css|js|svg)$")
-
-
 def cache_control(path: str) -> str:
-    """How long Cloudflare and browsers may keep a file. A fingerprinted file ("styles.3f9a2c1d.css") or a font never
-    changes under its name, so it can be kept for a year. Everything else (pages, downloads, the plain styles.css)
-    changes with each update, so it is checked with the server each time: Cloudflare would otherwise keep a CSS, JS or
-    CSV file for two hours by default and serve the old one after an update (6 November 2026)."""
-    if FINGERPRINTED.search(path) or path.startswith("/fonts/"):
+    """How long Cloudflare and browsers may keep a file. Everything under /assets/ has a fingerprint of its content in
+    its name ("styles.3f9a2c1d.css", src/landlords/site.py), so it never changes under that name and can be kept for a
+    year, as the shared front door also says. Everything else (pages, downloads, names.json) changes with each update,
+    so it is checked with the server each time: Cloudflare would otherwise keep a CSS, JS or CSV file for two hours by
+    default and serve the old one after an update, as it did on 6 November 2026."""
+    if path.startswith("/assets/"):
         return "public, max-age=31536000, immutable"
     return "no-cache"
+
+
+def stylesheet(settings: Settings) -> str:
+    """The live build's stylesheet, for the API's own pages (assets.json, written by the build)."""
+    try:
+        return "/" + json.loads((site_dir(settings) / "assets.json").read_text())["styles.css"]
+    except (OSError, ValueError, KeyError):
+        return "/styles.css"   # a build made before assets/ (it kept its stylesheet at the top)
 
 
 class LiveFiles(StaticFiles):
@@ -233,7 +238,7 @@ def create_app(settings: Settings, behind_proxy: bool = False) -> FastAPI:
 
         html = (f'<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" '
                 f'content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">'
-                f'<title>{escape(title)}</title><link rel="stylesheet" href="/styles.css"></head><body>'
+                f'<title>{escape(title)}</title><link rel="stylesheet" href="{stylesheet(settings)}"></head><body>'
                 f'<main id="main"><h1>{escape(title)}</h1>{body}</main></body></html>')
         return HTMLResponse(html, status_code=status, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex"})
 

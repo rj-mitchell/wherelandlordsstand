@@ -10,7 +10,7 @@
     landlords score                     # peer groups and bands (config/scoring.toml)
     landlords build                     # the pages, in data/site/
     landlords serve                     # the site and its API at http://127.0.0.1:8000/ (this computer only)
-    landlords update                    # weekly: fetch, load, check, score, build into data/builds/ (not live)
+    landlords update                    # weekly: fetch, load, check, score, build into data/builds/; email to approve
     landlords publish                   # by hand: make the newest build live; `landlords rollback` undoes it
     landlords reports / missed          # readers' reports of mistakes; searches that found nothing
 """
@@ -128,8 +128,8 @@ def serve(port: int = typer.Option(8000), host: str = typer.Option("127.0.0.1", 
 @app.command()
 def update(no_fetch: bool = typer.Option(False, help="use the files already fetched"),
            no_email: bool = typer.Option(False, help="don't send the weekly email")) -> None:
-    """The weekly update: fetch, load, check; build new pages if anything is new; then publish them before launch,
-    or email a link to approve them after it ([publish] in config/settings.toml)."""
+    """The weekly update: fetch, load, check; build new pages if anything is new; then email a link to approve them
+    ([publish] in config/settings.toml). Exits 1 if something needs attention, or the approval email wasn't sent."""
     from landlords import publish
 
     info = publish.update(load_settings(), fetch=not no_fetch, notify=not no_email)
@@ -183,6 +183,7 @@ def reports(close: int = typer.Option(None, help="close this report (its email a
 def backup(to: Path = typer.Option(..., help="folder for the copies"), keep: int = typer.Option(14)) -> None:
     """Copy the state database (readers' reports, missed searches): the one thing that can't be rebuilt."""
     import gzip
+    import os
     import shutil
     import sqlite3
     from datetime import UTC, datetime
@@ -194,10 +195,17 @@ def backup(to: Path = typer.Option(..., help="folder for the copies"), keep: int
     to.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
     tmp = to / f"landlords-state-{stamp}.sqlite"
-    with sqlite3.connect(src) as a, sqlite3.connect(tmp) as b:
-        a.backup(b)  # a consistent copy, even while the site is writing
-    with open(tmp, "rb") as fi, gzip.open(f"{tmp}.gz", "wb") as fo:
-        shutil.copyfileobj(fi, fo)
+    # Readers' reports can hold their email addresses: the copies are readable by their owner only, as the other
+    # sites' backups are.
+    old_umask = os.umask(0o077)
+    try:
+        with sqlite3.connect(src) as a, sqlite3.connect(tmp) as b:
+            a.backup(b)  # a consistent copy, even while the site is writing
+        with open(tmp, "rb") as fi, gzip.open(f"{tmp}.gz", "wb") as fo:
+            shutil.copyfileobj(fi, fo)
+    finally:
+        os.umask(old_umask)
+    os.chmod(f"{tmp}.gz", 0o600)
     tmp.unlink()
     copies = sorted(to.glob("landlords-state-*.sqlite.gz"))
     for old in copies[:-keep]:

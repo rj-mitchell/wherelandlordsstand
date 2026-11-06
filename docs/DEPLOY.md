@@ -1,6 +1,7 @@
 # Putting the site on a server
 
-**Not public yet.** The site is released only when the owner says so (docs/LAUNCH.md).
+**Public, in alpha**, at wherelandlordsstand.com (docs/DECISIONS.md, 12). New pages go live only when the owner
+approves them by email. Search engines are kept out until launch (docs/LAUNCH.md).
 
 Where Landlords Stand runs on the charity's shared server the same way as Where Countries Stand and Where Councils
 Stand: in its own folder (`/opt/wherelandlordsstand`) with its own container, data, settings and timers. Where MPs
@@ -8,7 +9,7 @@ Stand's web server (Caddy) is the front door for every site on the server. It an
 Cloudflare, with the same protections as its own site, and passes visitors to the site's container over a shared
 Docker network (`sites`). See "Other sites on this server" in Where MPs Stand's `docs/HOSTING.md`.
 
-Until it has a domain, the site runs and updates all the same, and can be looked at privately.
+The site can also be looked at privately, on the server itself, through an SSH tunnel (step 4).
 
 ## What it needs
 
@@ -29,7 +30,7 @@ files and a few builds of the pages. No API keys and no paid services.
    ```
    It builds and starts the site, and installs its weekly update and nightly backup timers.
 3. **The first pages** (a few minutes: it downloads the regulator's and the Ombudsman's files, then builds and
-   publishes the pages, as nothing is public yet):
+   publishes the pages, as none are live yet; every later build waits for approval):
    ```bash
    cd /opt/wherelandlordsstand/deploy && docker compose run --rm -T app landlords update
    ```
@@ -39,7 +40,9 @@ files and a few builds of the pages. No API keys and no paid services.
    ```
    then open http://localhost:8004. The port answers on the server itself only, never on the internet.
 5. **The weekly email** (to wheretheystanduk@gmail.com), once the server's own email is set up (Where MPs Stand's
-   `docs/HOSTING.md`, "Email from the server"). This copies its account into this site's settings, then sends a test:
+   `docs/HOSTING.md`, "Email from the server"). New pages are approved from this email, so without it nothing new
+   is published, and each update fails to say so. This copies its account into this site's settings, then sends a
+   test:
    ```bash
    cd /opt/wherelandlordsstand/deploy
    for k in FROM:USER APP_PASSWORD:PASSWORD; do v=$(grep "^MAIL_${k%%:*}=" /etc/wheretheystand/mail.env | cut -d= -f2-); \
@@ -52,24 +55,23 @@ files and a few builds of the pages. No API keys and no paid services.
 
 ## Releasing it
 
-When the owner says so, and once the name and domain are settled (docs/DECISIONS.md, 1):
+Steps 1 and 2 are done: the site is public, in alpha. Step 3, launch, waits until the owner says so (docs/LAUNCH.md).
 
 1. **Cloudflare**, for the domain: as for the other sites ("Other sites on this server" in Where MPs Stand's
    `docs/HOSTING.md`): an **A** record for `@` pointing at the server, **Proxied**; `www` redirected to it by a
    redirect rule; SSL/TLS **Full (strict)**; and an **origin certificate** for the domain (leave its page open).
-2. **The front door:** add `wherelandlordsstand.com=wherelandlordsstand` (with the real domain) to `SITES` in
+2. **The front door:** add `wherelandlordsstand.com=wherelandlordsstand` to `SITES` in
    `/opt/hansardgpt/deploy/.env`, then paste the origin certificate:
    ```bash
    bash /opt/hansardgpt/deploy/cloudflare.sh site wherelandlordsstand.com
    ```
-3. **Go public:** in `/opt/wherelandlordsstand/deploy/.env`, set `LANDLORDS_SITE_URL=https://wherelandlordsstand.com`
-   and `LANDLORDS_LAUNCHED=true`, then rebuild and publish the pages:
+3. **Launch:** in `/opt/wherelandlordsstand/deploy/.env`, set `LANDLORDS_LAUNCHED=true`, then rebuild the pages:
    ```bash
    cd /opt/wherelandlordsstand/deploy && bash update.sh
-   docker compose run --rm -T app sh -c 'landlords update && landlords publish'
+   docker compose run --rm -T app landlords update
    ```
-   Check: `robots.txt` allows crawling, `/sitemap.xml` lists the pages, and
-   `bash /opt/hansardgpt/deploy/check.sh` says the site works. From then on, new pages wait for approval by email.
+   and approve them from the email. Check: `robots.txt` allows crawling, `/sitemap.xml` lists the pages, and
+   `bash /opt/hansardgpt/deploy/check.sh` says the site works.
 
 **This repository's default branch must be `main`** (GitHub: Settings → General → Default branch). The server pulls
 the branch it cloned.
@@ -80,8 +82,9 @@ Commands are run in `/opt/wherelandlordsstand/deploy`. Any `landlords` command r
 `docker compose run --rm -T app landlords <command>`.
 
 * **Updates** run every Thursday at 11.40 UK time (`landlords-update.timer`), clear of the other sites' updates.
-  Before launch they publish new pages themselves. After launch they email a link to approve them, with a Publish
-  button and an Undo button (docs/OPERATIONS.md, "The weekly update"). Nothing to run by hand.
+  If another site's update is still running, this one waits for it: every site's update takes the same lock,
+  `/var/lock/wheretheystand-update.lock`. Each update emails a link to approve the new pages, with a Publish button
+  and an Undo button (docs/OPERATIONS.md, "The weekly update"). Nothing to run by hand.
 * **Readers' reports:** `landlords reports`; close one with `landlords reports --close <id> --outcome "..."`, which
   deletes the reporter's email address. Fixes to our own mistakes go in the public log, `data_static/corrections.csv`.
 * **Missed searches:** `landlords missed`: candidates for new aliases (docs/OPERATIONS.md, "The register and names").

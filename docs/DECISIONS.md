@@ -20,6 +20,7 @@ All the decisions proposed in the planning session of 3 November 2026 have now b
 | 9 | Ombudsman data, for now | The Ombudsman's landlord tables are used while its reuse terms are confirmed (owner, 3 November 2026). **To do:** send the Ombudsman the drafted email asking for its reuse terms and attribution, home numbers per landlord, and Table 6; record the answer here. |
 | 10 | Ombudsman figures | Only the Ombudsman's own published figures are shown: findings, the share found at fault (its maladministration rate), severe findings and compensation. No rate per 1,000 homes is worked out by us, because the Ombudsman doesn't publish one (owner, 3 November 2026). |
 | 11 | Licence for our own work | Our own work (the text we write, bands, peer groups, homes by council area, the method) is licensed under **CC BY 4.0**, as on Where MPs Stand. Publishers' figures stay under their own terms; the name and mark are not covered (owner, 3 November 2026). |
+| 12 | Public alpha | The site is public at wherelandlordsstand.com, **in alpha**, and is called that. New pages from the weekly update are published only when the owner approves them by email, whether or not the launch switch is on. The alpha banner stays. The three gates still open (the method review, testing with applicants, an adviser's sign-off of the wording) are the conditions for beta. The launch switch (`[site] launched`) now only lets search engines in (owner, 6 November 2026; the family plan's decision 11). |
 
 ## Ground rules from the brief
 
@@ -32,5 +33,5 @@ These come from the owner's brief (3 November 2026) and are followed from the st
 - Being a good citizen when fetching: one request at a time, at least a second apart, with an identifying user agent,
   and every response kept so it is fetched once.
 - The repository is public, like the sibling sites (owner, 3 November 2026). Nothing is deployed until the owner
-  says so.
+  says so. The owner has put the site up as a public alpha (decision 12).
 - Code: AGPL-3.0, as the sibling sites, same author.

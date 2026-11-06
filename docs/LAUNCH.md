@@ -1,7 +1,9 @@
-# Launch checklist (phase 4)
+# From alpha to launch (phase 4)
 
-The site goes public only when the owner says so. This list is what stands between the code as it is and a public
-launch. Ticked items are done in the repository; the rest need the owner, a reviewer, or the server.
+The site is public at wherelandlordsstand.com, in alpha (docs/DECISIONS.md, 12). New pages go live only when the
+owner approves them by email, and search engines are kept out. The three gates under "Needs people" (the method
+review, testing with applicants, the adviser's sign-off) are the conditions for beta. Launch, which lets search
+engines in, comes when the owner says so. Ticked items are done; the rest need the owner, a reviewer, or the server.
 
 ## Done
 
@@ -11,12 +13,14 @@ launch. Ticked items are done in the repository; the rest need the owner, a revi
       `config/pages.toml`.
 - [x] Licences: our own work under CC BY 4.0 (docs/DECISIONS.md, 11), on the terms page and in the downloads.
 - [x] Accessibility: every kind of page checked with axe-core against WCAG 2.2 AA, phone and desktop, light and dark,
-      with no failures (3 November 2026); keyboard use checked by script. Recorded on the accessibility page.
+      with no failures (6 November 2026); keyboard use checked by script. Recorded on the accessibility page.
 - [x] No cookies, no third-party anything, no visit logs; a content security policy that allows only the site itself.
-- [x] Weekly update into a new build, publishing by hand, rollback; nightly backups, on the server and off site.
-- [x] A watch for new releases: TSM 2025/26 is listed as "waiting", and new documents in the regulator's collections
-      are reported (`landlords fetch`).
-- [x] One launch switch, `[site] launched`, off.
+- [x] Weekly update into a new build, approved by the owner by email with Publish and Undo buttons, whether or not
+      the site has launched (docs/DECISIONS.md, 12); publishing and rollback by hand; nightly backups, on the server
+      and off site.
+- [x] A watch for new releases: TSM 2025/26 was loaded the day it came out, TSM 2026/27 is listed as "waiting", and
+      new documents in the regulator's collections are reported (`landlords fetch`).
+- [x] One launch switch, `[site] launched`, off. It only lets search engines in.
 
 ## Needs people (the brief's gates, and sign-offs)
 
@@ -32,13 +36,14 @@ launch. Ticked items are done in the repository; the rest need the owner, a revi
 - [ ] **The contact address** admin@wherelandlordsstand.com (`[site] contact` and `feedback_email`, on the alpha
       banner, the about, terms and accessibility pages) must receive mail before launch: the owner is setting it up.
 
-## Just before launch
+## Before beta and launch
 
 - [x] **TSM 2025/26**: published 5 November 2026; loaded and reconciled the same day (docs/DATA.md).
 - [x] **Landlords with no 2025/26 results of their own**: all seven accounted for from the regulator's files, and
       their pages say who reports for them now (docs/DATA.md, `data_static/reporting.csv`).
-- [ ] **Rights page dates**: `landlords check` warns when a section is due. Due now: the Ombudsman's complaints
-      section weekly while its IT incident lasts; Awaab's Law on 1 December 2026 (phase 2 should be in force).
+- [ ] **Rights page dates**: `landlords check` warns when a section is due. The Ombudsman's complaints section is
+      due weekly while its IT incident lasts. Awaab's Law was brought up to date on 6 November 2026 (phase 2 is still
+      a draft); check it again on 1 December 2026, once phase 2 should be in force.
 - [x] **Where Councils Stand's council list**: Barnsley's and Sheffield's codes fixed there (merged 4 November
       2026), and the temporary mapping removed here.
 
@@ -47,19 +52,20 @@ launch. Ticked items are done in the repository; the rest need the owner, a revi
 The site runs beside the others, with Where MPs Stand's web server as the front door, as Where Countries Stand and
 Where Councils Stand do.
 
-1. Make `main` this repository's default branch (docs/DEPLOY.md).
-2. Steps 1–5 of docs/DEPLOY.md: clone into `/opt/wherelandlordsstand`, `deploy/update.sh`, the first
-   `landlords update`, and the weekly email. Docker builds this site's image there for the first time: watch it.
-3. Look at it privately on port 8004 through an SSH tunnel; send a test report through the corrections form and close
-   it (`landlords reports --close <id>`).
-4. **Launch** ("Releasing it" in docs/DEPLOY.md): Cloudflare and an origin certificate for the domain; the site in
-   `SITES` and `cloudflare.sh site <domain>` on Where MPs Stand's side; `LANDLORDS_SITE_URL` and
-   `LANDLORDS_LAUNCHED=true` in `deploy/.env`; then `landlords update && landlords publish`. Check: `robots.txt` allows crawling, `/sitemap.xml` lists the pages, `check.sh` shows the site working.
-5. Tell the sister sites' about pages.
+- [x] Steps 1–4 of docs/DEPLOY.md: cloned into `/opt/wherelandlordsstand`, `deploy/update.sh`, the first pages.
+- [x] Steps 1 and 2 of "Releasing it": Cloudflare and an origin certificate for the domain, and the site in `SITES`
+      on Where MPs Stand's side. The site is public, in alpha.
+- [ ] Step 5 of docs/DEPLOY.md, **the weekly email**: check it with `landlords email-test`. New pages are approved
+      from it, so without it nothing new is published (and each update fails to say so).
+- [x] `main` is this repository's default branch (docs/DEPLOY.md).
+- [ ] **Launch**, when the owner says so (step 3 of "Releasing it"): `LANDLORDS_LAUNCHED=true` in `deploy/.env`,
+      then `landlords update`, and approve the new pages. Check: `robots.txt` allows crawling, `/sitemap.xml` lists
+      the pages, `check.sh` shows the site working.
+- [ ] Tell the sister sites' about pages.
 
-## After launch
+## Every week
 
-- Every Thursday: read the update's `build-info.json` and `change-report.json`, look at a few changed pages, publish.
+- Every Thursday (in alpha too): read the update's email, look at a few changed pages, and press Publish.
 - Weekly: `landlords reports` (reply, fix our mistakes, log them in `data_static/corrections.csv`) and
   `landlords missed` (add aliases for real names).
 - When `landlords check` warns about a rights page date: check the sources, update the section and its dates.

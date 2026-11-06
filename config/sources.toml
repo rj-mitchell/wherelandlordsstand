@@ -180,7 +180,8 @@ source = "ombudsman"
 role = "landlord-tables"
 period = "2025-26"
 publisher = "Housing Ombudsman Service"
-licence = "© Housing Ombudsman Service; reuse terms being confirmed (docs/DECISIONS.md, 9)"
+# Used while the Ombudsman confirms its reuse terms (docs/DECISIONS.md, 9). This text is shown on the pages.
+licence = "© Housing Ombudsman Service; reuse terms being confirmed"
 page = "https://www.housing-ombudsman.org.uk/annual-complaint-review-reports/annual-complaints-review-2025-26/"
 links = "tables-for-landlords.*\\.xlsx$"
 types = ["xlsx"]
@@ -190,7 +191,8 @@ source = "ombudsman"
 role = "landlord-tables"
 period = "2024-25"
 publisher = "Housing Ombudsman Service"
-licence = "© Housing Ombudsman Service; reuse terms being confirmed (docs/DECISIONS.md, 9)"
+# Used while the Ombudsman confirms its reuse terms (docs/DECISIONS.md, 9). This text is shown on the pages.
+licence = "© Housing Ombudsman Service; reuse terms being confirmed"
 page = "https://www.housing-ombudsman.org.uk/annual-complaint-review-reports/annual-complaints-review-2024-25/"
 links = "tables-for-landlords.*\\.xlsx$"
 types = ["xlsx"]

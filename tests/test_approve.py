@@ -107,3 +107,11 @@ def test_the_email(settings, monkeypatch):
     assert notify.send(settings, subject, body) == "sent to wheretheystanduk@gmail.com"
     msg = sent[-1]
     assert msg["To"] == "wheretheystanduk@gmail.com" and "app-password" not in msg.as_string()
+
+
+def test_the_approval_page_uses_the_live_builds_stylesheet(site):
+    settings, state, client = site
+    live = publish.builds_dir(settings) / "20261101-000000"
+    (live / "assets.json").write_text(json.dumps({"styles.css": "assets/styles.0123456789.css"}))
+    token = state.add_approval("20261105-000000", 14)
+    assert 'href="/assets/styles.0123456789.css"' in client.get(f"/admin/approve/{token}").text

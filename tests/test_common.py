@@ -53,3 +53,22 @@ def test_2025_26_field_names_are_read_as_before():
     assert harmonise("RSH Comments", None, "Management_info") == "RSH Comments"      # not a survey table
     assert harmonise("TP01_Satisfied_Calc_LCRA", "LCRA", "LCRA_perception") == "TP01_Satisfied_Calc_LCRA"
     assert harmonise("Landlord code", None, "Table_coverage") == "Landlord_code"
+
+
+def test_the_pages_show_the_licence_as_sources_toml_says_now(settings):
+    """A file fetched before a change to its licence line still gets the new line (no internal notes on the pages)."""
+    import json
+
+    from landlords.fetch import entries
+    from landlords.load.common import record_sources
+
+    e = next(e for e in entries() if e.source == "ombudsman")
+    note = {"sha256": "abc", "source": e.source, "role": e.role, "period": e.period, "title": "t", "url": "u",
+            "page": "p", "publisher": e.publisher, "licence": "old words (docs/DECISIONS.md, 9)",
+            "fetched_at": "2026-11-03T00:00:00+00:00", "file": "abc.xlsx"}
+    settings.staging_dir.mkdir(parents=True)
+    record_sources(settings, [note])
+    licence = json.loads((settings.staging_dir / "sources.json").read_text())["abc"]["licence"]
+    assert licence == e.licence and "docs/" not in licence
+    for entry in entries():
+        assert "docs/" not in entry.licence and ".md" not in entry.licence, entry

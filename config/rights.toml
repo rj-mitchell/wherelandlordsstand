@@ -29,28 +29,34 @@ recheck = "2027-05-03"
 [[section]]
 heading = "Dangerous damp, mould and other hazards (Awaab's Law)"
 text = [
-  "Since 27 October 2025, council landlords and housing associations must deal with some hazards in set times. This covers emergency hazards, and damp and mould that could seriously harm you.",
-  "From 30 November 2026, it also covers being too cold or too hot, falls, a building that could collapse, fire, electrical hazards, and hygiene. More hazards are due to be added in 2027.",
+  "Since 27 October 2025, council landlords and housing associations must deal with some dangers in your home in set times. This is the law. It covers emergency hazards, and damp and mould that could seriously harm you.",
+  "The government plans to add more from 30 November 2026: being too cold or too hot, falls, electrical hazards, fire and explosions, a building that could collapse, and hygiene, such as pests, drains, and places to wash and cook. Parliament has to agree to these new rules first. When we last checked, they were still a draft.",
+  "Fire inside your home, like a broken smoke alarm, will be covered. Fire safety in the shared parts of a block of flats, like the stairs and fire doors, will not. Other fire safety laws cover those parts.",
+  "After that, the government plans to add every other kind of hazard except overcrowding. Its guidance says this will be in 2027.",
   "If there is an emergency hazard, the landlord must look into it and make the home safe within 24 hours.",
-  "If there is a significant hazard, the landlord must:",
+  "If there is a significant hazard, the landlord must look into it within 10 working days of finding out about it. It must then make the home safe within 5 working days.",
+  "For both kinds of hazard, the landlord must also:",
 ]
 list = [
-  "look into it within 10 working days of finding out about it",
-  "make the home safe within 5 working days of looking into it",
-  "send you a written summary within 3 working days of looking into it, if more work is needed",
-  "start that work within 5 working days, or as soon as it can and within 12 weeks",
-  "find you somewhere else safe to stay if it can't make your home safe in time",
+  "write to you within 3 working days of looking into it, to say what it found and what it will do, unless all the work is already done",
+  "start any work to stop the hazard coming back within 5 working days, or as soon as it can and within 12 weeks",
+  "find you somewhere else safe to stay, and pay for it, if it can't make your home safe in time",
 ]
 sources = [
   ["The Hazards in Social Housing (Prescribed Requirements) (England) Regulations 2025", "https://www.legislation.gov.uk/uksi/2025/1042/contents"],
+  ["The Hazards in Social Housing (Prescribed Requirements) (England) (Amendment) Regulations 2026, a draft laid before Parliament", "https://www.legislation.gov.uk/ukdsi/2026/9780348285611/contents"],
+  ["Awaab's Law phase 2: guidance for social landlords (GOV.UK, updated 31 July 2026)", "https://www.gov.uk/government/publications/awaabs-law-phase-2-guidance-for-social-housing-landlords/awaabs-law-phase-2-guidance-for-social-landlords"],
   ["Awaab's Law: guidance for social landlords (GOV.UK, updated 16 July 2026)", "https://www.gov.uk/government/publications/awaabs-law-guidance-for-social-landlords/awaabs-law-guidance-for-social-landlords-timeframes-for-repairs-in-the-social-rented-sector"],
-  ["Awaab's Law phase 2 guidance (GOV.UK, updated 31 July 2026)", "https://www.gov.uk/government/publications/awaabs-law-phase-2-guidance-for-social-housing-landlords/awaabs-law-phase-2-guidance-for-social-landlords"],
-  ["Awaab's Law: guidance for tenants (GOV.UK)", "https://www.gov.uk/government/publications/awaabs-law-guidance-for-tenants-in-social-housing/awaabs-law-guidance-for-tenants-in-social-housing"],
+  ["Awaab's Law: guidance for tenants (GOV.UK, updated 4 December 2025)", "https://www.gov.uk/government/publications/awaabs-law-guidance-for-tenants-in-social-housing/awaabs-law-guidance-for-tenants-in-social-housing"],
 ]
-checked = "2026-11-03"
-# Phase 2 starts 30 November 2026: confirm the regulations have been made and are in force.
+# 6 November 2026: phase 2 (30 November 2026) rests on the 2026 amendment regulations, which legislation.gov.uk
+# shows as a draft "not yet made". The hazards listed are those in the draft's explanatory note and the phase 2
+# guidance (HHSRS Schedule 1, paragraphs 2, 3, 14A, 18A, 21, 22, 23, 23A and 29). Phase 3's year (2027) is from the
+# phase 1 guidance; the phase 2 guidance gives no year. On 1 December: check the regulations were made and are in
+# force, and change "plans to add" and "will be covered" to say what now applies.
+checked = "2026-11-06"
 recheck = "2026-12-01"
-note = "It applies to homes you rent with a tenancy, including some temporary and supported housing. It does not cover shared ownership."
+note = "It applies to homes you rent with a tenancy, including some temporary and supported housing. It does not cover homes you live in under a licence, or shared ownership."
 
 [[section]]
 heading = "Complaints"

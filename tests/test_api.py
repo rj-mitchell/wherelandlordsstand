@@ -87,8 +87,29 @@ def test_fingerprinted_files_are_kept_and_everything_else_is_checked_each_time()
     """Cloudflare kept the old styles.css for two hours after the redesign was published (6 November 2026)."""
     from landlords.api import cache_control
 
-    assert "immutable" in cache_control("/styles.7bbe18f016.css")
-    assert "immutable" in cache_control("/search.ddce99e856.js")
-    assert "immutable" in cache_control("/fonts/source-serif-4-normal-latin.woff2")
+    assert "immutable" in cache_control("/assets/styles.7bbe18f016.css")
+    assert "immutable" in cache_control("/assets/search.ddce99e856.js")
+    assert "immutable" in cache_control("/assets/fonts/source-serif-4-normal-latin.0a1b2c3d4e.woff2")
     for path in ("/styles.css", "/index.html", "/landlords/abri-group/", "/data/landlords.csv", "/names.json"):
         assert cache_control(path) == "no-cache", path
+
+
+def test_every_file_a_page_uses_is_fingerprinted_under_assets(tmp_path):
+    """A changed stylesheet, script, icon or font gets a new name under assets/, and the stylesheet names the fonts by
+    their new names, so no page can meet an old file (6 November 2026)."""
+    import re
+
+    from landlords import site
+
+    names = site.write_assets(tmp_path)
+    assert set(names) >= {"styles.css", "search.js", "compare.js", "icon.svg",
+                          "fonts/source-serif-4-normal-latin.woff2"}
+    for built in names.values():
+        assert built.startswith("assets/") and re.search(r"\.[0-9a-f]{10}\.\w+$", built), built
+        assert (tmp_path / built).is_file(), built
+    css = (tmp_path / names["styles.css"]).read_text()
+    for url in re.findall(r"url\(([^)]+)\)", css):
+        assert (tmp_path / "assets" / url).is_file(), url
+    assert json.loads((tmp_path / "assets.json").read_text()) == names
+    assert site.write_assets(tmp_path / "again") == names          # the same files give the same names
+    assert 'width="46" height="46"' in site.MARK                    # stays small without the stylesheet

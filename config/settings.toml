@@ -18,11 +18,11 @@ min_homes = 1000
 
 [site]
 name = "Where Landlords Stand"
-# The launch switch (docs/LAUNCH.md). While false, every page asks search engines not to index it (noindex),
-# robots.txt asks crawlers to stay away, and new pages are published without asking for approval by email. Set `url` (the domain, with https://) first: the
-# sitemap needs it.
+# The launch switch (docs/LAUNCH.md). While false, every page asks search engines not to index it (noindex) and
+# robots.txt asks crawlers to stay away. It doesn't change publishing: the site is public, in alpha, so new pages
+# always wait for approval by email ([publish]; docs/DECISIONS.md, 12). The sitemap and the approval links need `url`.
 launched = false
-url = ""
+url = "https://wherelandlordsstand.com"
 operator = "Rob Mitchell"
 contact = "admin@wherelandlordsstand.com"
 # The alpha banner on every page, with where to send feedback. Remove `stage` (or set it to "") to take it down.
@@ -38,7 +38,8 @@ where_councils_stand = "https://wherecouncilsstand.com/councils/{gss}"
 
 [publish]
 # What the weekly update (`landlords update`) does with new pages (docs/OPERATIONS.md):
-#   "approve": before launch, publish them (nothing is public); after launch, email a link to approve them
+#   "approve": email a link to approve them; nothing new goes live until the owner presses Publish (the site is
+#              public, in alpha: docs/DECISIONS.md, 12). Only the very first pages, when none are live, go live at once.
 #   "auto":    publish them whenever their checks pass, and email what changed
 mode = "approve"
 # Who gets the weekly email. The account that sends it is set on the server, in deploy/.env (src/landlords/notify.py).

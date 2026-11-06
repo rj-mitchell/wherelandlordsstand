@@ -13,6 +13,7 @@ other sites.
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 import time
 from collections import defaultdict, deque
@@ -146,6 +147,19 @@ def site_dir(settings: Settings) -> Path:
     return live if live.exists() else settings.data_dir / "site"
 
 
+FINGERPRINTED = re.compile(r"\.[0-9a-f]{10}\.(css|js|svg)$")
+
+
+def cache_control(path: str) -> str:
+    """How long Cloudflare and browsers may keep a file. A fingerprinted file ("styles.3f9a2c1d.css") or a font never
+    changes under its name, so it can be kept for a year. Everything else (pages, downloads, the plain styles.css)
+    changes with each update, so it is checked with the server each time: Cloudflare would otherwise keep a CSS, JS or
+    CSV file for two hours by default and serve the old one after an update (6 November 2026)."""
+    if FINGERPRINTED.search(path) or path.startswith("/fonts/"):
+        return "public, max-age=31536000, immutable"
+    return "no-cache"
+
+
 class LiveFiles(StaticFiles):
     """Static files from whichever build is live now, so `landlords publish` and `rollback` take effect at once."""
 
@@ -173,6 +187,7 @@ def create_app(settings: Settings, behind_proxy: bool = False) -> FastAPI:
         response = await call_next(request)
         for k, v in HEADERS.items():
             response.headers.setdefault(k, v)
+        response.headers.setdefault("Cache-Control", cache_control(request.url.path))
         return response
 
     @app.get("/api/health")

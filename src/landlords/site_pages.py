@@ -358,9 +358,10 @@ def build_extra(settings: Settings, profiles: list[dict], out: Path, w: dict) ->
     import shutil
 
     from landlords.register import aliases, landlords
+    from landlords.site import asset
 
     for name in ("search.js", "compare.js", "icon.svg"):
-        shutil.copy(STATIC / name, out / name)
+        shutil.copy(STATIC / name, out / asset(name))   # fingerprinted (landlords.site.fingerprint)
     shutil.copytree(STATIC / "fonts", out / "fonts", ignore=shutil.ignore_patterns("*.md"))
     (out / "names.json").write_text(json.dumps(names_json(profiles, landlords(), aliases(), w),
                                                separators=(",", ":")))

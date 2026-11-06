@@ -180,6 +180,20 @@ NAV = [("index.html", "Find a landlord"), ("areas/index.html", "Areas"), ("compa
 
 _LAUNCHED = False
 _SITE: dict = {}
+# The stylesheet's, scripts' and icon's names for this build, each with a fingerprint of its content
+# ("styles.3f9a2c1d.css"): a changed file gets a new name, so no cache (Cloudflare's, a browser's) can serve the old one.
+_ASSETS: dict[str, str] = {}
+
+
+def asset(name: str) -> str:
+    return _ASSETS.get(name, name)
+
+
+def fingerprint(name: str, content: bytes) -> str:
+    import hashlib
+
+    stem, _, ext = name.rpartition(".")
+    return f"{stem}.{hashlib.sha256(content).hexdigest()[:10]}.{ext}"
 
 
 def alpha_banner(words: dict) -> str:
@@ -215,14 +229,14 @@ def page(title: str, body: str, w: dict, depth: int, description: str = "", scri
     live = launched()
     nav = "".join(f'<a href="{up}{href}"{' aria-current="page"' if href == here else ""}>{esc(label)}</a>'
                   for href, label in NAV)
-    js = "".join(f'<script src="{up}{src}" defer></script>' for src in scripts)
+    js = "".join(f'<script src="{up}{asset(src)}" defer></script>' for src in scripts)
     site = w["site"]
     return f"""<!doctype html>
 <html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{esc(title)}</title><meta name="description" content="{esc(description or site['tagline'])}">
-{"" if live else '<meta name="robots" content="noindex">'}<link rel="icon" href="{up}icon.svg" type="image/svg+xml">
+{"" if live else '<meta name="robots" content="noindex">'}<link rel="icon" href="{up}{asset('icon.svg')}" type="image/svg+xml">
 <link rel="preload" href="{up}fonts/source-serif-4-normal-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="{up}styles.css">{js}</head>
+<link rel="stylesheet" href="{up}{asset('styles.css')}">{js}</head>
 <body><a class="skip" href="#main">Skip to content</a>{alpha_banner(site)}
 <header class="mast"><div class="wrap mast-in"><a class="brand" href="{up}index.html">{MARK}<span>
 <span class="name">{esc(site['name'])}</span><span class="tag">{esc(site['tagline'])}</span></span></a>
@@ -456,16 +470,23 @@ its file.</p>"""
 
 
 def build(settings: Settings, out: Path | None = None) -> dict[str, int]:
-    global _LAUNCHED, _SITE
+    global _LAUNCHED, _SITE, _ASSETS
     _LAUNCHED = bool(settings.section("site").get("launched"))
     _SITE = settings.section("site")
+    from landlords.site_pages import STATIC
+
+    css = (CSS.strip() + "\n").encode()
+    _ASSETS = {"styles.css": fingerprint("styles.css", css)}
+    for name in ("search.js", "compare.js", "icon.svg"):
+        _ASSETS[name] = fingerprint(name, (STATIC / name).read_bytes())
     w = load_toml("wording.toml")
     out = out or settings.data_dir / "site"
     if out.exists():
         shutil.rmtree(out)
     (out / "landlords").mkdir(parents=True)
     (out / "method").mkdir()
-    (out / "styles.css").write_text(CSS.strip() + "\n")
+    (out / asset("styles.css")).write_bytes(css)
+    (out / "styles.css").write_bytes(css)   # under its plain name too, for the API's own pages (src/landlords/api.py)
     profiles = build_profiles(settings)
     sizes = []
     for p in profiles:

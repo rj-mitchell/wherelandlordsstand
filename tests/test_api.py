@@ -81,3 +81,14 @@ def test_the_browser_normalises_names_as_the_register_does():
               f"console.log(JSON.stringify({json.dumps(names)}.map(window.WLS.norm)))")
     out = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True).stdout
     assert json.loads(out) == [normalise(n) for n in names]
+
+
+def test_fingerprinted_files_are_kept_and_everything_else_is_checked_each_time():
+    """Cloudflare kept the old styles.css for two hours after the redesign was published (6 November 2026)."""
+    from landlords.api import cache_control
+
+    assert "immutable" in cache_control("/styles.7bbe18f016.css")
+    assert "immutable" in cache_control("/search.ddce99e856.js")
+    assert "immutable" in cache_control("/fonts/source-serif-4-normal-latin.woff2")
+    for path in ("/styles.css", "/index.html", "/landlords/abri-group/", "/data/landlords.csv", "/names.json"):
+        assert cache_control(path) == "no-cache", path

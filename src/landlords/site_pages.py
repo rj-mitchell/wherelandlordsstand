@@ -14,7 +14,8 @@ from pathlib import Path
 from landlords.config import Settings, load_toml
 from landlords.register import normalise, slugify
 from landlords.score import rules
-from landlords.site import band_name, esc, fill, nice_date, page
+from landlords.sisters import council_url, councils_covered
+from landlords.site import band_name, esc, fill, nice_date, page, rich, sister_link
 
 # Search ----------------------------------------------------------------------------------------------------------------
 
@@ -56,7 +57,8 @@ def index_html(profiles: list[dict], w: dict) -> str:
     for letter, ps in by_letter.items():
         items = "".join(f'<li><a href="landlords/{esc(p["slug"])}/index.html">{esc(p["name"])}</a></li>' for p in ps)
         parts.append(f'<h3>{esc(letter)}</h3><ul class="az">{items}</ul>')
-    return page(w["site"]["name"], "".join(parts), w, depth=0, scripts=("search.js",), here="index.html")
+    return page(w["site"]["name"], "".join(parts), w, depth=0, scripts=("search.js",), here="index.html",
+                path="")
 
 
 # Council areas ---------------------------------------------------------------------------------------------------------
@@ -80,6 +82,8 @@ def area_rows(settings: Settings, profiles: list[dict]) -> dict[str, dict]:
         slugs[base] += 1
         a["slug"] = base if slugs[base] == 1 else f"{base}-{a['gss'].lower()}"
         a["landlords"].sort(key=lambda x: -x[1])
+        a["council_url"] = council_url(settings, a["gss"])
+        a["council_name"] = councils_covered().get(a["gss"], "")
     return areas
 
 
@@ -101,8 +105,10 @@ def area_html(a: dict, w: dict, sources: dict) -> str:
             f'<th scope="col">{esc(t["overall"])}</th></tr></thead><tbody>{"".join(rows)}</tbody></table></div>'
             f'<p class="hint">{esc(t["notes"])}</p>'
             + (f'<p class="hint">* {esc(t["council_note"])}</p>' if any(x[2] == "council total" for x in a["landlords"]) else "")
-            + f'<p class="warn">{esc(w["card"]["refusal"])}</p>' + src.ref(*a["sources"]) + src.html(w))
-    return page(f"{a['name']} – {w['site']['name']}", body, w, depth=2, here="areas/index.html",
+            + f'<p class="warn">{esc(w["card"]["refusal"])}</p>' + src.ref(*a["sources"])
+            + sister_link(a.get("council_url", ""), fill(t["council_link"], council=a.get("council_name", "")))
+            + src.html(w))
+    return page(f"{a['name']} – {w['site']['name']}", body, w, depth=2, here="areas/index.html", path=f"areas/{a['slug']}/",
                 description=fill(t["intro"], count=len(a["landlords"])))
 
 
@@ -112,7 +118,7 @@ def areas_index_html(areas: dict[str, dict], w: dict) -> str:
                     f'<span class="hint">({len(a["landlords"])})</span></li>'
                     for a in sorted(areas.values(), key=lambda a: a["name"]))
     body = f"<h1>{esc(t['heading'])}</h1><p>{esc(t['index_intro'])}</p><ul class=\"az\">{items}</ul>"
-    return page(f"{t['heading']} – {w['site']['name']}", body, w, depth=1, here="areas/index.html")
+    return page(f"{t['heading']} – {w['site']['name']}", body, w, depth=1, here="areas/index.html", path="areas/")
 
 
 # Compare ---------------------------------------------------------------------------------------------------------------
@@ -150,7 +156,7 @@ def compare_html(w: dict) -> str:
             f'<ul id="picks" class="results"></ul><div id="table"></div></div>'
             f'<script type="application/json" id="compare-text">{json.dumps(text)}</script>'
             f'<noscript><p>{esc(t["noscript"])}</p></noscript><p class="warn">{esc(w["card"]["refusal"])}</p>')
-    return page(f"{t['heading']} – {w['site']['name']}", body, w, depth=1, scripts=("search.js", "compare.js"),
+    return page(f"{t['heading']} – {w['site']['name']}", body, w, depth=1, scripts=("search.js", "compare.js"), path="compare/",
                 here="compare/index.html")
 
 
@@ -232,7 +238,7 @@ def downloads_html(files: list[tuple[str, str, int]], w: dict) -> str:
                     for n, text, c in files)
     body = (f"<h1>{esc(t['heading'])}</h1><p>{esc(t['intro'])}</p><ul class=\"list\">{items}</ul>"
             f"<h2>{esc(t['attribution_heading'])}</h2>" + "".join(f"<p>{esc(x)}</p>" for x in t["attribution"]))
-    return page(f"{t['heading']} – {w['site']['name']}", body, w, depth=1)
+    return page(f"{t['heading']} – {w['site']['name']}", body, w, depth=1, path="data/")
 
 
 # Corrections and privacy -----------------------------------------------------------------------------------------------
@@ -262,19 +268,20 @@ def corrections_html(w: dict) -> str:
                  f"<tbody>{rows}</tbody></table></div>")
     else:
         body += f"<p>{esc(t['log_empty'])}</p>"
-    return page(f"{t['heading']} – {w['site']['name']}", body, w, depth=1)
+    return page(f"{t['heading']} – {w['site']['name']}", body, w, depth=1, path="corrections/")
 
 
 def thanks_html(w: dict) -> str:
     t = w["corrections"]
     return page(f"{t['thanks_heading']} – {w['site']['name']}",
-                f"<h1>{esc(t['thanks_heading'])}</h1><p>{esc(t['thanks'])}</p>", w, depth=1)
+                f"<h1>{esc(t['thanks_heading'])}</h1><p>{esc(t['thanks'])}</p>", w, depth=1,
+                path="corrections/thanks.html")
 
 
 def privacy_html(w: dict) -> str:
     t = w["privacy"]
     body = f"<h1>{esc(t['heading'])}</h1>" + "".join(f"<h2>{esc(h)}</h2><p>{esc(x)}</p>" for h, x in t["sections"])
-    return page(f"{t['heading']} – {w['site']['name']}", body, w, depth=1)
+    return page(f"{t['heading']} – {w['site']['name']}", body, w, depth=1, path="privacy/")
 
 
 # Your rights -----------------------------------------------------------------------------------------------------------
@@ -296,7 +303,8 @@ def rights_html(w: dict) -> str:
         parts.append(f'<p class="src">Sources: {links}. Checked {esc(nice_date(sec["checked"]))}; to be checked again by '
                      f'{esc(nice_date(sec["recheck"]))}.</p>')
     parts.append(f'<p class="hint">{esc(r["not_advice"])}</p>')
-    return page(f"{r['heading']} – {w['site']['name']}", "".join(parts), w, depth=1, here="rights/index.html")
+    return page(f"{r['heading']} – {w['site']['name']}", "".join(parts), w, depth=1, here="rights/index.html",
+                path="rights/")
 
 
 # About, terms, accessibility, not found; robots.txt and the sitemap -------------------------------------------------
@@ -311,7 +319,16 @@ def _fill_site(text: str, settings: Settings, w: dict, extra: dict | None = None
 
 
 def text_page(settings: Settings, w: dict, key: str, extra: dict | None = None) -> str:
+    """A page from config/pages.toml. Each section is a heading and its paragraphs; a paragraph that is itself a list
+    of sentences is shown as a bulleted list. [Words](address) in a sentence become a link (``site.rich``)."""
     t = load_toml("pages.toml")[key]
+
+    def para(x: str | list) -> str:
+        if isinstance(x, list):
+            return '<ul class="list">' + "".join(f"<li>{rich(_fill_site(i, settings, w, extra), '../')}</li>"
+                                                 for i in x) + "</ul>"
+        return f"<p>{rich(_fill_site(x, settings, w, extra), '../')}</p>"
+
     parts = [f"<h1>{esc(t['heading'])}</h1>"]
     if t.get("short"):
         parts.append(f"<p><strong>{esc(t['short'])}</strong></p>")
@@ -319,8 +336,8 @@ def text_page(settings: Settings, w: dict, key: str, extra: dict | None = None) 
         parts.append(f'<p class="hint">Last updated {esc(nice_date(t["updated"]))}.</p>')
     for heading, paras in t["sections"]:
         parts.append(f"<h2>{esc(heading)}</h2>")
-        parts += [f"<p>{esc(_fill_site(x, settings, w, extra))}</p>" for x in paras]
-    return page(f"{t['heading']} – {w['site']['name']}", "".join(parts), w, depth=1)
+        parts += [para(x) for x in paras]
+    return page(f"{t['heading']} – {w['site']['name']}", "".join(parts), w, depth=1, path=f"{key}/")
 
 
 def not_found_html(w: dict) -> str:

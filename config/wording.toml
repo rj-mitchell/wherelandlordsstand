@@ -5,11 +5,32 @@
 [site]
 name = "Where Landlords Stand"
 tagline = "What social landlords in England are like, from what the regulator and the Housing Ombudsman publish."
-independence = "Independent. Not part of the Regulator of Social Housing, the Housing Ombudsman or any landlord."
-# Shown at the top of every page while [site] stage = "alpha" (config/settings.toml). The words before the colon
-# become its label; {email} becomes a link.
-alpha = "Alpha: this site is new and still being tested, so some things may be missing or wrong. We can't promise that everything here is right, so use it at your own risk. Please send any feedback to {email}."
-parent = "A project of Where They Stand, which is applying to register as a charity in England and Wales."
+# The masthead's short form of the family's independence line (the family glossary). The full line is on the about
+# and terms pages (config/pages.toml).
+independence = "Independent. Not affiliated with the Regulator of Social Housing, the Housing Ombudsman Service or any landlord."
+# The phase banner at the top of every page while [site] stage = "alpha" (config/settings.toml), worded as on the
+# sister sites: one sentence and a link to the report form. The words before the colon become its label; {report}
+# becomes a link to the corrections page, with alpha_report as its words, and {email} a link to the address.
+alpha = "Alpha: this site is new and still being tested, so some things may be missing or wrong. {report}, or email {email}."
+alpha_report = "Tell us about a mistake"
+
+[footer]
+# The footer's links, in the family's order (About, How it works, Corrections, Accessibility, Privacy, Terms, Data,
+# Press, Status, Source code), leaving out the pages this site doesn't have. An address that doesn't start with
+# https:// is a page on this site, from its root. The charity's line and the links to wheretheystand.uk and the sister
+# sites come with the family shelf below them (src/landlords/family/shelf.html).
+label = "About this site"
+links = [
+  ["About", "about/index.html"],
+  ["How it works", "method/index.html"],
+  ["Corrections", "corrections/index.html"],
+  ["Accessibility", "accessibility/index.html"],
+  ["Privacy", "privacy/index.html"],
+  ["Terms", "terms/index.html"],
+  ["Data", "data/index.html"],
+  ["Source code", "https://github.com/rj-mitchell/wherelandlordsstand"],
+]
+contact = "Contact: {email}"
 
 [card]
 heading = "Before you bid"
@@ -26,7 +47,13 @@ council = "Council"
 "for-profit" = "For-profit landlord"
 
 [council_link]
+# On a council's own page here, where Where Councils Stand covers the council (src/landlords/sisters.py).
 text = "See what {name}'s council and cabinet meetings have discussed and decided, on Where Councils Stand."
+
+[method]
+# The method page's note on the links between this site and Where Councils Stand. [Words](address) become a link.
+sister_heading = "Links to Where Councils Stand"
+sister = "[Where Councils Stand](https://wherecouncilsstand.com/), a sister site, shows what councils have decided and said in their meetings. Where it covers a council, the council's page here and the page for its area link to the council's page there. The council pages on Where Councils Stand link back here: to the council as a landlord, and to the landlords that own homes in its area."
 
 [grade]
 heading = "The regulator's grade"
@@ -110,6 +137,8 @@ grade = "Grade"
 overall = "Satisfaction"
 notes = "Homes here: rented homes each landlord owns in this area on 31 March 2026, from the regulator's stock data. For a group, we added up the figures for its companies. Landlords with fewer than 1,000 homes are not listed. Overall satisfaction is compared with similar landlords, not with the others on this page."
 council_note = "A council's homes are counted in its own area."
+# A link to the council's page on Where Councils Stand, where that site covers it (src/landlords/sisters.py).
+council_link = "See what {council} has discussed and decided in its meetings, on Where Councils Stand."
 
 [compare]
 heading = "Compare landlords"

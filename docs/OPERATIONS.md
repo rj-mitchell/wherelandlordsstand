@@ -78,12 +78,32 @@ uv run landlords serve                 # http://127.0.0.1:8000/ on this computer
 The rules are in `config/scoring.toml` and every sentence in `config/wording.toml`; change them there, not in the
 code. `landlords build` replaces `data/site/` each time. On your own computer `serve` listens on 127.0.0.1 only.
 
-The stylesheet is `src/landlords/static/styles.css`. The build copies it, the scripts and the fonts into
-`data/site/assets/`, each with a fingerprint of its content in its name, so a cache never serves an old copy
-(docs/DESIGN.md, "Where the look lives").
+The stylesheet is `src/landlords/static/styles.css`. The build copies it, the scripts, and the family kit's
+stylesheets, fonts, icons and link card into `data/site/assets/`, each with a fingerprint of its content in its name,
+so a cache never serves an old copy (docs/DESIGN.md, "Where the look lives").
+
+**The family kit** (`src/landlords/family/`) is the Where They Stand family's binding: the endorsement, the footer
+shelf, the icons and link card, and Source Serif 4. It is copied in from the charity's family folder, never edited
+here. When the kit changes (a new sister site, a status, the stylesheet), copy it again from a checkout of the
+charity's repository, then rebuild:
+
+```bash
+node <charity checkout>/family/kit/sync.mjs --site landlords --out src/landlords/family
+```
+
+`uv run pytest` fails if the copy has been edited by hand (its `VERSION` file carries a hash of the rest).
+
+**Links to Where Councils Stand.** A council's page and each council area's page link to the council's page on Where
+Councils Stand where that site covers the council, from `data_static/councils_covered.csv`. Refresh it now and then
+(it grows as Where Councils Stand loads more councils), look at the change and commit it:
+
+```bash
+uv run landlords sister-councils       # reads wherecouncilsstand.com/api/councils
+```
 
 `uv run pytest` checks the built pages: each landlord's page under 100 KB, with the line about turning down offers,
-no scripts or outside resources, and every source link pointing to a listed file.
+no scripts or outside resources, and every source link pointing to a listed file; and every page carries the
+family's binding.
 
 ## The weekly update, the email, and publishing
 
@@ -109,6 +129,13 @@ Setting up the email, once, on the server: `LANDLORDS_SMTP_USER` (the Gmail addr
 `LANDLORDS_SMTP_PASSWORD` (its Google **app password**) in `/opt/wherelandlordsstand/deploy/.env`. They are the
 server's own email account, so docs/DEPLOY.md (step 5) copies them from its mail settings and sends a test
 (`landlords email-test`).
+
+**To be consolidated.** Unlike the other sites, this one sends its email itself (`src/landlords/notify.py`, with
+Python's smtplib), so it keeps its own copy of the server's Gmail app password in its `.env`. Every other job on the
+server sends mail through the shared `deploy/mail.sh` in Where MPs Stand's checkout, which reads the one copy in
+`/etc/wheretheystand/mail.env`. The charity's family plan (section 5, "Retire") wants this site moved onto
+`mail.sh`, so there is one copy of the password and one way of sending. Until then, when the app password changes,
+copy it again (docs/DEPLOY.md, step 5): otherwise the weekly update fails for want of its email.
 
 By hand, if ever needed:
 

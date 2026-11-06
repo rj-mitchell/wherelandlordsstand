@@ -278,9 +278,17 @@ def build_profile(data: Data, lid: str) -> dict:
                 collect(v)
 
     collect(p)
-    p["sources"] = [{"sha": s, **data.sources.get(s, {})} for s in sorted(used, key=lambda s: (
-        data.sources.get(s, {}).get("source", ""), data.sources.get(s, {}).get("period", "")))]
+    p["sources"] = [{"sha": s, **data.sources.get(s, {})} for s in sorted(used, key=lambda s: source_order(data, s))]
     return p
+
+
+def source_order(data: Data, sha: str) -> tuple[str, ...]:
+    """Where a file comes in a page's numbered list of sources: by source and period, then by title, file name and
+    hash, so that two files from the same source and period (the regulator's council and housing association stock
+    files, say) are always numbered the same way. Left in the order of a Python set, which changes from one run to the
+    next, they made two builds of the same data differ."""
+    s = data.sources.get(sha, {})
+    return (s.get("source", ""), s.get("period", ""), s.get("title", ""), s.get("file", ""), sha)
 
 
 def build_profiles(settings: Settings) -> list[dict]:

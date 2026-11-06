@@ -12,6 +12,8 @@ OnFailure=alert@%n.service
 Type=oneshot
 WorkingDirectory=/opt/wherelandlordsstand/deploy
 # Exits 1 when something needs attention; each run's summary is appended to /data/updates.jsonl.
-ExecStart=/usr/bin/docker compose run --rm -T app landlords update
+# One update at a time on the whole server: every site's update takes the same lock, and this one waits for any other
+# to finish rather than fail (Where MPs Stand's sync can take up to 6 hours), so the time allowed covers the wait.
+ExecStart=/usr/bin/flock /var/lock/wheretheystand-update.lock /usr/bin/docker compose run --rm -T app landlords update
 Nice=10
-TimeoutStartSec=1h
+TimeoutStartSec=8h

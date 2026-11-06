@@ -82,8 +82,9 @@ Commands are run in `/opt/wherelandlordsstand/deploy`. Any `landlords` command r
 `docker compose run --rm -T app landlords <command>`.
 
 * **Updates** run every Thursday at 11.40 UK time (`landlords-update.timer`), clear of the other sites' updates.
-  They email a link to approve the new pages, with a Publish button and an Undo button (docs/OPERATIONS.md, "The
-  weekly update"). Nothing to run by hand.
+  If another site's update is still running, this one waits for it: every site's update takes the same lock,
+  `/var/lock/wheretheystand-update.lock`. Each update emails a link to approve the new pages, with a Publish button
+  and an Undo button (docs/OPERATIONS.md, "The weekly update"). Nothing to run by hand.
 * **Readers' reports:** `landlords reports`; close one with `landlords reports --close <id> --outcome "..."`, which
   deletes the reporter's email address. Fixes to our own mistakes go in the public log, `data_static/corrections.csv`.
 * **Missed searches:** `landlords missed`: candidates for new aliases (docs/OPERATIONS.md, "The register and names").

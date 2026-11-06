@@ -14,11 +14,17 @@ display name, slug, status or successor that is already there: those are edited 
 
 `landlords match` proposes landlords for published names that have no code (the Ombudsman's) into a review file.
 Nothing is accepted without a person marking it so (`landlords match --accept`).
+
+On the server the code is read-only, so the refreshed register is written to a working copy in the data folder
+(``LANDLORDS_REGISTER_DIR``, set in the Dockerfile) and read from there. It is always rebuilt from the repository's
+copy, where the hand edits live, so a change merged into the repository reaches the server at the next update.
+Without ``LANDLORDS_REGISTER_DIR`` (on your own computer) the repository's copy itself is refreshed, ready to commit.
 """
 
 from __future__ import annotations
 
 import csv
+import os
 import re
 import unicodedata
 from collections import defaultdict
@@ -28,7 +34,7 @@ from pathlib import Path
 
 from landlords.config import STATIC_DIR
 
-LANDLORDS_CSV = STATIC_DIR / "landlords.csv"
+LANDLORDS_CSV = STATIC_DIR / "landlords.csv"    # the repository's copies, where the hand edits live
 ALIASES_CSV = STATIC_DIR / "aliases.csv"
 PUBLISHED_SLUGS = STATIC_DIR / "published_slugs.txt"
 
@@ -92,12 +98,24 @@ def write_csv(path: Path, rows: list[dict], fields: list[str]) -> None:
     tmp.rename(path)
 
 
+def working(base: Path) -> Path:
+    """Where the refreshed copy of a register file is written: the data folder's register/ on the server, the
+    repository's file itself elsewhere."""
+    folder = os.environ.get("LANDLORDS_REGISTER_DIR")
+    return Path(folder) / base.name if folder else base
+
+
+def _current(base: Path) -> Path:
+    path = working(base)
+    return path if path.exists() else base
+
+
 def landlords() -> dict[str, dict]:
-    return {r["id"]: r for r in read_csv(LANDLORDS_CSV)}
+    return {r["id"]: r for r in read_csv(_current(LANDLORDS_CSV))}
 
 
 def aliases() -> list[dict]:
-    return read_csv(ALIASES_CSV)
+    return read_csv(_current(ALIASES_CSV))
 
 
 def _exact(name: str) -> str:
@@ -187,7 +205,7 @@ def build(settings) -> RegisterResult:
     stock = read_table(settings, "stock_area")
     tsm_rows = read_table(settings, "tsm")
 
-    existing = landlords()
+    existing = {r["id"]: r for r in read_csv(LANDLORDS_CSV)}   # the repository's copy, with its hand edits
     parents = {g["landlord_id"]: g["parent_id"] for g in groups if g["parent_id"]}
     # Profiled: the landlords in the latest TSM year (1,000 or more homes; docs/DECISIONS.md, 3).
     latest = max(c["period"] for c in coverage)
@@ -249,7 +267,7 @@ def build(settings) -> RegisterResult:
             for r in rs:
                 if slug not in published:
                     r["slug"] = f"{slug}-{r['id'].lower()}"
-    write_csv(LANDLORDS_CSV, out, LANDLORD_FIELDS)
+    write_csv(working(LANDLORDS_CSV), out, LANDLORD_FIELDS)
 
     aliases_added = seed_published_aliases(settings, {r["id"]: r for r in out})
     return RegisterResult(added=added, refreshed=refreshed, total=len(out),
@@ -280,8 +298,8 @@ def seed_published_aliases(settings, register: dict[str, dict]) -> int:
             f"Regulatory judgements ({g['table']})"
         (archive if g["table"] == "archive" else current).append((g["landlord_id"], g["name_published"], label))
 
-    have = {(a["landlord_id"], normalise(a["alias"])) for a in aliases()}
-    rows = aliases()
+    rows = read_csv(ALIASES_CSV)       # the repository's copy, with its hand edits
+    have = {(a["landlord_id"], normalise(a["alias"])) for a in rows}
     added = 0
     current_names = {(lid, normalise(n)) for lid, n, _ in current}
     for (lid, name, src), kind in [(c, "published") for c in current] + [(a, "former") for a in archive]:
@@ -296,7 +314,7 @@ def seed_published_aliases(settings, register: dict[str, dict]) -> int:
         added += 1
     rows.sort(key=lambda a: (register.get(a["landlord_id"], {}).get("legal_name", "").lower(), a["landlord_id"],
                              a["kind"], a["alias"].lower()))
-    write_csv(ALIASES_CSV, rows, ALIAS_FIELDS)
+    write_csv(working(ALIASES_CSV), rows, ALIAS_FIELDS)
     return added
 
 
@@ -368,5 +386,5 @@ def accept(review_file: Path) -> int:
                          "source": r["source"], "valid_to": ""})
             have.add(key)
             added += 1
-    write_csv(ALIASES_CSV, rows, ALIAS_FIELDS)
+    write_csv(working(ALIASES_CSV), rows, ALIAS_FIELDS)
     return added

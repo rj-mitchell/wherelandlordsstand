@@ -16,7 +16,9 @@ COPY src ./src
 COPY config ./config
 COPY data_static ./data_static
 RUN uv sync --frozen --no-dev --compile-bytecode
+# the code is read-only here: the refreshed name register goes in the data folder (src/landlords/register.py)
 ENV LANDLORDS_DATA_DIR=/data \
+    LANDLORDS_REGISTER_DIR=/data/register \
     PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1
 VOLUME ["/data"]

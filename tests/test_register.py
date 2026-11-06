@@ -78,3 +78,25 @@ def test_a_group_reported_under_its_unregistered_parent_is_proposed_first(static
     out = register.propose([("MHS Homes Ltd", "Ombudsman")],
                            unregistered_parents={normalise("mhs homes Ltd"): ["4634"]})
     assert out[0]["candidate_id"] == "4634" and out[0]["kind"] == "group" and out[0]["accept"] == ""
+
+
+def test_on_the_server_the_register_is_refreshed_in_the_data_folder(static, tmp_path, monkeypatch):
+    """The code is read-only in the container (the first update on the server failed writing landlords.csv,
+    6 November 2026): with LANDLORDS_REGISTER_DIR set, the refreshed register goes there and is read from there,
+    while the repository's copy, with its hand edits, is left alone and is what each refresh starts from."""
+    base = [{"id": "L1", "legal_name": "Abri Group Limited", "display_name": "Abri", "type": "housing association",
+             "status": "active", "profiled": "yes", "slug": "abri"}]
+    _register(static, base)
+    work = tmp_path / "data" / "register"
+    monkeypatch.setenv("LANDLORDS_REGISTER_DIR", str(work))
+    assert register.working(register.LANDLORDS_CSV) == work / "landlords.csv"
+    assert register.landlords()["L1"]["display_name"] == "Abri"      # no working copy yet: the repository's
+
+    review = tmp_path / "review.csv"
+    register.write_csv(review, [{"name_published": "Abri Homes", "candidate_id": "L1", "source": "test",
+                                 "accept": "yes", "kind": "trading"}],
+                       ["name_published", "candidate_id", "source", "accept", "kind"])
+    before = register.ALIASES_CSV.read_text()
+    assert register.accept(review) == 1
+    assert register.ALIASES_CSV.read_text() == before                  # the repository's copy is untouched
+    assert [a["alias"] for a in register.aliases()] == ["Abri Homes"]  # read from the working copy

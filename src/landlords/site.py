@@ -130,6 +130,10 @@ def write_assets(out: Path) -> dict[str, str]:
         names[name] = f"{ASSETS}/{fingerprint(name, content)}"
         (out / names[name]).write_bytes(content)
     shutil.copy(FAMILY / "favicon.ico", out / "favicon.ico")
+    # the kit's VERSION at /family/VERSION, as on every site of the family: the charity's nightly family check reads
+    # it to confirm the live pages carry the current kit (the kit's other files are under assets/, renamed)
+    (out / "family").mkdir(exist_ok=True)
+    shutil.copy(FAMILY / "VERSION", out / "family" / "VERSION")
     # for the API's own pages (the approval page), which use this build's stylesheets
     (out / "assets.json").write_text(json.dumps(names, indent=1) + "\n")
     return names

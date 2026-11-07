@@ -42,6 +42,9 @@ def test_the_kit_partials_name_their_files_at_their_fingerprinted_addresses(tmp_
     assert f'content="https://wherelandlordsstand.com/{names["card.png"]}"' in head
     assert "/family/" not in head and "<script" not in "".join(parts.values())
     assert 'class="wts-endorse"' in parts["endorsement"] and 'class="wts-shelf"' in parts["shelf"]
+    # the kit's VERSION is at /family/VERSION, for the charity's nightly family check
+    version = (tmp_path / "family" / "VERSION").read_text()
+    assert version.startswith("Where They Stand family kit") and "\nsite landlords\n" in version
 
 
 def test_the_masthead_mark_is_the_press_pages_mark():

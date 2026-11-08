@@ -271,8 +271,8 @@ def page(title: str, body: str, w: dict, depth: int, description: str = "", scri
 <link rel="stylesheet" href="{up}{asset('styles.css')}">{js}</head>
 <body class="wts-headings"><a class="skip" href="#main">Skip to content</a>{alpha_banner(site, up)}
 <header class="mast"><div class="wrap mast-in"><div class="brand">{MARK}<a class="name" href="{up}index.html">{esc(site['name'])}</a>
-{_PARTS.get("endorsement", "")}<p class="tag">{esc(site['tagline'])}</p></div>
-<p class="indep">{esc(site['independence'])}</p></div>
+{_PARTS.get("endorsement", "")}<p class="tag">{esc(site['tagline'])}</p>
+<p class="indep">{esc(site['independence'])}</p></div></div>
 <nav class="tabs wrap" aria-label="Main">{nav}</nav></header>
 <main id="main" class="wrap">{body}</main>
 {footer(w, up)}

@@ -71,6 +71,10 @@ class Sources:
 
 NAV = [("index.html", "Find a landlord"), ("areas/index.html", "Areas"), ("compare/index.html", "Compare"),
        ("rights/index.html", "Your rights"), ("method/index.html", "How we compare")]
+# On a phone the tabs are one line that scrolls sideways (styles.css). The first three always show on a 320 px screen;
+# the pages of the others bring their tab into view with tabs.js. Pages with no tab of their own, such as landlords'
+# pages, have no script for it.
+SCROLLED_TABS = {href for href, _ in NAV[3:]}
 
 
 _LAUNCHED = False
@@ -125,7 +129,7 @@ def write_assets(out: Path) -> dict[str, str]:
     files = {"fonts.css": fonts_css.encode()}
     files |= {name: (FAMILY / name).read_bytes() for name in FAMILY_FILES if name != "fonts.css"}
     files |= {"styles.css": CSS_FILE.read_bytes()}
-    files |= {name: (STATIC / name).read_bytes() for name in ("search.js", "compare.js")}
+    files |= {name: (STATIC / name).read_bytes() for name in ("search.js", "compare.js", "tabs.js")}
     for name, content in files.items():
         names[name] = f"{ASSETS}/{fingerprint(name, content)}"
         (out / names[name]).write_bytes(content)
@@ -253,6 +257,8 @@ def page(title: str, body: str, w: dict, depth: int, description: str = "", scri
     live = launched()
     nav = "".join(f'<a href="{up}{href}"{' aria-current="page"' if href == here else ""}>{esc(label)}</a>'
                   for href, label in NAV)
+    if here in SCROLLED_TABS:
+        scripts += ("tabs.js",)
     js = "".join(f'<script src="{up}{asset(src)}" defer></script>' for src in scripts)
     site = w["site"]
     description = description or site["tagline"]
@@ -279,6 +285,18 @@ def page(title: str, body: str, w: dict, depth: int, description: str = "", scri
 {footer(w, up)}
 </body></html>
 """
+
+
+def stack_table(heads: list[str], rows: list[str], numeric: tuple[int, ...] = (), cls: str = "stack") -> str:
+    """A table that a narrow phone draws as one block per row (styles.css, "stacked tables"): the first cell on a line
+    of its own, then each other cell under its column's heading, which the cell carries in ``data-label``. The real
+    headings stay in the table for screen readers. Changing how a table is displayed can make some browsers forget it
+    is a table, so the table, its rows and its cells also say what they are with ARIA roles: each of ``rows`` is a
+    ``<tr role="row">`` whose cells have role="cell" (or "rowheader" on a row's heading)."""
+    ths = "".join(f'<th scope="col" role="columnheader"{' class="n"' if i in numeric else ""}>{esc(h)}</th>'
+                  for i, h in enumerate(heads))
+    return (f'<table class="{cls}" role="table"><thead role="rowgroup"><tr role="row">{ths}</tr></thead>'
+            f'<tbody role="rowgroup">{"".join(rows)}</tbody></table>')
 
 
 def meter(b: int | None) -> str:

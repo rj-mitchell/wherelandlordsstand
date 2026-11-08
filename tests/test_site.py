@@ -79,3 +79,50 @@ def test_sentences_with_links():
         'Use the <a href="../corrections/index.html">form</a>.')
     assert rich("Email [a@b.org](mailto:a@b.org).") == 'Email <a href="mailto:a@b.org">a@b.org</a>.'
     assert fill_html("It's {link}, or {x}.", link="<a>here</a>", x="<b>") == "It&#x27;s <a>here</a>, or <b>."
+
+
+def test_area_tables_stack_on_a_phone_and_stay_tables():
+    """On a narrow phone each landlord in an area is a block, its figures under their headings (styles.css), so no
+    name is broken mid-word ('Birmingh|am'). The headings stay in the table, and ARIA roles keep it a table for screen
+    readers whatever the stylesheet does to it (8 November 2026)."""
+    from landlords.config import load_toml
+    from landlords.site_pages import area_html
+
+    w = load_toml("wording.toml")
+    t = w["area"]
+    p = {"slug": "abri-group", "name": "Abri Group", "grade": {"grade": "G1"}, "bands": {"headline": {"band": 4}}}
+    area = {"name": "Birmingham", "slug": "birmingham", "landlords": [(p, 12345, "")], "sources": set()}
+    html = area_html(area, w, {})
+    assert '<table class="stack" role="table"><thead role="rowgroup"><tr role="row">' in html
+    assert f'<th scope="col" role="columnheader" class="n">{t["homes"]}</th>' in html
+    for label, value in ((t["homes"], "12,345"), (t["grade"], "G1")):
+        assert f'data-label="{label}">{value}</td>' in html
+    assert '<tr role="row"><td role="cell"><a href="../../landlords/abri-group/index.html">Abri Group</a></td>' in html
+
+
+def test_search_tells_screen_readers_the_number_found_not_the_whole_list():
+    """The list of results is rebuilt with every letter typed, so it is not a live region; a separate status line
+    says how many were found once typing stops (search.js), in the words of config/wording.toml."""
+    import json
+    import re
+
+    from landlords.config import load_toml
+    from landlords.site_pages import index_html
+
+    w = load_toml("wording.toml")
+    html = index_html([], w)
+    assert '<ul id="results" class="results"></ul>' in html
+    assert '<p id="results-status" class="sr-only" role="status" aria-live="polite"></p>' in html
+    text = json.loads(re.search(r'<script type="application/json" id="search-text">(.*?)</script>', html).group(1))
+    assert text["found"] == w["search"]["found"] and "{count}" in text["found"]
+    assert {"found_one", "found_none", "found_small"} <= set(text)
+
+
+def test_only_the_pages_whose_tab_can_start_out_of_sight_on_a_phone_load_the_tab_script():
+    from landlords.config import load_toml
+    from landlords.site import NAV, page
+
+    w = load_toml("wording.toml")
+    for i, (here, _) in enumerate(NAV):
+        assert ("tabs." in page("T", "", w, depth=1, here=here)) == (i >= 3), here
+    assert "<script" not in page("T", "", w, depth=2)                # a landlord's page has no tab, and no script

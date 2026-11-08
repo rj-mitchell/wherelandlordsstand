@@ -47,13 +47,25 @@
     const root = form.dataset.root || "";
     const input = form.querySelector("input");
     const out = document.getElementById("results");
+    const status = document.getElementById("results-status");
     const text = JSON.parse(document.getElementById("search-text").textContent);
     function li(html) { const el = document.createElement("li"); el.innerHTML = html; return el; }
     function esc(s) { return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]); }
+    // Screen readers hear how many were found, half a second after typing stops (or at once on Enter), not the list,
+    // which is rebuilt with every letter typed. The same words are not read twice.
+    let timer = 0;
+    function tell(r, now) {
+      clearTimeout(timer);
+      const n = r.covered.length;
+      const words = !WLS.norm(input.value) ? ""
+        : n === 1 ? text.found_one : n ? text.found.replace("{count}", n) : r.small.length ? text.found_small : text.found_none;
+      timer = setTimeout(() => { if (status.textContent !== words) status.textContent = words; }, now ? 0 : 500);
+    }
     async function show(submitted) {
       const names = await load(root);
       const r = search(names, input.value);
       out.innerHTML = "";
+      tell(r, submitted);
       if (!WLS.norm(input.value)) return;
       for (const e of r.covered) {
         const also = e.a.length ? ` <span class="hint">(${esc(e.a.slice(0, 3).join(", "))})</span>` : "";

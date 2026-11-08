@@ -15,7 +15,7 @@ from landlords.config import Settings, load_toml
 from landlords.register import normalise, slugify
 from landlords.score import rules
 from landlords.sisters import council_url, councils_covered
-from landlords.site import band_name, esc, fill, nice_date, page, rich, sister_link
+from landlords.site import band_name, esc, fill, nice_date, page, rich, sister_link, stack_table
 
 # Search ----------------------------------------------------------------------------------------------------------------
 
@@ -45,11 +45,14 @@ def index_html(profiles: list[dict], w: dict) -> str:
     for p in sorted(profiles, key=lambda p: p["name"].lower().removeprefix("the ")):
         letter = p["name"].lower().removeprefix("the ")[:1].upper()
         by_letter.setdefault(letter if letter.isalpha() else "#", []).append(p)
-    text = json.dumps({"none": s["none"], "small": s["small"], "areas": s["areas_link"]})
+    text = json.dumps({"none": s["none"], "small": s["small"], "areas": s["areas_link"],
+                       **{k: s[k] for k in ("found_one", "found", "found_none", "found_small")}})
     parts = [f"<h1>{esc(s['heading'])}</h1><p>{esc(s['intro'])}</p>",
              f'<form id="search" role="search" data-root=""><label for="q">{esc(s["label"])}</label>'
              f'<input id="q" name="q" type="search" autocomplete="off" placeholder="{esc(s["placeholder"])}" '
-             f'aria-describedby="q-hint"><p class="hint" id="q-hint">{esc(s["hint"])}</p></form><ul id="results" class="results" aria-live="polite"></ul>'
+             f'aria-describedby="q-hint"><p class="hint" id="q-hint">{esc(s["hint"])}</p></form><ul id="results" class="results"></ul>'
+             # the number found, for screen readers, rather than the list, which changes with every letter typed
+             '<p id="results-status" class="sr-only" role="status" aria-live="polite"></p>'
              f'<script type="application/json" id="search-text">{text}</script>'
              f'<noscript><p>{esc(s["noscript"])}</p></noscript>',
              f'<p><a href="areas/index.html">{esc(s["areas_link"])}</a></p>',
@@ -96,14 +99,16 @@ def area_html(a: dict, w: dict, sources: dict) -> str:
     for p, homes, basis in a["landlords"]:
         g = p["grade"].get("grade") or "–"
         b = p["bands"].get("headline", {}) if p["bands"] else {}
-        rows.append(f'<tr><td><a href="../../landlords/{esc(p["slug"])}/index.html">{esc(p["name"])}</a>'
-                    f'{" *" if basis == "council total" else ""}</td><td class="n">{homes:,.0f}</td>'
-                    f'<td>{esc(g)}</td><td>{esc(band_name(b.get("band")) or "–")}</td></tr>')
+        rows.append(f'<tr role="row"><td role="cell"><a href="../../landlords/{esc(p["slug"])}/index.html">{esc(p["name"])}</a>'
+                    f'{" *" if basis == "council total" else ""}</td>'
+                    f'<td role="cell" class="n" data-label="{esc(t["homes"])}">{homes:,.0f}</td>'
+                    f'<td role="cell" data-label="{esc(t["grade"])}">{esc(g)}</td>'
+                    f'<td role="cell" data-label="{esc(t["overall"])}">{esc(band_name(b.get("band")) or "–")}</td></tr>')
+    # On a phone each row is drawn as a block, each figure under its heading (stack_table)
     body = (f"<h1 id=\"area\">{esc(a['name'])}</h1><p>{fill(t['intro'], count=len(a['landlords']))}</p>"
-            f'<div class="scroll" tabindex="0" role="region" aria-labelledby="area"><table><thead><tr><th scope="col">{esc(t["landlord"])}</th>'
-            f'<th scope="col" class="n">{esc(t["homes"])}</th><th scope="col">{esc(t["grade"])}</th>'
-            f'<th scope="col">{esc(t["overall"])}</th></tr></thead><tbody>{"".join(rows)}</tbody></table></div>'
-            f'<p class="hint">{esc(t["notes"])}</p>'
+            f'<div class="scroll" tabindex="0" role="region" aria-labelledby="area">'
+            + stack_table([t["landlord"], t["homes"], t["grade"], t["overall"]], rows, numeric=(1,)) + "</div>"
+            + f'<p class="hint">{esc(t["notes"])}</p>'
             + (f'<p class="hint">* {esc(t["council_note"])}</p>' if any(x[2] == "council total" for x in a["landlords"]) else "")
             + f'<p class="warn">{esc(w["card"]["refusal"])}</p>' + src.ref(*a["sources"])
             + sister_link(a.get("council_url", ""), fill(t["council_link"], council=a.get("council_name", "")))

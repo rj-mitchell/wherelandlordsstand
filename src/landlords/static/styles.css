@@ -121,7 +121,8 @@ td.n,th.n{text-align:end;white-space:nowrap;font-variant-numeric:tabular-nums}
 ul.list{padding-inline-start:1.2rem}
 ul.az{list-style:none;padding:0;columns:3 14rem;column-gap:2rem;max-width:none}
 ul.az li{margin:.2rem 0;break-inside:avoid}
-main>h3{font:700 1rem/1 var(--sans);margin:1.6rem 0 .5rem;padding-block-end:.3rem;border-block-end:1px solid var(--rule)}
+/* the home page's letters (A, B, C): in Source Serif, as every heading in the family is (the kit's .wts-headings) */
+main>h3{font-size:1rem;font-weight:700;line-height:1;margin:1.6rem 0 .5rem;padding-block-end:.3rem;border-block-end:1px solid var(--rule)}
 ol.sources{font-size:.9rem;padding-inline-start:1.3rem}ol.sources li{margin:.45rem 0;overflow-wrap:anywhere}
 /* a link to a sister site, with its spine */
 .sister a{display:inline-flex;align-items:center;gap:.6rem}.sister .wts-spine{height:1.9em;width:auto}
@@ -140,17 +141,56 @@ footer .wts-shelf{margin-block-start:1.2rem}
 .name{font-size:1.3rem}.brand .wts-endorse{margin-block-start:.1rem}
 .tag{display:none}
 .indep{font-size:.78rem;line-height:1.35}
-nav.tabs{gap:0 .9rem;font-size:.86rem}
-nav.tabs a{padding:.45rem 0 .35rem}
+/* the tabs on one line that scrolls sideways, rather than one tab left alone on a second line: each tab a snap point,
+   the scroll kept to the row, the edge fading where there is more to see, and the current tab brought into view
+   (tabs.js, on the pages whose tab could start out of sight). The row has room above and below for the focus ring,
+   which a scrolling box would otherwise cut off; the negative margins keep the masthead the height it was. */
+nav.tabs{gap:0 .9rem;font-size:.86rem;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;
+scroll-snap-type:x proximity;scroll-padding-inline:var(--tabs-fade-max);padding-block:6px;margin-block:-6px;
+--tabs-fade-max:2.5rem;--tabs-fade-s:0px;--tabs-fade-e:var(--gutter);
+-webkit-mask-image:linear-gradient(to right,transparent,#000 var(--tabs-fade-s),#000 calc(100% - var(--tabs-fade-e)),transparent);
+mask-image:linear-gradient(to right,transparent,#000 var(--tabs-fade-s),#000 calc(100% - var(--tabs-fade-e)),transparent)}
+nav.tabs a{padding:.45rem 0 .35rem;flex:none;white-space:nowrap;scroll-snap-align:start}
+/* no fade while a tab has the keyboard's focus, so its ring is never faded (a browser may leave a focused tab half
+   in view) */
+nav.tabs:has(:focus-visible){-webkit-mask-image:none;mask-image:none}
 h1{margin-block-start:.85rem;font-size:1.65rem}
 .sub{margin-block-end:.7rem}
 .card{margin-block-start:.7rem}.card>h2{margin-block-start:.5rem;padding-block-start:.3rem}.card p{margin-block:.6rem}
 .card section{padding-block-end:.5rem}
 th,td{padding:.4rem .3rem}
 thead th{font-size:.7rem;letter-spacing:.03em}thead th.n{white-space:normal}
-/* so the tables fit: a long word in a narrow cell is hyphenated where the browser knows how, else broken anywhere */
-td{overflow-wrap:anywhere;-webkit-hyphens:auto;hyphens:auto}
 }
+/* the other tables (a landlord's figures) fit a screen narrower than 22rem only if a long word may break: hyphenated
+   where the browser knows how, else broken anywhere. Wider than that they fit without breaking a word. */
+@media (max-width:22rem){table:not(.stack) td{overflow-wrap:anywhere;-webkit-hyphens:auto;hyphens:auto}}
+/* stacked tables (stack_table in site.py: the area tables and the status page's files): on a narrow phone each row is
+   a block, its first cell on a line of its own and each other cell under its column's heading, so no word has to be
+   broken to fit. The column headings stay in the table for screen readers, and the cells' labels are left out of
+   what they read (the "/ ''"), since they already hear the headings. */
+@media (max-width:30rem){
+.stack{position:relative}
+.stack,.stack tbody,.stack tr,.stack td,.stack tbody th{display:block}
+.stack thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.stack tbody{border-block-start:2px solid var(--rule-strong)}
+.stack tr{display:grid;grid-template-columns:var(--stack-cols,auto auto 1fr);gap:.2rem 1.25rem;padding-block:.55rem .6rem;
+border-block-end:1px solid var(--rule)}
+.stack-2{--stack-cols:auto 1fr}
+.stack td,.stack tbody th{padding:0;border:0;text-align:start}
+.stack tr>:first-child,.stack .wide,.stack td[colspan]{grid-column:1 / -1}
+.stack td[data-label]::before{content:attr(data-label);content:attr(data-label) / "";display:block;
+font:700 .7rem/1.3 var(--sans);letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
+}
+/* where the browser can tie an animation to scrolling, the fades follow it: none on the left until the row is
+   scrolled, none on the right once it is at the end. Elsewhere the right edge fades within the page's margin only. */
+@property --tabs-fade-s{syntax:"<length>";inherits:false;initial-value:0px}
+@property --tabs-fade-e{syntax:"<length>";inherits:false;initial-value:0px}
+@keyframes tabs-fade{0%{--tabs-fade-s:0px;--tabs-fade-e:var(--tabs-fade-max)}15%{--tabs-fade-s:var(--tabs-fade-max)}
+85%{--tabs-fade-e:var(--tabs-fade-max)}100%{--tabs-fade-s:var(--tabs-fade-max);--tabs-fade-e:0px}}
+@media (max-width:40rem){@supports (animation-timeline:scroll()){
+nav.tabs{animation:tabs-fade linear both;animation-timeline:scroll(self inline)}}
+/* no scroll bar under the tabs on a touch screen, where a swipe scrolls them and the fade shows there is more */
+@media (pointer:coarse){nav.tabs{scrollbar-width:none}nav.tabs::-webkit-scrollbar{display:none}}}
 /* colour fades only, so they may run whatever the motion setting (good-css.com); --wts-ease-out is the family's */
 a,nav.tabs a{transition:border-color .12s var(--wts-ease-out,ease-out),color .12s var(--wts-ease-out,ease-out),
 text-decoration-color .12s var(--wts-ease-out,ease-out)}

@@ -102,7 +102,7 @@ def test_every_file_a_page_uses_is_fingerprinted_under_assets(tmp_path):
     from landlords import site
 
     names = site.write_assets(tmp_path)
-    assert set(names) >= {"styles.css", "fonts.css", "family.css", "search.js", "compare.js", "icon.svg",
+    assert set(names) >= {"styles.css", "fonts.css", "family.css", "search.js", "compare.js", "tabs.js", "icon.svg",
                           "favicon.ico", "apple-touch-icon.png", "card.png", "fonts/source-serif-4-normal-latin.woff2"}
     for built in names.values():
         assert built.startswith("assets/") and re.search(r"\.[0-9a-f]{10}\.\w+$", built), built

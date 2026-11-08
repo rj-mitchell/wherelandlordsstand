@@ -89,7 +89,7 @@ def _date(iso: str) -> str:
 def page_html(w: dict, snap: dict, check: dict, pending: str | None, known: bool) -> str:
     """The page. ``known`` says whether the site knows about builds waiting for approval (not for pages built by hand
     with `landlords build`)."""
-    from landlords.site import esc, fill, page
+    from landlords.site import esc, fill, page, stack_table
 
     t = load_toml("pages.toml")["status"]
     names = t["sources"]
@@ -111,19 +111,22 @@ def page_html(w: dict, snap: dict, check: dict, pending: str | None, known: bool
             parts.append(f"<li>{esc(t['not_waiting'])}</li>")
     parts.append("</ul>")
 
-    cols = "".join(f'<th scope="col">{esc(c)}</th>' for c in t["columns"])
+    # On a phone each set of files is drawn as a block, each date under its heading (stack_table)
+    _, newest, fetched, loaded = (esc(c) for c in t["columns"])
     rows = []
     for name, label in names.items():
         s = snap.get("sources", {}).get(name)
         if not s:
-            rows.append(f'<tr><th scope="row">{esc(label)}</th><td colspan="3">{esc(t["never"])}</td></tr>')
+            rows.append(f'<tr role="row"><th scope="row" role="rowheader">{esc(label)}</th>'
+                        f'<td role="cell" colspan="3">{esc(t["never"])}</td></tr>')
             continue
-        rows.append(f'<tr><th scope="row">{esc(label)}<br><span class="hint">{esc(s["publisher"])}</span></th>'
-                    f'<td>{esc(_title(s["title"]))} ({esc(s["period"])})</td><td>{esc(_date(s["fetched"]) or t["never"])}</td>'
-                    f'<td>{esc(_date(s["loaded"]) or t["never"])}</td></tr>')
+        rows.append(f'<tr role="row"><th scope="row" role="rowheader">{esc(label)}<br><span class="hint">{esc(s["publisher"])}</span></th>'
+                    f'<td role="cell" class="wide" data-label="{newest}">{esc(_title(s["title"]))} ({esc(s["period"])})</td>'
+                    f'<td role="cell" data-label="{fetched}">{esc(_date(s["fetched"]) or t["never"])}</td>'
+                    f'<td role="cell" data-label="{loaded}">{esc(_date(s["loaded"]) or t["never"])}</td></tr>')
     parts.append(f"<h2 id=\"files\">{esc(t['sources_heading'])}</h2><p>{esc(t['sources_intro'])}</p>"
-                 f'<div class="scroll" tabindex="0" role="region" aria-labelledby="files"><table><thead><tr>{cols}</tr></thead><tbody>{"".join(rows)}</tbody>'
-                 f"</table></div>")
+                 f'<div class="scroll" tabindex="0" role="region" aria-labelledby="files">'
+                 + stack_table(t["columns"], rows, cls="stack stack-2") + "</div>")
     parts += [f'<p class="hint">{esc(x)}</p>' for x in t["notes"]]
     return page(f"{t['heading']} – {w['site']['name']}", "".join(parts), w, depth=1, path="status/")
 

@@ -122,9 +122,12 @@ the spines have their size in the page as well as in the stylesheet, so they sta
 
 ## Shared with the siblings
 
-Square corners, ruled lists, colour only where it carries meaning, one fluid type scale, visible focus rings, hover
-styles that need a mouse, animation only when reduced motion isn't requested, and no sideways scrolling on phones
-(checked at 390 px, where the area tables fit without scrolling).
+Square corners, ruled lists, colour only where it carries meaning, one fluid type scale, visible focus rings (the
+slate ring, which the family shelf wears too, through the kit's `--wts-focus`), hover styles that need a mouse with a
+pressed state for touch, colour fades only, and no sideways scrolling on phones (checked at 390 px, where the area
+tables fit without scrolling; a table that is still too wide, at 320 px, scrolls inside its own box, which takes the
+keyboard's focus). The footer's links are at least 24 px tall, as the shelf's are, and the footer shelf keeps the
+page's own side margins, so its column lines up with the page's.
 
 ## Checking a change
 

@@ -191,7 +191,8 @@ def rich(text: str, up: str = "") -> str:
 
 def alpha_banner(words: dict, up: str) -> str:
     """The phase banner at the top of every page, while [site] stage = "alpha", worded as on the sister sites: its
-    label (the words before the colon) as a chip, then one sentence, a link to the report form and the address."""
+    label (the words before the colon) as a chip, then one sentence, a link to the report form and the address. It is
+    the first thing in the masthead's <header>, so it is inside the page's banner landmark."""
     if _SITE.get("stage") != "alpha" or not words.get("alpha"):
         return ""
     email = _SITE.get("feedback_email") or _SITE.get("contact", "")
@@ -264,13 +265,13 @@ def page(title: str, body: str, w: dict, depth: int, description: str = "", scri
         card = f'<link rel="canonical" href="{esc(url)}/{esc(path)}"><meta property="og:url" content="{esc(url)}/{esc(path)}">' + card
     return f"""<!doctype html>
 <html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{esc(title)}</title><meta name="description" content="{esc(description)}">
+<meta name="color-scheme" content="light dark"><title>{esc(title)}</title><meta name="description" content="{esc(description)}">
 {"" if live else '<meta name="robots" content="noindex">'}{card}
 {_PARTS.get("head", "").replace(UP, up)}
 <link rel="preload" href="{up}{asset('fonts/source-serif-4-normal-latin.woff2')}" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{up}{asset('styles.css')}">{js}</head>
-<body class="wts-headings"><a class="skip" href="#main">Skip to content</a>{alpha_banner(site, up)}
-<header class="mast"><div class="wrap mast-in"><div class="brand">{MARK}<a class="name" href="{up}index.html">{esc(site['name'])}</a>
+<body class="wts-headings"><a class="skip" href="#main">Skip to main content</a>
+<header class="mast">{alpha_banner(site, up)}<div class="wrap mast-in"><div class="brand">{MARK}<a class="name" href="{up}index.html">{esc(site['name'])}</a>
 {_PARTS.get("endorsement", "")}<p class="tag">{esc(site['tagline'])}</p>
 <p class="indep">{esc(site['independence'])}</p></div></div>
 <nav class="tabs wrap" aria-label="Main">{nav}</nav></header>
@@ -414,16 +415,18 @@ def profile_html(p: dict, w: dict) -> str:
             for m in b["other"]:
                 v = (pct(m["value"]) if m["unit"] == "%" else f'{m["value"]:,.1f}') if m["value"] is not None else m["status"]
                 rows.append(f'<tr><td>{esc(m["label"])}</td><td class="n">{esc(v)}</td><td></td></tr>')
-        out.append(f'<h2>The figures, {esc(b["period"])}</h2><table><thead><tr><th scope="col">Measure</th>'
+        out.append(f'<h2 id="figures">The figures, {esc(b["period"])}</h2><div class="scroll" tabindex="0" role="region" '
+                   f'aria-labelledby="figures"><table><thead><tr><th scope="col">Measure</th>'
                    f'<th scope="col" class="n">Figure</th><th scope="col">Among similar landlords</th></tr></thead>'
-                   f'<tbody>{"".join(rows)}</tbody></table>{src.ref(b.get("source", ""))}')
+                   f'<tbody>{"".join(rows)}</tbody></table></div>{src.ref(b.get("source", ""))}')
 
     if om["earlier"]:
         rows = "".join(f'<tr><td>{esc(r["period"])}</td><td>{esc(r["name"])}</td><td class="n">{r.get("findings_in_jurisdiction", 0):,.0f}</td>'
                        f'<td class="n">{100 * r.get("maladministration_rate", 0):.0f}%</td></tr>' for r in om["earlier"])
-        out.append(f'<h2>Earlier Ombudsman figures</h2><p>{esc(w["ombudsman"]["change"])}</p><table><thead><tr>'
+        out.append(f'<h2 id="earlier">Earlier Ombudsman figures</h2><p>{esc(w["ombudsman"]["change"])}</p>'
+                   f'<div class="scroll" tabindex="0" role="region" aria-labelledby="earlier"><table><thead><tr>'
                    f'<th scope="col">Year</th><th scope="col">Name in the report</th><th scope="col" class="n">Findings</th>'
-                   f'<th scope="col" class="n">At fault</th></tr></thead><tbody>{rows}</tbody></table>'
+                   f'<th scope="col" class="n">At fault</th></tr></thead><tbody>{rows}</tbody></table></div>'
                    f'{src.ref(*[r["_source"] for r in om["earlier"]])}')
 
     if p["type"] == "council":

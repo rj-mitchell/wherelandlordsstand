@@ -121,8 +121,8 @@ def page_html(w: dict, snap: dict, check: dict, pending: str | None, known: bool
         rows.append(f'<tr><th scope="row">{esc(label)}<br><span class="hint">{esc(s["publisher"])}</span></th>'
                     f'<td>{esc(_title(s["title"]))} ({esc(s["period"])})</td><td>{esc(_date(s["fetched"]) or t["never"])}</td>'
                     f'<td>{esc(_date(s["loaded"]) or t["never"])}</td></tr>')
-    parts.append(f"<h2>{esc(t['sources_heading'])}</h2><p>{esc(t['sources_intro'])}</p>"
-                 f'<div class="scroll"><table><thead><tr>{cols}</tr></thead><tbody>{"".join(rows)}</tbody>'
+    parts.append(f"<h2 id=\"files\">{esc(t['sources_heading'])}</h2><p>{esc(t['sources_intro'])}</p>"
+                 f'<div class="scroll" tabindex="0" role="region" aria-labelledby="files"><table><thead><tr>{cols}</tr></thead><tbody>{"".join(rows)}</tbody>'
                  f"</table></div>")
     parts += [f'<p class="hint">{esc(x)}</p>' for x in t["notes"]]
     return page(f"{t['heading']} – {w['site']['name']}", "".join(parts), w, depth=1, path="status/")

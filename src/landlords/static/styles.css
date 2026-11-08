@@ -5,7 +5,8 @@
 --rule-strong:#1c2427;--slate:#40484d;--link:#2f4a5e;--band-off:#e2e0d8;--gilt:#7a5c1c;
 --note:#ece5d5;--strip:#e7e2d5;--serif:"Source Serif 4",Georgia,"Times New Roman",serif;
 --sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;--wrap:64rem;
---gutter:clamp(1rem,4vw,2rem);--wts-focus:var(--slate)}
+--gutter:clamp(1rem,4vw,2rem);--wts-focus:var(--slate);
+--wts-gutter:var(--gutter);--wts-shelf-width:calc(var(--wrap) - 2 * var(--gutter))}   /* the shelf lines up with the page's column */
 @media (prefers-color-scheme:dark){:root{--paper:#14181a;--paper-hi:#1a1f22;--ink:#e9e6de;--muted:#aab1b5;
 --rule:#353c40;--rule-strong:#e9e6de;--slate:#b9c3c9;--link:#a9c6dc;--band-off:#2c3337;--gilt:#d9bc72;
 --note:#20262a;--strip:#1f2528}}
@@ -19,8 +20,8 @@ a{color:var(--link);text-decoration-thickness:1px;text-underline-offset:.18em}
 a,button{touch-action:manipulation}
 a:active{text-decoration-thickness:2px}
 @media (hover:hover) and (pointer:fine){a:hover{color:var(--ink);text-decoration-thickness:2px}}
-/* the ring the family's kit uses too (--wts-focus is the slate, so the footer shelf wears it) */
-:focus-visible{outline:var(--wts-focus-width,3px) solid var(--slate);outline-offset:2px}
+/* the ring the family's kit uses too (--wts-focus is the slate, so the footer shelf wears it), 3px wide and 3px off */
+:focus-visible{outline:var(--wts-focus-width,3px) solid var(--slate);outline-offset:var(--wts-focus-offset,3px)}
 .sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip-path:inset(50%);
 white-space:nowrap}
 .skip{position:absolute;inset-inline-start:-999px;font-family:var(--sans)}
@@ -130,14 +131,13 @@ footer{margin-block-start:3rem;border-block-start:3px double var(--rule-strong);
 .foot-links{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.2rem 1.1rem}
 /* each link at least 24px tall (WCAG 2.5.8), as the shelf's own links are */
 .foot-links a{display:inline-flex;align-items:center;min-block-size:var(--wts-target-min,24px)}
-footer .wts-shelf{margin-block-start:1.2rem;padding-inline:var(--gutter)}   /* the page's own gutter, so the column lines up */
-footer .wts-shelf__inner{max-inline-size:calc(var(--wrap) - 4rem)}   /* in line with the page's column */
+footer .wts-shelf{margin-block-start:1.2rem}
 /* phones: a lighter masthead, so a landlord's grade is on the first screen, and tables that fit */
 @media (max-width:40rem){
 .strip{font-size:.76rem;line-height:1.35}.strip p{padding-block:.3rem}
 .mast-in{padding-block:.6rem .35rem;gap:.3rem}
 .brand{column-gap:.6rem}.mark{width:44px;height:44px}
-.name{font-size:1.3rem}.brand .wts-endorse{margin-block-start:.1rem;font-size:.66rem}
+.name{font-size:1.3rem}.brand .wts-endorse{margin-block-start:.1rem}
 .tag{display:none}
 .indep{font-size:.78rem;line-height:1.35}
 nav.tabs{gap:0 .9rem;font-size:.86rem}

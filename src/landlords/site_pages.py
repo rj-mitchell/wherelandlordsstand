@@ -15,7 +15,7 @@ from landlords.config import Settings, load_toml
 from landlords.register import normalise, slugify
 from landlords.score import rules
 from landlords.sisters import council_url, councils_covered
-from landlords.site import band_name, esc, fill, nice_date, page, rich, sister_link
+from landlords.site import band_name, esc, fill, nice_date, page, rich, sister_link, stack_table
 
 # Search ----------------------------------------------------------------------------------------------------------------
 
@@ -45,11 +45,14 @@ def index_html(profiles: list[dict], w: dict) -> str:
     for p in sorted(profiles, key=lambda p: p["name"].lower().removeprefix("the ")):
         letter = p["name"].lower().removeprefix("the ")[:1].upper()
         by_letter.setdefault(letter if letter.isalpha() else "#", []).append(p)
-    text = json.dumps({"none": s["none"], "small": s["small"], "areas": s["areas_link"]})
+    text = json.dumps({"none": s["none"], "small": s["small"], "areas": s["areas_link"],
+                       **{k: s[k] for k in ("found_one", "found", "found_none", "found_small")}})
     parts = [f"<h1>{esc(s['heading'])}</h1><p>{esc(s['intro'])}</p>",
              f'<form id="search" role="search" data-root=""><label for="q">{esc(s["label"])}</label>'
-             f'<input id="q" name="q" type="search" autocomplete="off" placeholder="{esc(s["placeholder"])}">'
-             f'<p class="hint">{esc(s["hint"])}</p></form><ul id="results" class="results" aria-live="polite"></ul>'
+             f'<input id="q" name="q" type="search" autocomplete="off" placeholder="{esc(s["placeholder"])}" '
+             f'aria-describedby="q-hint"><p class="hint" id="q-hint">{esc(s["hint"])}</p></form><ul id="results" class="results"></ul>'
+             # the number found, for screen readers, rather than the list, which changes with every letter typed
+             '<p id="results-status" class="sr-only" role="status" aria-live="polite"></p>'
              f'<script type="application/json" id="search-text">{text}</script>'
              f'<noscript><p>{esc(s["noscript"])}</p></noscript>',
              f'<p><a href="areas/index.html">{esc(s["areas_link"])}</a></p>',
@@ -96,14 +99,16 @@ def area_html(a: dict, w: dict, sources: dict) -> str:
     for p, homes, basis in a["landlords"]:
         g = p["grade"].get("grade") or "–"
         b = p["bands"].get("headline", {}) if p["bands"] else {}
-        rows.append(f'<tr><td><a href="../../landlords/{esc(p["slug"])}/index.html">{esc(p["name"])}</a>'
-                    f'{" *" if basis == "council total" else ""}</td><td class="n">{homes:,.0f}</td>'
-                    f'<td>{esc(g)}</td><td>{esc(band_name(b.get("band")) or "–")}</td></tr>')
-    body = (f"<h1>{esc(a['name'])}</h1><p>{fill(t['intro'], count=len(a['landlords']))}</p>"
-            f'<div class="scroll"><table><thead><tr><th scope="col">{esc(t["landlord"])}</th>'
-            f'<th scope="col" class="n">{esc(t["homes"])}</th><th scope="col">{esc(t["grade"])}</th>'
-            f'<th scope="col">{esc(t["overall"])}</th></tr></thead><tbody>{"".join(rows)}</tbody></table></div>'
-            f'<p class="hint">{esc(t["notes"])}</p>'
+        rows.append(f'<tr role="row"><td role="cell"><a href="../../landlords/{esc(p["slug"])}/index.html">{esc(p["name"])}</a>'
+                    f'{" *" if basis == "council total" else ""}</td>'
+                    f'<td role="cell" class="n" data-label="{esc(t["homes"])}">{homes:,.0f}</td>'
+                    f'<td role="cell" data-label="{esc(t["grade"])}">{esc(g)}</td>'
+                    f'<td role="cell" data-label="{esc(t["overall"])}">{esc(band_name(b.get("band")) or "–")}</td></tr>')
+    # On a phone each row is drawn as a block, each figure under its heading (stack_table)
+    body = (f"<h1 id=\"area\">{esc(a['name'])}</h1><p>{fill(t['intro'], count=len(a['landlords']))}</p>"
+            f'<div class="scroll" tabindex="0" role="region" aria-labelledby="area">'
+            + stack_table([t["landlord"], t["homes"], t["grade"], t["overall"]], rows, numeric=(1,)) + "</div>"
+            + f'<p class="hint">{esc(t["notes"])}</p>'
             + (f'<p class="hint">* {esc(t["council_note"])}</p>' if any(x[2] == "council total" for x in a["landlords"]) else "")
             + f'<p class="warn">{esc(w["card"]["refusal"])}</p>' + src.ref(*a["sources"])
             + sister_link(a.get("council_url", ""), fill(t["council_link"], council=a.get("council_name", "")))
@@ -150,10 +155,10 @@ def compare_html(w: dict) -> str:
                                   "not_graded", "no_report", "at_fault", "findings", "all_done", "not_all_done",
                                   "caveat", "none")},
             "bands": rules()["scoring"]["bands"]}
-    body = (f"<h1>{esc(t['heading'])}</h1><p>{esc(t['intro'])}</p>"
+    body = (f"<h1 id=\"compare-heading\">{esc(t['heading'])}</h1><p>{esc(t['intro'])}</p>"
             f'<div id="compare" data-root="../"><label for="add">{esc(t["add"])}</label>'
             f'<input id="add" type="search" autocomplete="off"><ul id="suggest" class="results"></ul>'
-            f'<ul id="picks" class="results"></ul><div id="table"></div></div>'
+            f'<ul id="picks" class="results" aria-live="polite"></ul><div id="table"></div></div>'
             f'<script type="application/json" id="compare-text">{json.dumps(text)}</script>'
             f'<noscript><p>{esc(t["noscript"])}</p></noscript><p class="warn">{esc(w["card"]["refusal"])}</p>')
     return page(f"{t['heading']} – {w['site']['name']}", body, w, depth=1, scripts=("search.js", "compare.js"), path="compare/",
@@ -248,10 +253,11 @@ def corrections_html(w: dict) -> str:
     t = w["corrections"]
     body = (f"<h1>{esc(t['heading'])}</h1>" + "".join(f"<p>{esc(x)}</p>" for x in t["intro"]) +
             f'<form method="post" action="../api/corrections"><label for="page">{esc(t["page"])}</label>'
-            f'<input id="page" name="page" type="text" maxlength="300">'
+            f'<input id="page" name="page" type="text" maxlength="300" autocomplete="off">'
             f'<label for="message">{esc(t["message"])}</label><textarea id="message" name="message" rows="6" '
             f'maxlength="4000" required></textarea><label for="email">{esc(t["email"])}</label>'
-            f'<input id="email" name="email" type="email" maxlength="200"><p class="hint">{esc(t["email_hint"])}</p>'
+            f'<input id="email" name="email" type="email" maxlength="200" autocomplete="email" '
+            f'aria-describedby="email-hint"><p class="hint" id="email-hint">{esc(t["email_hint"])}</p>'
             f'<p><button type="submit">{esc(t["send"])}</button></p></form>')
     # The form posts to the site's small API (src/landlords/api.py), which serves every page, so it always works for
     # readers. Opened as plain files, without `landlords serve`, it can't send (docs/OPERATIONS.md).
@@ -259,11 +265,11 @@ def corrections_html(w: dict) -> str:
 
     with open(STATIC_DIR / "corrections.csv", newline="", encoding="utf-8") as fh:
         log = list(csv.DictReader(fh))
-    body += f"<h2>{esc(t['log_heading'])}</h2>"
+    body += f"<h2 id=\"log\">{esc(t['log_heading'])}</h2>"
     if log:
         rows = "".join(f"<tr><td>{esc(r['date'])}</td><td>{esc(r['page'])}</td><td>{esc(r['what_was_wrong'])}</td>"
                        f"<td>{esc(r['what_we_did'])}</td></tr>" for r in reversed(log))
-        body += (f'<div class="scroll"><table><thead><tr><th scope="col">Date</th><th scope="col">Page</th>'
+        body += (f'<div class="scroll" tabindex="0" role="region" aria-labelledby="log"><table><thead><tr><th scope="col">Date</th><th scope="col">Page</th>'
                  f'<th scope="col">What was wrong</th><th scope="col">What we did</th></tr></thead>'
                  f"<tbody>{rows}</tbody></table></div>")
     else:

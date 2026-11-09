@@ -57,6 +57,9 @@ def test_the_status_page_says_how_up_to_date_the_pages_are(staged, tmp_path):
     assert "waiting" not in text                     # pages built by hand know nothing of approvals
     html = (out / "status" / "index.html").read_text()
     assert "<script" not in html and 'href="../press/index.html">Press</a>' in html
+    # on a narrow phone each set of files is a block, each date under its heading (styles.css, stacked tables)
+    assert '<table class="stack stack-2" role="table">' in html
+    assert '<td role="cell" data-label="Read in">2 November 2026</td>' in html
 
 
 def test_the_live_status_page_is_written_again_after_each_update_publish_and_undo(staged):

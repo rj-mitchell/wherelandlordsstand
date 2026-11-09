@@ -128,6 +128,11 @@ noscript = "Search needs JavaScript. Without it, use the list of all landlords b
 none = "We couldn't find that name. We cover social landlords in England with 1,000 or more homes. If the advert shows only a logo, try the list of council areas."
 small = "{name} is a registered social landlord with fewer than 1,000 homes. We don't cover landlords that small, because they don't have to publish the same figures."
 areas_link = "Find landlords by council area"
+# Read out by screen readers half a second after typing stops (search.js), in place of the whole list of results
+found_one = "1 landlord found"
+found = "{count} landlords found"
+found_none = "No landlords found"
+found_small = "No landlords found that we cover"
 all = "All landlords"
 count = "{count} social landlords in England with 1,000 or more homes."
 

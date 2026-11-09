@@ -31,7 +31,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     picks.innerHTML = rows.map((l) => `<li>${esc(l.name)} <button type="button" data-s="${esc(l.slug)}" aria-label="${esc(text.remove)} ${esc(l.name)}">${esc(text.remove)}</button></li>`).join("");
     if (!rows.length) { table.innerHTML = `<p>${esc(text.empty)}</p>`; return; }
     const line = (label, f) => `<tr><th scope="row">${esc(label)}</th>${rows.map((l) => `<td>${f(l)}</td>`).join("")}</tr>`;
-    let html = `<div class="scroll"><table class="cmp"><thead><tr><th scope="col"><span class="sr-only">${esc(text.measure)}</span></th>${rows.map((l) => `<th scope="col"><a href="${root}landlords/${esc(l.slug)}/index.html">${esc(l.name)}</a></th>`).join("")}</tr></thead><tbody>`;
+    // the table scrolls sideways on a phone, so its box takes the keyboard focus and is named by the page's heading
+    let html = `<div class="scroll" tabindex="0" role="region" aria-labelledby="compare-heading"><table class="cmp"><thead><tr><th scope="col"><span class="sr-only">${esc(text.measure)}</span></th>${rows.map((l) => `<th scope="col"><a href="${root}landlords/${esc(l.slug)}/index.html">${esc(l.name)}</a></th>`).join("")}</tr></thead><tbody>`;
     html += line(text.type, (l) => esc(l.type));
     html += line(text.homes, (l) => l.homes ? esc(l.homes.toLocaleString("en-GB")) : "–");
     html += line(text.grade, (l) => l.grade ? `${esc(l.grade)} <span class="hint">(${esc(l.grade_date)})</span>` : esc(text.not_graded));
@@ -44,9 +45,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     table.innerHTML = html;
   }
 
-  picks.addEventListener("click", (ev) => {
-    const s = ev.target.dataset && ev.target.dataset.s;
-    if (s) { chosen = chosen.filter((x) => x !== s); save(); draw(); }
+  // After a landlord is added or removed, the button pressed is gone, so the focus goes back to the box, not to the
+  // top of the page.
+  picks.addEventListener("click", async (ev) => {
+    const s = ev.target.closest("button")?.dataset.s;
+    if (s) { chosen = chosen.filter((x) => x !== s); save(); await draw(); input.focus(); }
   });
   const list = document.getElementById("suggest");
   input.addEventListener("input", async () => {
@@ -54,10 +57,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const r = WLS.search(names, input.value).covered.slice(0, 6);
     list.innerHTML = r.map((e) => `<li><button type="button" data-s="${esc(e.s)}">${esc(e.n)}</button></li>`).join("");
   });
-  list.addEventListener("click", (ev) => {
-    const s = ev.target.dataset && ev.target.dataset.s;
-    if (s && !chosen.includes(s) && chosen.length < 3) { chosen.push(s); save(); draw(); }
+  list.addEventListener("click", async (ev) => {
+    const s = ev.target.closest("button")?.dataset.s;
+    if (!s) return;
     input.value = ""; list.innerHTML = "";
+    if (!chosen.includes(s) && chosen.length < 3) { chosen.push(s); save(); await draw(); }
+    input.focus();
   });
+  // Escape closes the suggestions
+  input.addEventListener("keydown", (ev) => { if (ev.key === "Escape") list.innerHTML = ""; });
   draw();
 });

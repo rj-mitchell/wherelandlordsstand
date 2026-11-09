@@ -240,10 +240,10 @@ def create_app(settings: Settings, behind_proxy: bool = False) -> FastAPI:
 
         html = (f'<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" '
                 f'content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">'
-                f'<title>{escape(title)}</title>'
+                f'<meta name="color-scheme" content="light dark"><title>{escape(title)}</title>'
                 + "".join(f'<link rel="stylesheet" href="{href}">' for href in stylesheets(settings))
                 + '</head><body>'
-                f'<main id="main"><h1>{escape(title)}</h1>{body}</main></body></html>')
+                f'<main id="main" class="wrap"><h1>{escape(title)}</h1>{body}</main></body></html>')
         return HTMLResponse(html, status_code=status, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex"})
 
     def approval_or_404(request: Request, token: str):

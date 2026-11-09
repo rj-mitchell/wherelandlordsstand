@@ -71,7 +71,7 @@ tested_how = "Every kind of page (a landlord, a council, a merged landlord, one 
 sections = [
   ["What you can expect", [
     "{site} should be usable by everyone, including people who use a screen reader, a keyboard, voice control or magnification.",
-    "Text can be enlarged to 200% or more without loss of content, and the layout fits small screens without scrolling sideways. Every part of the site can be used with a keyboard alone; a \"Skip to content\" link is the first stop. Pages follow your device's light or dark setting. Bands are shown in words as well as with shaded boxes, so colour is never the only way to tell them apart.",
+    "Text can be enlarged to 200% or more without loss of content, and the layout fits small screens without scrolling sideways. Every part of the site can be used with a keyboard alone; a \"Skip to main content\" link is the first stop. Pages follow your device's light or dark setting. Bands are shown in words as well as with shaded boxes, so colour is never the only way to tell them apart.",
     "Landlords' pages, area pages and the rights page work without JavaScript. Search and compare need it; without it, the list of all landlords and each landlord's page give the same information.",
     "The site uses no cookies and needs no account. Its sentences aim for a reading age of about 9.",
   ]],

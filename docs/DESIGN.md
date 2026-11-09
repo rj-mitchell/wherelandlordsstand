@@ -93,8 +93,8 @@ mark and `mark.svg` have the same shapes. The favicon, the touch icon and the li
   being tested, and to use it at your own risk), a link to the report form, then the email address (`[site] alpha`
   in `config/wording.toml`). On phones its type is a little smaller.
 - **The masthead:** the mark (the open front door, "The mark" above), the name in Source Serif, the
-  family's endorsement under it, the tagline in italic, the independence line on the right, then the tabs, with the
-  current page underlined in slate, over a double rule. On phones it is lighter, so a landlord's grade is on the first
+  family's endorsement under it, the tagline and the independence line in italic, both on the left, then the tabs,
+  with the current page underlined in slate, over a double rule. On phones it is lighter, so a landlord's grade is on the first
   screen: a smaller mark, name and endorsement, no tagline (the home page says the same), the independence line in
   smaller type, and closer spacing. With the endorsement added, the grade is on the first screen at 390 x 844 for the
   same 326 of the 363 landlords as before (6 November 2026), with the alpha strip's type and the masthead's spacing
@@ -102,7 +102,26 @@ mark and `mark.svg` have the same shapes. The favicon, the touch icon and the li
   masthead is no taller: measured by where the grade itself ends (or, for a landlord with no grade of its own, the
   grade's heading), it is on the first screen at 390 x 844 for 356 of the 363 landlords both before and after the
   change (6 November 2026).
-- **Section headings** (`h2`) in small capitals under a rule.
+- **The tabs on a phone** are one line that scrolls sideways, rather than wrapping and leaving "How we compare" alone
+  on a second line at 360 to 390 px. Each tab is a snap point, the scroll stays in the row, and the row's edge fades
+  where there is more to see (in browsers that tie an animation to scrolling, the left edge fades only once the row
+  is scrolled, and the right edge stops fading at the end). On the two pages whose tab can start out of sight (Your
+  rights, How we compare) a small script, `static/tabs.js`, scrolls the row so the current tab shows; no other page
+  loads it. The row has room above and below for the focus ring, and the fade is dropped while a tab has the
+  keyboard's focus, so the ring is never cut off or faded. The labels are unchanged. With the tabs on one line the
+  masthead is a line shorter on a phone, and, measured as above, the grade is on the first screen at 390 x 844 for
+  356 of the 363 landlords, up from 294 while the tabs wrapped (8 November 2026).
+- **Section headings** (`h2`) in small capitals under a rule. The home page's letters (A, B, C ...) are bold
+  Source Serif over a thin rule, as the family's headings are.
+- **Tables** have small sans-serif column headings over a heavy rule. On a narrow phone (under 30rem) the area tables
+  and the status page's table of files are drawn one block per row: the landlord (or the set of files) on a line of
+  its own, then each figure or date under its column's heading in small capitals, so no name or date is broken
+  mid-word ("Birmingh|am", "Nove|mber"). The column headings stay in the table for screen readers, which skip the
+  small labels, and ARIA roles keep it a table whatever the stylesheet does (`stack_table` in `site.py`). A
+  landlord's own tables keep their columns; below 22rem a long word in them may be hyphenated or broken so they fit.
+- **Search** on the home page lists the landlords found as each letter is typed. That list is not read out as it
+  changes; a separate, hidden status line tells screen readers how many were found ("8 landlords found", "No
+  landlords found", in `[search]` of `config/wording.toml`) half a second after typing stops, or at once on Enter.
 - **The landlord's card:** a panel with a slate top rule. Its parts (grade, how it compares, complaints, safety) have
   small sans-serif headings between thin rules. "Before you bid" sits beside a gilt rule.
 - **The footer** under a double rule, like the masthead: the site's own links and its contact address, then the
@@ -122,9 +141,13 @@ the spines have their size in the page as well as in the stylesheet, so they sta
 
 ## Shared with the siblings
 
-Square corners, ruled lists, colour only where it carries meaning, one fluid type scale, visible focus rings, hover
-styles that need a mouse, animation only when reduced motion isn't requested, and no sideways scrolling on phones
-(checked at 390 px, where the area tables fit without scrolling).
+Square corners, ruled lists, colour only where it carries meaning, one fluid type scale, visible focus rings (the
+slate ring, which the family shelf wears too, through the kit's `--wts-focus`), hover styles that need a mouse with a
+pressed state for touch, colour fades only, and no sideways scrolling on phones (checked on every area page and
+every landlord's page at 320, 340, 360 and 390 px, and the area pages at 481, 560 and 640 px too: no table box
+scrolls; only the compare table, with three landlords, scrolls inside its own box, which takes the keyboard's
+focus, as any table that is still too wide does). The footer's links are at least 24 px tall, as the shelf's are, and the footer shelf keeps the
+page's own side margins, so its column lines up with the page's.
 
 ## Checking a change
 

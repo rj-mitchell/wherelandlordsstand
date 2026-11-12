@@ -37,8 +37,11 @@ What it has:
 - **your rights**: offers and reviews, Awaab's Law, complaints and the Ombudsman, the regulator, STAIRs and FOI,
   written from official sources, each section dated with a date to check it again (`config/rights.toml`);
 - **data downloads**: CSV files whose rows carry their source and licence;
-- **report a mistake**, a form that works without JavaScript, with a public log of our fixes, and a count of searches
-  that found nothing, so names can be added;
+- **corrections and problems**, a form that works without JavaScript, for anything the site says about a landlord
+  (its figures, labels, groupings and connections), with a public log of our fixes, and a count of searches that found
+  nothing, so names can be added;
+- **if you're named**: for landlords the site names, the charity's routes for putting something right, and a
+  statement in their own words shown beside what the site says about them (docs/DECISIONS.md, 15);
 - about, terms, privacy, accessibility (axe-core, WCAG 2.2 AA, no failures), press, status and "not found" pages; one switch that lets
   search engines in (`[site] launched`); off-site backups; and a watch for new releases.
 

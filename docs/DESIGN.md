@@ -124,8 +124,15 @@ mark and `mark.svg` have the same shapes. The favicon, the touch icon and the li
   landlords found", in `[search]` of `config/wording.toml`) half a second after typing stops, or at once on Enter.
 - **The landlord's card:** a panel with a slate top rule. Its parts (grade, how it compares, complaints, safety) have
   small sans-serif headings between thin rules. "Before you bid" sits beside a gilt rule.
+- **A statement in a landlord's own words** (docs/DECISIONS.md, 15) never looks like the site's own text: it is in
+  the sans, inside a dashed rule, with its words set off by a thin rule on the left, headed "Statement from [name],
+  [date]" and ending with "In their own words. Not checked or endorsed by Where Landlords Stand." in small italic.
+  Inside the card it sits at the end of the part it is about, under a smaller heading; elsewhere after the card, or
+  at the end of an area's table. It is a note for screen readers (`role="note"`), named by its heading.
+- **Forms** (the report form, the statement form) have a label over each field and hints in small sans-serif type
+  under it. The report form's kinds are radio buttons, each with its hint under its label.
 - **The footer** under a double rule, like the masthead: the site's own links and its contact address, then the
-  family shelf.
+  family shelf. "Corrections and problems" and "If you're named" sit side by side, as the family glossary says.
 
 ## Where the look lives
 

@@ -82,13 +82,16 @@ Commands are run in `/opt/wherelandlordsstand/deploy`. Any `landlords` command r
   in the volume's `outbox/sent/` for 30 days.
 * **Readers' reports:** `landlords reports`; close one with `landlords reports --close <id> --outcome "..."`, which
   deletes the reporter's email address. Fixes to our own mistakes go in the public log, `data_static/corrections.csv`.
+* **Statements from landlords** (the right of reply): `landlords statements` lists those waiting; publish one with
+  `landlords statements --publish <id> --checked "how you confirmed who sent it"`, or decline, update or withdraw it
+  (docs/OPERATIONS.md, "Readers' reports, statements and missed searches"). It goes on the live pages at once.
 * **Missed searches:** `landlords missed`: candidates for new aliases (docs/OPERATIONS.md, "The register and names").
 * **New code:** merge it into `main` on GitHub, then `bash /opt/wherelandlordsstand/deploy/update.sh`. The next
   update rebuilds the pages.
 * **Caching.** Stylesheets, scripts, fonts, icons and the link card are served from `/assets/` under names that change
   with their content, and the front door and the site tell caches to keep them for a year. Pages and downloads are
   checked with the server each time. So a new release needs no Cloudflare purge.
-* **Backups:** everything but the state database (readers' reports, missed searches, approval links) can be rebuilt
+* **Backups:** everything but the state database (readers' reports, statements, missed searches, approval links) can be rebuilt
   from the raw files. That database is copied every night (`landlords-backup.timer`) to
   `/opt/wherelandlordsstand/deploy/backups`, the last 14 kept, and to the charity's B2 bucket under this site's own
   names (each site deletes only its own old copies). To set up the off-site copy, once, copy the bucket and key from

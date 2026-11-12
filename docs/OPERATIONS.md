@@ -156,21 +156,61 @@ uv run landlords rollback              # put back the build that was live before
 Each build has `build-info.json` (new files, failed checks, what was done) and `change-report.json` (grade changes,
 biggest movers). The last six builds are kept, and never the live one or the one before it.
 
-## Readers' reports and missed searches
+## Readers' reports, statements and missed searches
 
 ```bash
-uv run landlords reports                                   # open reports of mistakes
+uv run landlords reports                                   # open reports; requests to remove a person's details first
 uv run landlords reports --close 3 --outcome "fixed alias"   # closes it and deletes the reporter's email address
 uv run landlords missed                                    # searches that found nothing, most frequent first
 uv run landlords backup --to backups                       # copy the state database
 ```
 
 The "report a mistake" form posts to the site's small API, so it works wherever the pages are served by `landlords
-serve` (on the server and on your own computer), but not when the built files are opened on their own.
+serve` (on the server and on your own computer), but not when the built files are opened on their own. Each report has
+a `kind`: `wrong` ("Something is wrong"), `unfair` ("You've been characterised unfairly"), `takedown` (a person's
+details to remove: deal with these first) or `other` (docs/DECISIONS.md, 15). A link to
+`/corrections/?kind=unfair&page=landlords/abri-group/` opens the form with that kind chosen and the page filled in.
 
 If a report shows a mistake of ours, fix it, add a line to `data_static/corrections.csv` (shown on the corrections
 page), rebuild and publish. If it is about a publisher's figure, we don't change it: reply and point to the publisher.
-A missed search that is really a landlord's name is added through `landlords match --accept` like any other alias.
+If it says our own words, labels or groupings are unfair, check them against the charity's impartiality policy and,
+if they break it, put them right in the same way. A missed search that is really a landlord's name is added through
+`landlords match --accept` like any other alias.
+
+**Response times** (the impartiality policy, 7.3; said on the corrections page and "If you're named"): reply within 5
+working days, decide within 20. The weekly email counts open reports and statements waiting, but a week is too long
+to wait for the first reply: look at `landlords reports` and `landlords statements` at least twice a week.
+
+**Statements from landlords** (the right of reply; `src/landlords/statements.py`). A landlord, or someone acting for
+it, sends a statement of up to 150 words from the form on "If you're named" (`/named/`). It is kept as pending:
+
+```bash
+uv run landlords statements                                # those waiting, with their email and word count
+uv run landlords statements --all                          # every one, whatever its state
+uv run landlords statements --publish 4 --checked "reply from j.smith@example-housing.org.uk, 14 Nov"
+uv run landlords statements --publish 5 --checked "..." --landlord birmingham-city-council   # about an area's page
+uv run landlords statements --decline 6 --reason "it names a tenant"
+uv run landlords statements --update 4 --text-file new.txt --reason "the author's new version"   # or --name/--role/--link
+uv run landlords statements --withdraw 4 --reason "withdrawn by the author"
+uv run landlords statements --log 4                        # what was done to it, and why
+```
+
+1. **Confirm who sent it** before publishing: write to the address given, from admin@wherelandlordsstand.com, and
+   check it is the landlord's own (an address at its web address, or the council's), or check with the landlord
+   through its published contact details. Say how in `--checked`: it is logged.
+2. **Check it against the rules** (the policy, 7.2): nothing defamatory, abusive or about a private individual, no
+   one else's personal data, no appeals for votes, money or support, nothing about another person's conduct (and in an
+   election period, nothing that campaigns). Then publish it as written, or decline it with `--reason` and tell the
+   sender why. Never edit it: if something must come out, agree it with the author and use `--update` with their
+   new version.
+3. Publishing, updating or withdrawing writes the live pages again at once (and every kept build, so approving or
+   undoing pages never brings back an old version or drops a new one); no rebuild or approval is needed. A statement
+   about an area's page needs `--landlord`: it is shown there and on that landlord's own page.
+
+Every decision is logged in the state database (`statement_log`), for the trustees' review (the policy, 7.4). The
+email address given is never shown; it is deleted three months after a statement is withdrawn or declined, at each
+`landlords statements` command and each weekly update. There is no admin page for statements or reports: the owner
+uses these commands on the server (docs/DEPLOY.md, "Running it").
 
 ## The rights page
 

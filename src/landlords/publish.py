@@ -131,12 +131,15 @@ def update(settings: Settings, fetch: bool = True, notify: bool = True) -> dict:
     from landlords.api import State
 
     state = State(settings.data_dir / "state.db")
+    from landlords import statements
+
+    statements.forget_old_emails(state)        # three months after a statement is withdrawn or declined
     extra = {"rights_due": rights.get("rows") or [], "open_reports": state.open_report_count(),
-             "missed": state.top_missed(7, 5)}
+             "pending_statements": state.pending_statement_count(), "missed": state.top_missed(7, 5)}
     changes_path = settings.staging_dir / "change-report.json"
     extra["changes"] = json.loads(changes_path.read_text()) if changes_path.exists() else {}
     worth_sending = (info["build"] or info["checks_failed"] or info.get("fetch_failed") or info.get("unlisted")
-                     or extra["rights_due"] or extra["open_reports"])
+                     or extra["rights_due"] or extra["open_reports"] or extra["pending_statements"])
     if notify and worth_sending:
         from landlords import notify as notify_
 
@@ -198,10 +201,18 @@ def publish(settings: Settings, build: str | None = None, force: bool = False, k
 
 
 def _refresh_status(settings: Settings) -> None:
-    """The live pages' status page, written again: it says whether new pages are waiting (src/landlords/status.py)."""
-    from landlords import status
+    """The live pages' status page, written again: it says whether new pages are waiting (src/landlords/status.py).
+    And the statements from landlords, written again into the pages now live, in case one was published, changed or
+    withdrawn after they were built (src/landlords/statements.py). Neither may stop a publish or an undo."""
+    import logging
+
+    from landlords import statements, status
 
     status.refresh(settings)
+    try:
+        statements.refresh(settings)
+    except Exception as exc:  # noqa: BLE001 - see above
+        logging.getLogger(__name__).warning("statements not written again: %s", exc)
 
 
 def rollback(settings: Settings) -> dict:

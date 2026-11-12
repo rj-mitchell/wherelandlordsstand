@@ -15,7 +15,8 @@ from landlords.config import Settings, load_toml
 from landlords.register import normalise, slugify
 from landlords.score import rules
 from landlords.sisters import council_url, councils_covered
-from landlords.site import band_name, esc, fill, nice_date, page, rich, sister_link, stack_table
+from landlords.site import band_name, esc, fill, fill_html, nice_date, page, rich, sister_link, stack_table
+from landlords.statements import slot
 
 # Search ----------------------------------------------------------------------------------------------------------------
 
@@ -111,6 +112,8 @@ def area_html(a: dict, w: dict, sources: dict) -> str:
             + f'<p class="hint">{esc(t["notes"])}</p>'
             + (f'<p class="hint">* {esc(t["council_note"])}</p>' if any(x[2] == "council total" for x in a["landlords"]) else "")
             + f'<p class="warn">{esc(w["card"]["refusal"])}</p>' + src.ref(*a["sources"])
+            # statements from landlords about this page, in their own words (src/landlords/statements.py)
+            + slot("page")
             + sister_link(a.get("council_url", ""), fill(t["council_link"], council=a.get("council_name", "")))
             + src.html(w))
     return page(f"{a['name']} – {w['site']['name']}", body, w, depth=2, here="areas/index.html", path=f"areas/{a['slug']}/",
@@ -246,14 +249,26 @@ def downloads_html(files: list[tuple[str, str, int]], w: dict) -> str:
     return page(f"{t['heading']} – {w['site']['name']}", body, w, depth=1, path="data/")
 
 
-# Corrections and privacy -----------------------------------------------------------------------------------------------
+# Corrections, "If you're named" and privacy ---------------------------------------------------------------------------
 
 
 def corrections_html(w: dict) -> str:
+    """The corrections page: the response times, a link to "If you're named", and the report form, whose options are the
+    impartiality policy's routes (7.1) by the family glossary's names. ?kind= and ?page= in a link to it choose an
+    option and fill in the page, when the page is served by the site's API (api.prefill)."""
     t = w["corrections"]
+    named = fill_html(t["named"], named=f'<a href="../named/index.html">{esc(t["named_link"])}</a>')
+    kinds = "".join(
+        f'<div class="choice"><input type="radio" id="kind-{v}" aria-describedby="kind-{v}-hint" name="kind" '
+        f'value="{v}"{" checked" if i == 0 else ""}><label for="kind-{v}">{esc(label)}</label>'
+        f'<p class="hint" id="kind-{v}-hint">{esc(hint)}</p></div>' for i, (v, label, hint) in enumerate(t["kinds"]))
     body = (f"<h1>{esc(t['heading'])}</h1>" + "".join(f"<p>{esc(x)}</p>" for x in t["intro"]) +
-            f'<form method="post" action="../api/corrections"><label for="page">{esc(t["page"])}</label>'
-            f'<input id="page" name="page" type="text" maxlength="300" autocomplete="off">'
+            f'<p class="times"><strong>{esc(t["times"])}</strong> {esc(t["times_note"])}</p>'
+            f'<p>{named}</p>'
+            f'<form id="report" method="post" action="../api/corrections"><fieldset><legend>{esc(t["kind"])}</legend>'
+            f'{kinds}</fieldset><label for="page">{esc(t["page"])}</label>'
+            f'<input id="page" name="page" value="" type="text" maxlength="300" autocomplete="off" '
+            f'aria-describedby="page-hint"><p class="hint" id="page-hint">{esc(t["page_hint"])}</p>'
             f'<label for="message">{esc(t["message"])}</label><textarea id="message" name="message" rows="6" '
             f'maxlength="4000" required></textarea><label for="email">{esc(t["email"])}</label>'
             f'<input id="email" name="email" type="email" maxlength="200" autocomplete="email" '
@@ -277,10 +292,96 @@ def corrections_html(w: dict) -> str:
     return page(f"{t['heading']} – {w['site']['name']}", body, w, depth=1, path="corrections/")
 
 
+def statement_form(w: dict) -> str:
+    """The form for a statement in a landlord's own words (src/landlords/statements.py), on the "If you're named"
+    page. It works without JavaScript: it posts to the site's API, then goes to a thank-you page. The browser checks
+    what it can (required fields, an email address, a web address); the API checks the rest, such as the 150 words.
+    The hidden field ("Leave this empty") is for robots: a statement with it filled in is thanked and dropped."""
+    from landlords.statements import LIMITS, PARTS
+
+    t = w["statement"]
+    parts = {"grade": w["grade"]["heading"], "bands": w["bands"]["heading"], "ombudsman": w["ombudsman"]["heading"],
+             "safety": w["safety"]["heading"]}
+    options = f'<option value="">{esc(t["part_whole"])}</option>' + "".join(
+        f'<option value="{p}">{esc(parts[p])}</option>' for p in PARTS)
+
+    def field(name: str, label: str, attrs: str, hint: str = "", fid: str = "") -> str:
+        fid = fid or f"st-{name}"
+        described = f' aria-describedby="{fid}-hint"' if hint else ""
+        return (f'<label for="{fid}">{esc(label)}</label><input id="{fid}" name="{name}"{attrs}{described}>'
+                + (f'<p class="hint" id="{fid}-hint">{esc(hint)}</p>' if hint else ""))
+
+    return (f'<h3 id="send">{esc(t["form_heading"])}</h3>'
+            f'<form id="statement" method="post" action="../api/statements">'
+            + field("name", t["name"], f' type="text" maxlength="{LIMITS["name"]}" autocomplete="name" required')
+            + field("role", t["role"], f' type="text" maxlength="{LIMITS["role"]}" autocomplete="organization-title" '
+                    'required', t["role_hint"])
+            # id="page" with an empty value, as on the report form, so ?page= can fill it in (api.prefill)
+            + field("page", t["page"], f' value="" type="text" inputmode="url" maxlength="{LIMITS["page"]}" '
+                    'autocomplete="off" required', t["page_hint"], fid="page")
+            + f'<label for="st-part">{esc(t["part"])}</label><select id="st-part" name="part">{options}</select>'
+            + f'<label for="st-text">{esc(t["text"])}</label><textarea id="st-text" name="text" rows="8" '
+              f'maxlength="{LIMITS["text"]}" required aria-describedby="st-text-hint"></textarea>'
+              f'<p class="hint" id="st-text-hint">{esc(t["text_hint"])}</p>'
+            + field("link", t["link"], f' type="url" maxlength="{LIMITS["link"]}" autocomplete="url"', t["link_hint"])
+            + field("email", t["email"], f' type="email" maxlength="{LIMITS["email"]}" autocomplete="email" required',
+                    t["email_hint"])
+            + f'<div class="hp" aria-hidden="true"><label for="st-website">{esc(t["honeypot"])}</label>'
+              f'<input id="st-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>'
+            + f'<p><button type="submit">{esc(t["send"])}</button></p><p class="hint">{esc(t["after"])}</p></form>')
+
+
+def named_html(settings: Settings, w: dict) -> str:
+    """"If you're named" (config/pages.toml, [named]): for landlords this site names, and people acting for them. The
+    impartiality policy's three routes (7.1), each with a way to start it, what is covered on this site, what a
+    statement can say and how it is shown (7.2), how identity is checked, the response times (7.3), and who decides and
+    how to appeal (7.4). Its address, named/, is the one the charity's own page links to."""
+    from landlords.statements import render
+
+    t = load_toml("pages.toml")["named"]
+    example = render({"id": "example", "name": t["example"]["name"], "date": t["example"]["date"],
+                      "role": t["example"]["role"], "text": t["example"]["text"], "link": ""}, w, 4)
+
+    def para(x: str | list) -> str:
+        if isinstance(x, list):
+            return '<ul class="list">' + "".join(f"<li>{rich(_fill_site(i, settings, w), '../')}</li>" for i in x) + "</ul>"
+        if x == "@example":
+            return example
+        if x == "@form":
+            return statement_form(w)
+        return f"<p>{rich(_fill_site(x, settings, w), '../')}</p>"
+
+    parts = [f"<h1>{esc(t['heading'])}</h1>"] + [para(x) for x in t["intro"]]
+    parts.append(f'<p class="times"><strong>{esc(w["corrections"]["times"])}</strong></p>')
+    contents = "".join(f'<li><a href="#{esc(s["id"])}">{esc(s["heading"])}</a></li>' for s in t["section"])
+    parts.append(f'<nav aria-labelledby="contents"><h2 id="contents" class="sr-only">{esc(t["contents"])}</h2>'
+                 f'<ul class="contents">{contents}</ul></nav>')
+    for s in t["section"]:
+        parts.append(f'<h2 id="{esc(s["id"])}">{esc(s["heading"])}</h2>')
+        parts += [para(x) for x in s.get("text", [])]
+        for heading, text, start, href in s.get("routes", []):
+            parts.append(f"<h3>{esc(heading)}</h3><p>{rich(_fill_site(text, settings, w), '../')}</p>"
+                         f'<p class="go">{rich(f"[{start}]({href})", "../")}</p>')
+        for heading, paras in s.get("parts", []):
+            parts.append(f"<h3>{esc(heading)}</h3>" + "".join(para(x) for x in paras))
+    return page(f"{t['heading']} – {w['site']['name']}", "".join(parts), w, depth=1, path="named/",
+                description=t["description"])
+
+
+def named_thanks_html(w: dict) -> str:
+    t = w["statement"]
+    return page(f"{t['thanks_heading']} – {w['site']['name']}",
+                f"<h1>{esc(t['thanks_heading'])}</h1><p>{esc(t['thanks'])}</p>"
+                f'<p class="times"><strong>{esc(w["corrections"]["times"])}</strong></p>'
+                f'<p><a href="index.html">{esc(load_toml("pages.toml")["named"]["heading"])}</a></p>', w, depth=1,
+                path="named/thanks.html")
+
+
 def thanks_html(w: dict) -> str:
     t = w["corrections"]
     return page(f"{t['thanks_heading']} – {w['site']['name']}",
-                f"<h1>{esc(t['thanks_heading'])}</h1><p>{esc(t['thanks'])}</p>", w, depth=1,
+                f"<h1>{esc(t['thanks_heading'])}</h1><p>{esc(t['thanks'])}</p>"
+                f'<p class="times"><strong>{esc(t["times"])}</strong> {esc(t["times_note"])}</p>', w, depth=1,
                 path="corrections/thanks.html")
 
 
@@ -436,6 +537,9 @@ def build_extra(settings: Settings, profiles: list[dict], out: Path, w: dict) ->
         (out / name).mkdir(exist_ok=True)
         (out / name / "index.html").write_text(html)
     (out / "corrections" / "thanks.html").write_text(thanks_html(w))
+    (out / "named").mkdir(exist_ok=True)
+    (out / "named" / "index.html").write_text(named_html(settings, w))
+    (out / "named" / "thanks.html").write_text(named_thanks_html(w))
     acc = load_toml("pages.toml")["accessibility"]
     for name in ("about", "terms", "accessibility"):
         (out / name).mkdir(exist_ok=True)

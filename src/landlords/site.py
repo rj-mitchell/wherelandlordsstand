@@ -17,6 +17,7 @@ from pathlib import Path
 from landlords.config import Settings, load_toml
 from landlords.profile import build_profiles
 from landlords.score import rules
+from landlords.statements import slot
 
 # The stylesheet, a file of its own (docs/DESIGN.md). The build gives it a fingerprinted name (``build`` below).
 CSS_FILE = Path(__file__).parent / "static" / "styles.css"
@@ -332,7 +333,7 @@ def profile_html(p: dict, w: dict) -> str:
                     f'{src.ref(p["homes"]["source"])}</section>')
 
     g = p["grade"]
-    gs = [f'<h3>{esc(w["grade"]["heading"])}</h3>']
+    gs = [f'<h3 id="grade">{esc(w["grade"]["heading"])}</h3>']
     if g.get("grade"):
         if g["by"] == p["id"]:
             gs.append(f'<p class="grade">{esc(g["grade"])}</p><p>{fill(w["grade"]["graded"], name=name, grade=g["grade"], date=nice_date(g["date"]))}</p>')
@@ -346,10 +347,10 @@ def profile_html(p: dict, w: dict) -> str:
     if g.get("enforcement"):
         gs.append(f'<p>{fill(w["grade"]["enforcement"], name=name, date=nice_date(g["enforcement"]["date"]))}</p>')
     shas = [g.get("source", "")] + [g[k]["source"] for k in ("under_review", "enforcement") if g.get(k)]
-    card.append("<section>" + "".join(gs) + src.ref(*shas) + "</section>")
+    card.append("<section>" + "".join(gs) + src.ref(*shas) + slot("grade") + "</section>")
 
     b = p["bands"]
-    bs = [f'<h3>{esc(w["bands"]["heading"])}</h3>']
+    bs = [f'<h3 id="bands">{esc(w["bands"]["heading"])}</h3>']
     peer = b.get("peer")
     if peer and (b["headline"]["band"] or any(x["band"] for x in b["pillars"])):
         bs.append(f'<p>{fill(w["bands"]["intro"], name=name, peers=peer["peers"] - 1, peer_label=peer["peer_group_label"], period=b["period"])}</p>')
@@ -382,10 +383,10 @@ def profile_html(p: dict, w: dict) -> str:
     if p["survey_note"]:
         labels = rules()["survey_method"]["labels"]
         bs.append(f'<p class="note">{fill(w["method_note"]["text"], name=name, method=labels.get(p["survey_note"]["method"], p["survey_note"]["method"]), peer_method=labels.get(p["survey_note"]["peer_method"], p["survey_note"]["peer_method"]))}</p>')
-    card.append("<section>" + "".join(bs) + src.ref(b.get("source", "")) + "</section>")
+    card.append("<section>" + "".join(bs) + src.ref(b.get("source", "")) + slot("bands") + "</section>")
 
     om = p["ombudsman"]
-    os_ = [f'<h3>{esc(w["ombudsman"]["heading"])}</h3>']
+    os_ = [f'<h3 id="ombudsman">{esc(w["ombudsman"]["heading"])}</h3>']
     if om["reports"]:
         for r in om["reports"]:
             os_.append("<p>" + fill(w["ombudsman"]["report"], period=r["period"], published_name=r["name"],
@@ -399,11 +400,12 @@ def profile_html(p: dict, w: dict) -> str:
         os_.append(f'<p class="src">{esc(w["ombudsman"]["change"])}</p>')
     elif om["period"]:
         os_.append(f'<p>{fill(w["ombudsman"]["no_report"], name=name, period=om["period"])}</p>')
-    card.append("<section>" + "".join(os_) + src.ref(*[r["_source"] for r in om["reports"]]) + "</section>")
+    card.append("<section>" + "".join(os_) + src.ref(*[r["_source"] for r in om["reports"]]) + slot("ombudsman")
+                + "</section>")
 
     sf = p["safety"]
     if sf:
-        ss = [f'<h3>{esc(w["safety"]["heading"])}</h3>']
+        ss = [f'<h3 id="safety">{esc(w["safety"]["heading"])}</h3>']
         if sf["all_done"]:
             ss.append(f'<p>{fill(w["safety"]["all_done"], year=sf["year"])}</p>')
         else:
@@ -416,9 +418,12 @@ def profile_html(p: dict, w: dict) -> str:
                 elif c["value"] < 100:
                     items.append(f'<li>{fill(w["safety"]["gap_item"], label=c["label"].capitalize(), value=pct(c["value"]))}</li>')
             ss.append(f'<p>{fill(w["safety"]["gaps"], year=sf["year"])}</p><ul class="list">{"".join(items)}</ul>')
-        card.append("<section>" + "".join(ss) + src.ref(sf["source"]) + "</section>")
+        card.append("<section>" + "".join(ss) + src.ref(sf["source"]) + slot("safety") + "</section>")
     card.append("</section>")
     out.append("".join(card))
+    # Statements in the landlord's own words, about this page or another that names it, are written into these slots:
+    # one beside each part of the card, and this one after it (src/landlords/statements.py). Never part of the figures.
+    out.append(slot("page"))
 
     # Detail -----------------------------------------------------------------------------------------------------
     if peer:
@@ -553,6 +558,10 @@ def build(settings: Settings, out: Path | None = None) -> dict[str, int]:
     from landlords.site_pages import build_extra
 
     extra = build_extra(settings, profiles, out, w)
+    # the statements published now, written into the pages' slots (published later, they are written in at once)
+    from landlords import statements
+
+    extra["statements"] = statements.write_into(out, statements.published(settings), w)
     if max(sizes) > 100 * 1024:
         raise RuntimeError(f"a profile page is over 100 KB ({max(sizes) // 1024} KB)")
     return {"profiles": len(profiles), "largest_kb": round(max(sizes) / 1024, 1), **extra, "folder": str(out)}

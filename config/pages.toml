@@ -1,4 +1,5 @@
-# The about, terms, accessibility and "not found" pages. Like config/wording.toml, every sentence lives here.
+# The about, terms, accessibility, press, status, "If you're named" and "not found" pages. Like config/wording.toml,
+# every sentence lives here.
 # {contact}, {operator}, {parent}, {site} and {url} are filled from config/settings.toml ([site]).
 # [Words](address) in a sentence become a link: an address that doesn't start with https:// or mailto: is a page on this
 # site, from its root ("corrections/index.html"). A paragraph that is a list of sentences is shown as a bulleted list.
@@ -66,8 +67,8 @@ sections = [
 [accessibility]
 heading = "Accessibility"
 # Filled in from the latest accessibility test (docs/LAUNCH.md).
-tested = "2026-11-06"
-tested_how = "Every kind of page (a landlord, a council, a merged landlord, one with no survey results, an area, the lists, compare with three landlords, search with and without results, rights, method, downloads, corrections, privacy, about, terms, this page and \"not found\") was checked with the axe-core automated checker against WCAG 2.2 AA, at phone and desktop sizes, in light and dark modes, with no failures. Keyboard use was checked by script."
+tested = "2026-11-12"
+tested_how = "Every kind of page (a landlord, a council, a merged landlord, one with no survey results, an area, the lists, compare with three landlords, search with and without results, rights, method, downloads, corrections, \"If you're named\" with its form, a landlord's page and an area's page with a statement from the landlord, privacy, about, terms, this page and \"not found\") was checked with the axe-core automated checker against WCAG 2.2 AA, at phone and desktop sizes, in light and dark modes, with no failures. Keyboard use was checked by script."
 sections = [
   ["What you can expect", [
     "{site} should be usable by everyone, including people who use a screen reader, a keyboard, voice control or magnification.",
@@ -85,6 +86,115 @@ sections = [
   ["Reporting a problem", [
     "If you find something hard to use, or need information in a different format, email {contact} or use the form on the corrections page. We aim to reply within 10 working days.",
   ]],
+]
+
+[named]
+# "If you're named" (src/landlords/site_pages.py, named_html; docs/DECISIONS.md, 15): the charity's impartiality policy,
+# section 7, in plain words for the landlords this site names. Its heading, the three routes, the statement's heading
+# and the response times are the family glossary's words ("Corrections and the right of reply"). Each section has an
+# id (its address on the page) and paragraphs; "@example" is a statement drawn as the site shows one, and "@form" the
+# statement form. A route is [heading, text, the link's words, its address].
+heading = "If you're named"
+description = "For landlords this site names: how to put something right, or add a statement in your own words."
+contents = "On this page"
+intro = [
+  "This page is for councils, housing associations and for-profit landlords that this site names, and for people acting for them. It explains how to put something right, or how to add a statement in your own words beside what we say.",
+]
+[named.example]
+name = "[your name]"
+date = "[the date it is published]"
+role = "[Your role, and the landlord you speak for]"
+text = "[Your words, up to 150 words, exactly as you send them.]"
+
+[[named.section]]
+id = "who"
+heading = "Who this is for"
+text = [
+  "Every landlord this site covers: councils, housing associations and for-profit landlords in England with 1,000 or more homes, and the companies in their groups. Someone acting for a landlord can use it too: a member of its staff or board, or a council officer or councillor speaking for a council as a landlord.",
+  "Everyone else, including tenants and people looking for a home, is welcome to tell us about a mistake on the [corrections page](corrections/index.html).",
+  "If your own name or details are on this site and you don't speak for a landlord, [ask us to remove them](corrections/index.html?kind=takedown). We deal with these first. The [privacy page](privacy/index.html) says more.",
+]
+
+[[named.section]]
+id = "routes"
+heading = "Three ways to raise a concern"
+routes = [
+  ["Something is wrong", "A figure, a name, a date, a label or a connection is wrong. For example, a grade shown for the wrong landlord, a name matched to the wrong landlord, a company counted in the wrong group, a merger we missed, or homes listed in the wrong council area. We put it right as soon as we can, and say what changed and when in the [list of fixes](corrections/index.html#log).", "Report something wrong", "corrections/index.html?kind=wrong"],
+  ["You've been characterised unfairly", "The figures are right, but our own words, labels or groupings aren't fair. For example, a sentence in our own voice that takes sides, or a group of similar landlords that suggests something the figures don't show. We check it against the charity's [impartiality policy](https://wheretheystand.uk/right-of-reply) and, if it breaks it, put it right in the same way.", "Report unfair treatment", "corrections/index.html?kind=unfair"],
+  ["Add a statement in your own words", "The figures are right and we have followed the policy, but you see it differently. You can add a short statement beside what we say about you. It is shown as you wrote it, marked as yours.", "Write a statement", "named/index.html#send"],
+]
+
+[[named.section]]
+id = "covered"
+heading = "What is covered"
+text = [
+  "Everything this site says about a landlord, not only its figures. On Where Landlords Stand, that includes:",
+  [
+    "the regulator's grade as we show it, including a grade we show for a landlord because it was given to its group;",
+    "the bands we work out (top quarter, upper middle, lower middle and bottom quarter), and the arrows that show a change since last year;",
+    "which similar landlords each landlord is compared with, and what we say about how its tenants were asked;",
+    "how we show the Housing Ombudsman's findings and the safety checks (\"all done\", or each check that isn't);",
+    "how we match a landlord's names (short, trading, former and advert names), which companies we count as part of a group, and what we say when landlords merge or one reports for another;",
+    "the homes we list for each landlord in each council area, and the area pages;",
+    "the type we give each landlord (council, housing association or for-profit landlord), and the compare page.",
+  ],
+  "The figures themselves are not ours. They belong to the Regulator of Social Housing and the Housing Ombudsman, and only they can change them. We can still fix how we read or show them.",
+]
+
+[[named.section]]
+id = "statements"
+heading = "Add a statement in your own words"
+parts = [
+  ["What it can say", [
+    "Up to 150 words, in your own name, about the thing it sits beside: your landlord's page, a part of it (the grade, the bands, the Ombudsman's figures or the safety checks), or a council area's page that lists your landlord. Where you can, point to the record with a link: a statement you have published, a report to your board, or the regulator's or the Ombudsman's own page.",
+  ]],
+  ["What it can't contain", [
+    [
+      "anything defamatory or abusive, or about a private individual;",
+      "personal information about anyone else, including tenants;",
+      "appeals for votes, money or support;",
+      "anything about another person's conduct.",
+    ],
+    "During an election, statements are still accepted, but not ones that campaign.",
+  ]],
+  ["How it is shown", [
+    "Beside the thing it is about, and on your landlord's own page, set apart from our own words, like this:",
+    "@example",
+    "We publish a statement as you wrote it, or decline it and say why. We never edit it, except to take out something these rules don't allow, and only with your agreement.",
+    "A statement is never treated as part of the published figures. It doesn't change a grade or a band, and it isn't in the search, the compare page or the data downloads.",
+  ]],
+  ["How we check it's you", [
+    "Before a statement is shown, we write to the email address you give and check that it belongs to your landlord: usually an address at your landlord's own web address, or your council's. If you write from another address, we check with your landlord through the contact details it publishes.",
+  ]],
+  ["Changing or withdrawing it", [
+    "You can update or withdraw your statement at any time: email [{contact}](mailto:{contact}) from the address you gave. We can remove a statement that breaks these rules, and will tell you why.",
+    "@form",
+  ]],
+]
+
+[[named.section]]
+id = "times"
+heading = "How long it takes"
+text = [
+  "We reply within 5 working days, and decide within 20 working days.",
+  "Anything that may be unlawful or harmful is dealt with sooner, and requests to remove a person's details come first. Where a concern looks right but will take time to decide, we can hide the item meanwhile, with a note saying so.",
+  "Once we decide to publish a statement, it is on the site within a few minutes. A correction goes on the site with the next pages we make, which a person checks before they go live: usually within a week.",
+]
+
+[[named.section]]
+id = "decides"
+heading = "Who decides, and how to appeal"
+text = [
+  "The charity's founder decides, until the trustees appoint someone else. Every decision and its reasons are logged, and the trustees review the log at each of their meetings.",
+  "If you are unhappy with a decision, you can ask for a review (by the trustees, once they are appointed): email [admin@wheretheystand.uk](mailto:admin@wheretheystand.uk). Once the charity is registered, if you are still unhappy, you can also raise your concerns about it with the [Charity Commission](https://www.gov.uk/complain-about-charity).",
+  "Letters claiming legal liability, such as defamation, go straight to the trustees. Disputed material may be taken down while they take advice.",
+]
+
+[[named.section]]
+id = "information"
+heading = "Your information"
+text = [
+  "A statement is published with your name and role, as you wrote them. The email address you give is used only to confirm who you are, and to let you update or withdraw your statement. It is never shown. We keep it while the statement is shown, and delete it three months after the statement is withdrawn or declined. The [privacy page](privacy/index.html) says more.",
 ]
 
 [press]

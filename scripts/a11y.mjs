@@ -9,8 +9,8 @@ const require = createRequire(import.meta.url);
 const axe = readFileSync(require.resolve("axe-core/axe.min.js"), "utf8");
 const base = process.argv[2] ?? "http://127.0.0.1:8000";
 const pages = ["/", "/landlords/abri-group/", "/landlords/birmingham-city-council/", "/areas/", "/areas/birmingham/",
-  "/compare/?l=abri-group", "/rights/", "/method/", "/data/", "/corrections/", "/privacy/", "/about/", "/terms/",
-  "/accessibility/", "/press/", "/status/", "/no-such-page"];
+  "/compare/?l=abri-group", "/rights/", "/method/", "/data/", "/corrections/", "/corrections/?kind=unfair", "/named/",
+  "/privacy/", "/about/", "/terms/", "/accessibility/", "/press/", "/status/", "/no-such-page"];
 
 const browser = await chromium.launch();
 let failures = 0;

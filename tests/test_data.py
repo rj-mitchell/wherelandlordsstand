@@ -106,7 +106,7 @@ def test_every_page_carries_the_family_binding():
         assert 'name="theme-color" content="#40484D"' in text, path
         assert "/family/" not in text, path                         # every kit file at its address under assets/
         assert w["site"]["independence"].replace("'", "&#x27;") in text, path
-        labels = [label for label, _ in w["footer"]["links"]]
+        labels = [label.replace("'", "&#x27;") for label, _ in w["footer"]["links"]]
         found = [text.find(f">{label}</a></li>") for label in labels]
         assert all(i > 0 for i in found) and found == sorted(found), (path, found)
     assert (SITE / "favicon.ico").is_file()
@@ -154,6 +154,7 @@ def test_the_launch_switch(tmp_path):
     assert "noindex" not in page
     assert "Sitemap: https://example.org/sitemap.xml" in (live / "robots.txt").read_text()
     assert "<loc>https://example.org/landlords/abri-group/</loc>" in (live / "sitemap.xml").read_text()
+    assert "<loc>https://example.org/named/</loc>" in (live / "sitemap.xml").read_text()   # "If you're named"
     site.build(settings, settings.data_dir / "site")  # put the test-version pages back
 
 
@@ -200,3 +201,37 @@ def test_the_weekly_update_publishes_the_first_pages_and_asks_for_the_rest(tmp_p
     monkeypatch.setattr(publish, "code_version", lambda: "another-version")
     unsent = publish.update(launched, fetch=False, notify=True)
     assert unsent["needs_attention"] and "not sent" in unsent["approval"]   # nobody would hear: the update fails
+
+
+@pytest.mark.skipif(not (settings.staging_dir / "scores.parquet").exists(), reason="data not scored")
+def test_a_published_statement_is_built_into_its_pages_and_nowhere_else(tmp_path):
+    """The right of reply (src/landlords/statements.py; docs/DECISIONS.md, 15): a statement published before a build
+    is in the pages it builds, beside its item and on the landlord's own page, and never in the search, the compare
+    page's data, the downloads or the status page's data."""
+    import dataclasses
+    import shutil
+
+    from landlords import site
+    from landlords import statements as st
+    from landlords.api import State
+
+    data = tmp_path / "data"
+    shutil.copytree(settings.staging_dir, data / "staging", ignore=shutil.ignore_patterns("*.part"))
+    s = dataclasses.replace(settings, data_dir=data)
+    state = State(data / "state.db")
+    phrase = "A phrase only this statement uses, about our tenant survey."
+    for page, part in (("landlords/abri-group/", "bands"), ("areas/birmingham/", "")):
+        sid = state.add_statement("Jane Example", "Chief executive", page, part, phrase, "", "j@example.org",
+                                  "abri-group" if part else None)
+        st.publish(state, sid, "test", "abri-group" if part else "birmingham-city-council", lambda slug: True)
+    out = tmp_path / "site"
+    assert site.build(s, out)["statements"] == 3
+    abri = (out / "landlords" / "abri-group" / "index.html").read_text()
+    assert re.search(r'<h3 id="bands">.*?<div class="statement".*?' + re.escape(phrase), abri, re.S)
+    assert phrase in (out / "areas" / "birmingham" / "index.html").read_text()
+    assert phrase in (out / "landlords" / "birmingham-city-council" / "index.html").read_text()
+    assert "<script" not in abri and len(abri.encode()) < 100 * 1024
+    for path in out.rglob("*"):
+        if path.is_file() and path.suffix in (".json", ".csv", ".xml", ".txt"):
+            assert "only this statement uses" not in path.read_text(errors="ignore"), path
+    site.build(settings, settings.data_dir / "site")  # put the test-version pages back

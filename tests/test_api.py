@@ -34,8 +34,8 @@ def test_a_report_from_the_form_is_kept_and_its_email_deleted_on_closing(client,
     from landlords.api import State
 
     state = State(settings.data_dir / "state.db")
-    [(rid, _, page, message, email)] = state.open_reports()
-    assert (page, message, email) == ("landlords/x/", "Wrong grade", "a@b.org")
+    [(rid, _, kind, page, message, email)] = state.open_reports()
+    assert (kind, page, message, email) == (None, "landlords/x/", "Wrong grade", "a@b.org")   # an older form: no kind
     assert state.close_report(rid, "fixed")
     assert sqlite3.connect(settings.data_dir / "state.db").execute("select email from reports").fetchone() == (None,)
     assert client.post("/api/corrections", json={"message": ""}).status_code == 400

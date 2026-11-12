@@ -14,6 +14,7 @@
     landlords email-test                # a test email, through the outbox like the weekly one
     landlords publish                   # by hand: make the newest build live; `landlords rollback` undoes it
     landlords reports / missed          # readers' reports of mistakes; searches that found nothing
+    landlords statements                # statements from landlords waiting; --publish, --decline, --update, --withdraw
     landlords sister-councils           # which councils Where Councils Stand covers, for the links to it
 """
 
@@ -191,12 +192,64 @@ def reports(close: int = typer.Option(None, help="close this report (its email a
         typer.echo(json.dumps({"closed": state.close_report(close, outcome)}))
         return
     for r in state.open_reports():
-        typer.echo(json.dumps(dict(zip(("id", "at", "page", "message", "email"), r, strict=True))))
+        typer.echo(json.dumps(dict(zip(("id", "at", "kind", "page", "message", "email"), r, strict=True))))
+
+
+@app.command()
+def statements(publish: int = typer.Option(None, help="show this statement on the site, once you know who sent it"),
+               checked: str = typer.Option("", help="with --publish: how you confirmed who sent it, for the log"),
+               landlord: str = typer.Option("", help="with --publish: the landlord it speaks for (its slug), for a "
+                                                     "statement about an area's page"),
+               decline: int = typer.Option(None, help="decline this pending statement (give --reason)"),
+               update: int = typer.Option(None, help="replace this statement's words (--text-file), name, role or link "
+                                                     "with the author's new version"),
+               text_file: Path = typer.Option(None, help="with --update: a file holding the new words"),
+               name: str = typer.Option(None, help="with --update: the new name"),
+               role: str = typer.Option(None, help="with --update: the new role"),
+               link: str = typer.Option(None, help="with --update: the new link to the record (\"\" for none)"),
+               withdraw: int = typer.Option(None, help="take this statement down (give --reason)"),
+               reason: str = typer.Option("", help="why it was declined or taken down (the sender is told), or what "
+                                                   "an update took out"),
+               show_all: bool = typer.Option(False, "--all", help="list every statement, not only those waiting"),
+               log: int = typer.Option(None, help="what was done to this statement, and why")) -> None:
+    """Statements from landlords in their own words (the right of reply; src/landlords/statements.py). With no options,
+    those waiting for a decision. Publishing, declining, updating or withdrawing one writes the live pages again at
+    once, and deletes the email addresses of statements withdrawn or declined three months ago."""
+    from landlords import statements as st
+    from landlords.api import State, site_dir
+
+    s = load_settings()
+    state = State(s.data_dir / "state.db")
+    st.forget_old_emails(state)
+    if log is not None:
+        for at, action, note in state.statement_log(log):
+            typer.echo(json.dumps({"at": at, "action": action, "note": note}))
+        return
+    try:
+        if publish is not None:
+            exists = lambda slug: (site_dir(s) / "landlords" / slug / "index.html").is_file()  # noqa: E731
+            done = st.publish(state, publish, checked, landlord or None, exists)
+        elif decline is not None:
+            done = st.decline(state, decline, reason)
+        elif update is not None:
+            text = text_file.read_text(encoding="utf-8") if text_file else None
+            done = st.update(state, update, reason, text=text, name=name, role=role, link=link)
+        elif withdraw is not None:
+            done = st.withdraw(state, withdraw, reason)
+        else:
+            for row in state.statements(None if show_all else "pending"):
+                typer.echo(json.dumps(row | {"words": st.word_count(row["text"])}))
+            return
+    except st.StatementError as exc:
+        typer.echo(f"Not done: {exc}")
+        raise typer.Exit(1) from exc
+    typer.echo(json.dumps({k: done[k] for k in ("id", "status", "name", "page", "part", "landlord", "email")}
+                          | st.refresh(s)))
 
 
 @app.command()
 def backup(to: Path = typer.Option(..., help="folder for the copies"), keep: int = typer.Option(14)) -> None:
-    """Copy the state database (readers' reports, missed searches): the one thing that can't be rebuilt."""
+    """Copy the state database (readers' reports, statements, missed searches): the one thing that can't be rebuilt."""
     import gzip
     import os
     import shutil
@@ -210,7 +263,7 @@ def backup(to: Path = typer.Option(..., help="folder for the copies"), keep: int
     to.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
     tmp = to / f"landlords-state-{stamp}.sqlite"
-    # Readers' reports can hold their email addresses: the copies are readable by their owner only, as the other
+    # Readers' reports and statements can hold email addresses: the copies are readable by their owner only, as the other
     # sites' backups are.
     old_umask = os.umask(0o077)
     try:

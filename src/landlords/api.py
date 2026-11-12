@@ -1,8 +1,11 @@
-"""The website's server (`landlords serve`): the published pages, and two small endpoints.
+"""The website's server (`landlords serve`): the published pages, and three small endpoints.
 
-* ``POST /api/corrections``: a reader reports a mistake. The form works without JavaScript (it posts, then goes to a
-  thank-you page). The report is kept in ``data/state.db`` until it is dealt with; the email address, if given, is
-  deleted when the report is closed (`landlords reports --close`).
+* ``POST /api/corrections``: a reader reports a mistake, or something unfair (its ``kind``). The form works without
+  JavaScript (it posts, then goes to a thank-you page). The report is kept in ``data/state.db`` until it is dealt with;
+  the email address, if given, is deleted when the report is closed (`landlords reports --close`).
+* ``POST /api/statements``: a landlord, or someone acting for it, sends a statement in its own words to show beside
+  what the site says about it (the right of reply; src/landlords/statements.py). It is kept as pending until the owner
+  publishes or declines it (`landlords statements`).
 * ``POST /api/missed``: a search that found nothing. Only the words searched (normalised, at most 80 characters) and
   the day are kept, as a count, so names people look for can be added. No address or identifier is stored.
 
@@ -13,6 +16,7 @@ other sites.
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 import time
 from collections import defaultdict, deque
@@ -29,9 +33,22 @@ from landlords.config import Settings
 from landlords.register import normalise
 
 LIMITS = {"page": 300, "message": 4000, "email": 200}
+# The routes of the charity's impartiality policy (section 7.1) on the report form, by the family glossary's names
+# (config/wording.toml, [corrections] kinds). The third route, a statement, has its own form. "takedown" is a request to
+# remove a person's details, dealt with first. A report from an older copy of the form has no kind.
+KINDS = ("wrong", "unfair", "takedown", "other")
+# ?kind= and the posted value also accept the words the sister sites use, so a link made for one of them still works
+KIND_ALIASES = {"correction": "wrong", "error": "wrong", "mistake": "wrong", "complaint": "unfair",
+                "general": "other"}
 SCHEMA = """
 create table if not exists reports (id integer primary key, at text not null, page text, message text not null,
   email text, closed_at text, outcome text);
+create table if not exists statements (id integer primary key, at text not null, name text not null, role text not null,
+  page text not null, part text not null default '', text text not null, link text, email text,
+  status text not null default 'pending', landlord text, checked text, reason text, published_at text,
+  updated_at text, closed_at text);
+create table if not exists statement_log (id integer primary key, statement integer not null, at text not null,
+  action text not null, note text);
 create table if not exists missed (day text not null, query text not null, count integer not null default 0,
   primary key (day, query));
 create table if not exists approvals (token_hash text primary key, build text not null, created text not null,
@@ -52,20 +69,24 @@ class State:
         self.path = path
         with self.connect() as db:
             db.executescript(SCHEMA)
+            if "kind" not in {c[1] for c in db.execute("pragma table_info(reports)")}:
+                db.execute("alter table reports add column kind text")   # a database made before kinds
 
     def connect(self) -> sqlite3.Connection:
         return sqlite3.connect(self.path, timeout=10)
 
-    def add_report(self, page: str, message: str, email: str) -> int:
+    def add_report(self, page: str, message: str, email: str, kind: str = "") -> int:
         with self.connect() as db:
-            cur = db.execute("insert into reports (at, page, message, email) values (?, ?, ?, ?)",
-                             (datetime.now(UTC).isoformat(timespec="seconds"), page, message, email or None))
+            cur = db.execute("insert into reports (at, page, message, email, kind) values (?, ?, ?, ?, ?)",
+                             (datetime.now(UTC).isoformat(timespec="seconds"), page, message, email or None,
+                              kind or None))
             return int(cur.lastrowid)
 
     def open_reports(self) -> list[tuple]:
+        """Open reports, requests to remove a person's details first (the impartiality policy, 7.1)."""
         with self.connect() as db:
-            return db.execute("select id, at, page, message, email from reports where closed_at is null "
-                              "order by id").fetchall()
+            return db.execute("select id, at, kind, page, message, email from reports where closed_at is null "
+                              "order by kind is not 'takedown', id").fetchall()
 
     def close_report(self, rid: int, outcome: str) -> bool:
         """Close a report and delete the reporter's email address (the privacy page says so)."""
@@ -82,6 +103,59 @@ class State:
     def open_report_count(self) -> int:
         with self.connect() as db:
             return db.execute("select count(*) from reports where closed_at is null").fetchone()[0]
+
+    # Statements in a landlord's own words (src/landlords/statements.py has the rules, and shows them on the pages)
+    STATEMENT_FIELDS = ("id", "at", "name", "role", "page", "part", "text", "link", "email", "status", "landlord",
+                        "checked", "reason", "published_at", "updated_at", "closed_at")
+
+    def add_statement(self, name: str, role: str, page: str, part: str, text: str, link: str, email: str,
+                      landlord: str | None) -> int:
+        now = datetime.now(UTC).isoformat(timespec="seconds")
+        with self.connect() as db:
+            cur = db.execute("insert into statements (at, name, role, page, part, text, link, email, landlord) "
+                             "values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                             (now, name, role, page, part, text, link or None, email, landlord))
+            sid = int(cur.lastrowid)
+            db.execute("insert into statement_log (statement, at, action) values (?, ?, 'received')", (sid, now))
+            return sid
+
+    def statements(self, status: str | None = None) -> list[dict]:
+        sql = f"select {', '.join(self.STATEMENT_FIELDS)} from statements"  # noqa: S608 (fixed names)
+        with self.connect() as db:
+            rows = (db.execute(sql + " where status = ? order by id", (status,)) if status
+                    else db.execute(sql + " order by id")).fetchall()
+        return [dict(zip(self.STATEMENT_FIELDS, r, strict=True)) for r in rows]
+
+    def statement(self, sid: int) -> dict | None:
+        return next((s for s in self.statements() if s["id"] == sid), None)
+
+    def change_statement(self, sid: int, action: str, note: str = "", **fields) -> None:
+        """Set some of a statement's fields, and log what was done and why (the policy, 7.4: every decision and its
+        reasons are logged)."""
+        assert set(fields) <= set(self.STATEMENT_FIELDS) - {"id", "at"}
+        with self.connect() as db:
+            if fields:
+                sets = ", ".join(f"{k} = ?" for k in fields)
+                db.execute(f"update statements set {sets} where id = ?",  # noqa: S608 (names are checked)
+                           (*fields.values(), sid))
+            db.execute("insert into statement_log (statement, at, action, note) values (?, ?, ?, ?)",
+                       (sid, datetime.now(UTC).isoformat(timespec="seconds"), action, note or None))
+
+    def statement_log(self, sid: int) -> list[tuple]:
+        with self.connect() as db:
+            return db.execute("select at, action, note from statement_log where statement = ? order by id",
+                              (sid,)).fetchall()
+
+    def forget_statement_emails(self, before: str) -> int:
+        """Delete the email address of every statement withdrawn or declined before ``before`` (the privacy page:
+        three months after; ``statements.forget_old_emails``)."""
+        with self.connect() as db:
+            return db.execute("update statements set email = null where email is not null and status in "
+                              "('withdrawn', 'declined') and closed_at < ?", (before,)).rowcount
+
+    def pending_statement_count(self) -> int:
+        with self.connect() as db:
+            return db.execute("select count(*) from statements where status = 'pending'").fetchone()[0]
 
     # Approval links (publish.py, "approve"): only a hash of each token is kept, so the database can't approve.
     def add_approval(self, build: str, days: int) -> str:
@@ -119,6 +193,30 @@ class State:
 
 def _hash(token: str) -> str:
     return sha256(token.encode()).hexdigest()
+
+
+def report_kind(value: str) -> str:
+    """The kind of a report, from the form or a link's ?kind=: one of KINDS, or "" if it is none of them."""
+    value = value.strip().lower()
+    value = KIND_ALIASES.get(value, value)
+    return value if value in KINDS else ""
+
+
+def prefill(html: str, kind: str = "", page: str = "", part: str = "") -> str:
+    """The report form or the statement form with a choice made: the radio button for ``kind`` checked, the page's
+    address filled in, and the part of the page chosen. Only the form's own fields are touched, and what is filled in
+    is escaped."""
+    from html import escape
+
+    kind = report_kind(kind)
+    if kind and f'name="kind" value="{kind}"' in html:
+        html = re.sub(r'(name="kind" value="\w+") checked>', r"\1>", html)
+        html = html.replace(f'name="kind" value="{kind}">', f'name="kind" value="{kind}" checked>')
+    if page:
+        html = html.replace('id="page" name="page" value=""', f'id="page" name="page" value="{escape(page[:300])}"', 1)
+    if part and re.fullmatch(r"[a-z]{1,20}", part):
+        html = html.replace(f'<option value="{part}">', f'<option value="{part}" selected>', 1)
+    return html
 
 
 class Limiter:
@@ -217,10 +315,66 @@ def create_app(settings: Settings, behind_proxy: bool = False) -> FastAPI:
             return JSONResponse({"ok": False, "error": "please say what is wrong"}, status_code=400)
         if fields["email"] and "@" not in fields["email"]:
             fields["email"] = ""
-        rid = state.add_report(**fields)
+        rid = state.add_report(**fields, kind=report_kind(str(data.get("kind", ""))))
         if is_json:
             return {"ok": True, "id": rid}
         return RedirectResponse("/corrections/thanks.html", status_code=303)
+
+    @app.post("/api/statements")
+    async def statements_(request: Request):
+        """A statement in a landlord's own words, kept as pending (src/landlords/statements.py). The form works without
+        JavaScript: it posts, then goes to a thank-you page, or to a page that says what to change."""
+        from landlords import statements as st
+
+        is_json = request.headers.get("content-type", "").startswith("application/json")
+        if not limiter.allow(visitor(request)):
+            return JSONResponse({"ok": False, "error": "too many tries; try again in a minute"}, status_code=429)
+        body = (await request.body())[:20000]
+        if is_json:
+            data = json.loads(body or b"{}")
+        else:
+            data = {k: v[0] for k, v in parse_qs(body.decode("utf-8", "replace"), keep_blank_values=True).items()}
+        if str(data.get("website", "")).strip():
+            # the hidden field people leave empty: a robot filled it in. Thank it, keep nothing.
+            return {"ok": True} if is_json else RedirectResponse("/named/thanks.html", status_code=303)
+        try:
+            sid = st.submit(state, data, lambda page: (site_dir(settings) / page / "index.html").is_file())
+        except st.StatementError as exc:
+            if is_json:
+                return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
+            from html import escape
+
+            text = str(data.get("text", ""))[:st.LIMITS["text"]]
+            return admin_page("Your statement wasn't sent", (
+                f"<p>{escape(str(exc))}</p><p>Go back to the form to change it: your browser should still have what "
+                f'you wrote. Here it is too, so you can copy it.</p><label for="words">Your statement</label>'
+                f'<textarea id="words" rows="8" readonly>{escape(text)}</textarea>'
+                f'<p><a href="/named/index.html#send">Back to the form</a></p>'), 400)
+        if is_json:
+            return {"ok": True, "id": sid}
+        return RedirectResponse("/named/thanks.html", status_code=303)
+
+    # The report form and the statement form, with a choice made by the link that led there: ?kind= picks the kind of
+    # report ("wrong", "unfair", "takedown", "other", or the sister sites' words for them) and ?page= fills in the
+    # page, so "If you're named" can start each route. Without a query the page is served as it was built.
+    def prefilled(page: str, request: Request):
+        path = site_dir(settings) / page / "index.html"
+        if not path.is_file():
+            return admin_page("Page not found", "<p>That page isn't on the site.</p>", 404)
+        q = request.query_params
+        if not (q.get("kind") or q.get("page") or q.get("part")):
+            return FileResponse(path)
+        return HTMLResponse(prefill(path.read_text(), q.get("kind", ""), q.get("page", ""), q.get("part", "")))
+
+    @app.api_route("/corrections/", methods=["GET", "HEAD"])
+    @app.api_route("/corrections/index.html", methods=["GET", "HEAD"])
+    def corrections_page(request: Request):
+        return prefilled("corrections", request)
+
+    @app.api_route("/named/", methods=["GET", "HEAD"])
+    @app.api_route("/named/index.html", methods=["GET", "HEAD"])
+    def named_page(request: Request):
+        return prefilled("named", request)
 
     @app.post("/api/missed")
     async def missed(request: Request):

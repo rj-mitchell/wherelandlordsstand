@@ -75,11 +75,35 @@ h3{font-size:1.1rem;font-weight:600;margin:1.4rem 0 .3rem}
 /* forms */
 label{display:block;font:600 .95rem/1.4 var(--sans);margin:1rem 0 .35rem}
 input,textarea,select,button{font:inherit;color:inherit}
-input[type=search],input[type=text],input[type=email],textarea{width:100%;max-width:44rem;padding:.65rem .75rem;
+input[type=search],input[type=text],input[type=email],input[type=url],textarea,select{width:100%;max-width:44rem;padding:.65rem .75rem;
 border:1px solid var(--muted);border-bottom:2px solid var(--ink);background:var(--paper-hi);font-family:var(--serif);
 font-size:max(16px,1.05rem)}
 input::placeholder{color:var(--muted);opacity:1}input[type=search]{text-overflow:ellipsis}
 textarea{resize:vertical}
+/* the report form's kinds: a radio button beside each, its hint under its label */
+fieldset{border:0;margin:1rem 0 0;padding:0;min-inline-size:0}
+legend{font:600 .95rem/1.4 var(--sans);padding:0;margin-block-end:.2rem}
+.choice{display:grid;grid-template-columns:auto 1fr;column-gap:.6rem;align-items:start;max-width:44rem;margin:.55rem 0}
+.choice input{inline-size:1.25rem;block-size:1.25rem;margin:.15rem 0 0;accent-color:var(--slate)}
+.choice label{margin:0}.choice .hint{grid-column:2;margin:.1rem 0 0}
+/* the hidden field robots fill in and people never see (the statement form) */
+.hp{position:absolute;inset-inline-start:-9999px;inline-size:1px;block-size:1px;overflow:hidden}
+/* the response times, on the corrections page and "If you're named" */
+.times{border-inline-start:3px solid var(--slate);padding-inline-start:.85rem}
+.go a{font:600 .95rem/1.4 var(--sans)}
+ul.contents{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:.2rem 1.2rem;font:.9rem/1.5 var(--sans)}
+ul.contents a{display:inline-flex;align-items:center;min-block-size:var(--wts-target-min,24px)}
+/* a statement in a landlord's own words (src/landlords/statements.py; docs/DECISIONS.md, 15): in the sans, inside a
+   dashed rule, so it never reads as the site's own words; its heading and the line under it say whose words they are */
+.statement{font:400 .95rem/1.55 var(--sans);border:1px dashed var(--muted);padding:.55rem .9rem .6rem;margin:1rem 0;
+max-width:44rem;background:var(--paper)}
+.wts-headings .statement :is(h2,h4){font:700 1rem/1.35 var(--sans);font-variant-caps:normal;letter-spacing:0;
+text-transform:none;color:var(--ink);border:0;padding:0;margin:.1rem 0 .1rem}
+.statement p{margin:.35rem 0}.st-role,.st-about{color:var(--muted)}
+.st-words{margin:.5rem 0;padding-inline-start:.8rem;border-inline-start:3px solid var(--rule)}
+.st-words p{margin:.4rem 0}
+.st-note{font-size:.85rem;font-style:italic;color:var(--muted)}
+.card .statement{background:var(--paper-hi)}
 /* a transparent border, so a button keeps its edge in forced colours */
 button{font:600 .95rem/1 var(--sans);padding:.7rem 1.2rem;min-block-size:var(--wts-target-min,24px);
 border:1px solid transparent;background:var(--slate);color:var(--paper);cursor:pointer;user-select:none}

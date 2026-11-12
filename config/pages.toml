@@ -186,7 +186,7 @@ id = "decides"
 heading = "Who decides, and how to appeal"
 text = [
   "The charity's founder decides, until the trustees appoint someone else. Every decision and its reasons are logged, and the trustees review the log at each of their meetings.",
-  "If you are unhappy with a decision, you can ask the trustees to review it: write to [admin@wheretheystand.uk](mailto:admin@wheretheystand.uk). If you are still unhappy, you can raise your concerns about the charity with the [Charity Commission](https://www.gov.uk/complain-about-charity).",
+  "If you are unhappy with a decision, you can ask for a review (by the trustees, once they are appointed): email [admin@wheretheystand.uk](mailto:admin@wheretheystand.uk). Once the charity is registered, if you are still unhappy, you can also raise your concerns about it with the [Charity Commission](https://www.gov.uk/complain-about-charity).",
   "Letters claiming legal liability, such as defamation, go straight to the trustees. Disputed material may be taken down while they take advice.",
 ]
 

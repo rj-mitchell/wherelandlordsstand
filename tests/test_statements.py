@@ -185,8 +185,12 @@ def test_the_owner_lists_publishes_updates_and_withdraws(client, state, site, tm
     assert code == 0 and [json.loads(x)["id"] for x in out.splitlines()] == [1, 2]
 
     assert run("--publish", "1")[0] == 1                                # how was the sender confirmed?
-    code, out = run("--publish", "1", "--checked", "reply from jane@example-housing.org.uk")
+    note = "replied from the landlord's own address, 14 Nov"
+    code, out = run("--publish", "1", "--checked", note)
     assert code == 0 and json.loads(out)["status"] == "published"
+    # the note is kept for good (in the log, and in the statement's own row), so it holds no email address: the
+    # sender's is deleted three months after a statement is withdrawn or declined
+    assert state.statement(1)["checked"] == state.statement_log(1)[1][2] == note
     page = (site / "landlords" / "example-housing" / "index.html").read_text()
     assert "Statement from Jane Example, " in page                     # on the site at once
 

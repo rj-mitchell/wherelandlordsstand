@@ -197,7 +197,10 @@ def reports(close: int = typer.Option(None, help="close this report (its email a
 
 @app.command()
 def statements(publish: int = typer.Option(None, help="show this statement on the site, once you know who sent it"),
-               checked: str = typer.Option("", help="with --publish: how you confirmed who sent it, for the log"),
+               checked: str = typer.Option("", help="with --publish: how you confirmed who sent it, for the log. The "
+                                                    "note is kept for good, so leave the sender's email address out "
+                                                    "of it: that address is deleted three months after a statement "
+                                                    "is withdrawn or declined"),
                landlord: str = typer.Option("", help="with --publish: the landlord it speaks for (its slug), for a "
                                                      "statement about an area's page"),
                decline: int = typer.Option(None, help="decline this pending statement (give --reason)"),

@@ -192,7 +192,7 @@ declined, never edited. The same limits hold for `--update`. A statement that pa
 ```bash
 uv run landlords statements                                # those waiting, with their email and word count
 uv run landlords statements --all                          # every one, whatever its state
-uv run landlords statements --publish 4 --checked "reply from j.smith@example-housing.org.uk, 14 Nov"
+uv run landlords statements --publish 4 --checked "replied from the landlord's own address, 14 Nov"
 uv run landlords statements --publish 5 --checked "..." --landlord birmingham-city-council   # about an area's page
 uv run landlords statements --decline 6 --reason "it names a tenant"
 uv run landlords statements --update 4 --text-file new.txt --reason "the author's new version"   # or --name/--role/--link
@@ -202,7 +202,10 @@ uv run landlords statements --log 4                        # what was done to it
 
 1. **Confirm who sent it** before publishing: write to the address given, from admin@wherelandlordsstand.com, and
    check it is the landlord's own (an address at its web address, or the council's), or check with the landlord
-   through its published contact details. Say how in `--checked`: it is logged.
+   through its published contact details. Say how in `--checked`: it is logged, and the log is kept for good.
+   So don't put the sender's email address in the note (say "replied from the landlord's own address", not the
+   address itself): the privacy page promises that address is deleted three months after a statement is withdrawn
+   or declined, and only the statement's own email field is deleted then.
 2. **Check it against the rules** (the policy, 7.2): nothing defamatory, abusive or about a private individual, no
    one else's personal data, no appeals for votes, money or support, nothing about another person's conduct (and in an
    election period, nothing that campaigns). Then publish it as written, or decline it with `--reason` and tell the

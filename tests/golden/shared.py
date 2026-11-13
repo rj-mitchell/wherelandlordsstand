@@ -58,6 +58,16 @@ def pages(root: Path) -> dict[str, str]:
             for p in sorted(root.glob("*/*/index.html")) if p.parts[-3] in ("landlords", "areas")}
 
 
+def as_before(html: dict[str, str]) -> dict[str, str]:
+    """Pages as the site wrote them before the shared package. The one change to a statement's markup since is that
+    its element carries ``data-nosnippet``, which asks search engines not to quote it as the site's own words
+    (wts-core docs/adr/0008, the first question, decided for every site): each statement must have it, and with it
+    taken out the pages must be what they were, byte for byte."""
+    for page in html.values():
+        assert page.count(" data-nosnippet>") == page.count('<div class="statement"'), page
+    return {address: page.replace(" data-nosnippet>", ">") for address, page in html.items()}
+
+
 def read(name: str):
     return json.loads((GOLDEN / name).read_text())
 

@@ -361,7 +361,7 @@ def shown(**s) -> dict:
 def test_a_statement_is_headed_and_marked_as_the_glossary_says():
     html = st.render(shown(text="Line one <b>bold</b>\nline two\n\npara two", link="https://example.org/r?a=1&b=2"),
                      W, 2)
-    assert '<div class="statement" role="note" id="statement-7" aria-labelledby="statement-7-h">' in html
+    assert '<div class="statement" role="note" id="statement-7" aria-labelledby="statement-7-h" data-nosnippet>' in html
     assert '<h2 id="statement-7-h">Statement from Jane Example, 12 November 2026</h2>' in html
     assert html.endswith('<p class="st-note">In their own words. Not checked or endorsed by Where Landlords Stand.'
                          "</p></div>")
@@ -413,6 +413,33 @@ def test_published_now_and_kept_through_a_build_publish_and_undo(client, setting
     publish.rollback(settings)                                         # an undo doesn't bring it back
     assert "Statement from" not in (settings.data_dir / "live" / "landlords" / "example-housing" /
                                     "index.html").read_text()
+
+
+def test_a_statement_is_never_in_a_pages_title_description_or_link_card(tmp_path):
+    """A statement is shown in the page's own text, so every reader sees the reply beside the item; but a search
+    engine or a link card must never give it as the site's own words (wts-core docs/adr/0008, the first question).
+    So it is only ever inside the page's body, in an element that asks not to be quoted."""
+    from landlords.site import page
+
+    mark = "zebrafinch"
+    folder = tmp_path / "landlords" / "example-housing"
+    folder.mkdir(parents=True)
+    body = f'<h1>Example Housing</h1><section class="card">{slot("grade")}</section>{slot("page")}'
+    (folder / "index.html").write_text(page("Example Housing – Where Landlords Stand", body, W, depth=2,
+                                            path="landlords/example-housing/"))
+    statement = shown(name=f"Jane {mark}", role=f"Chief {mark}", text=f"Words {mark}.", part="grade",
+                      link=f"https://example.org/{mark}")
+    assert st.write_into(tmp_path, [statement]) == 1
+    html = (folder / "index.html").read_text()
+    head, rest = html.split("</head>", 1)
+    assert mark not in head and "<title>" in head                   # the title, the description, the link card
+    before, after = rest.split('<div class="statement"', 1)
+    inside, outside = after.split("</div>", 1)
+    assert inside.count(mark) == 4                                  # the name, the role, the words and the link
+    assert "data-nosnippet" in inside.split(">", 1)[0]              # the element that holds it asks not to be quoted
+    assert mark not in before and mark not in outside               # and nothing of it is anywhere else
+    assert "application/ld+json" not in html or mark not in re.findall(
+        r'<script type="application/ld\+json">(.*?)</script>', html, re.S)[0]
 
 
 # Never part of the published figures -----------------------------------------------------------------------------------

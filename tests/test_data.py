@@ -232,6 +232,8 @@ def test_a_published_statement_is_built_into_its_pages_and_nowhere_else(tmp_path
     assert phrase in (out / "areas" / "birmingham" / "index.html").read_text()
     assert phrase in (out / "landlords" / "birmingham-city-council" / "index.html").read_text()
     assert "<script" not in abri and len(abri.encode()) < 100 * 1024
+    # never in the page's title, description or link card, and in an element that asks search engines not to quote it
+    assert phrase not in abri.split("</head>")[0] and abri.count("data-nosnippet") == abri.count('class="statement"')
     for path in out.rglob("*"):
         if path.is_file() and path.suffix in (".json", ".csv", ".xml", ".txt"):
             assert "only this statement uses" not in path.read_text(errors="ignore"), path

@@ -170,7 +170,7 @@ def test_the_site_reads_from_the_imported_rows_what_it_read_from_its_own(old):
          "role": s["role"], "text": s["text"], "link": s["link"], "date": (s["updated_at"] or s["published_at"])[:10]}
         for s in sorted(GOLDEN["shown"], key=lambda s: (s["updated_at"] or s["published_at"], s["id"]))]
     assert statements.refresh(old) == {"pages_changed": 3, "shown": 2}
-    assert shared.pages(old.data_dir / "site") == GOLDEN["pages"]
+    assert shared.as_before(shared.pages(old.data_dir / "site")) == GOLDEN["pages"]
 
     # the site's own tables are where they were: approval links still open their pages, missed searches are counted
     assert rows(old.state_db, "select build, published_at from approvals order by build") == [

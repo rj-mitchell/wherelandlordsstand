@@ -315,8 +315,8 @@ def test_the_owners_commands_print_what_they_did(scenario):
         code, output = command([a.replace("<tmp>", str(tmp)) for a in was["args"]])
         output = output.replace(str(tmp), "<tmp>")
         after = shared.pages(root)
-        # the pages each command wrote again, byte for byte
-        assert {k: v for k, v in after.items() if v != before[k]} == was["pages_written"], typed
+        # the pages each command wrote again, byte for byte (but for the one attribute shared.as_before takes out)
+        assert shared.as_before({k: v for k, v in after.items() if v != before[k]}) == was["pages_written"], typed
         before = after
         if typed in NOT_DONE_NOW:
             assert (code, output) == (1, f"Not done: {NOT_DONE_NOW[typed]}\n"), typed

@@ -61,7 +61,9 @@ def published(settings: Settings) -> list[dict]:
 def render(s: dict, w: dict, level: int, about: str = "") -> str:
     """One statement, set apart from the site's own words: in the sans, inside a dashed rule (styles.css,
     ".statement"), marked as a note for screen readers and named by its heading. ``about`` is a link to the page it
-    is about, when it is shown away from it (on the landlord's own page)."""
+    is about, when it is shown away from it (on the landlord's own page). The whole of it carries ``data-nosnippet``,
+    which asks search engines never to quote it as this site's own words (they honour it on a ``div``); and it is
+    only ever written into a page's body, never its title, description or link card (wts-core docs/adr/0008)."""
     from landlords.site import esc, fill, fill_html, nice_date
 
     t = w["statement"]
@@ -69,7 +71,7 @@ def render(s: dict, w: dict, level: int, about: str = "") -> str:
     when = s.get("dated") or nice_date(s["date"])      # "dated": the date already in words (the form's example)
     words = "".join("<p>" + "<br>".join(esc(line) for line in para.split("\n")) + "</p>"
                     for para in s["text"].split("\n\n"))
-    out = [f'<div class="statement" role="note" id="{sid}" aria-labelledby="{sid}-h">',
+    out = [f'<div class="statement" role="note" id="{sid}" aria-labelledby="{sid}-h" data-nosnippet>',
            f'<h{level} id="{sid}-h">{fill(t["heading"], name=s["name"], date=when)}</h{level}>',
            f'<p class="st-role">{esc(s["role"])}</p>']
     if about:

@@ -121,7 +121,8 @@ Commands are run in `/opt/wherelandlordsstand/deploy`. Any `landlords` command r
   ```
   `restore` asks first (`--yes` to skip the question). It unpacks the backup beside the database and checks it
   (SQLite's integrity check, and that it is this site's database) before anything is replaced; the database it
-  replaces is kept as `state.db.before-restore`, which must be moved or deleted before another restore. A backup made
+  replaces is kept as `state.db.before-restore`, which must be moved or deleted before another restore: delete it
+  once the site is known to be right, as it holds email addresses as they stood. A backup made
   before the site moved onto the shared package can be put back too: its rows are brought across when the site
   starts (docs/OPERATIONS.md, "The state database").
 * **The Docker build** installs the shared package (wts-core) as the wheel of its release, from GitHub's releases

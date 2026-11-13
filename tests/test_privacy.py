@@ -114,3 +114,34 @@ def test_the_nightly_check_is_told_counts_and_ages_and_nothing_else(settings, si
     answers = [client.get("/api/check", headers={"authorization": "Bearer the-family-token"}).status_code
                for _ in range(10)]
     assert answers[-1] == 429 and set(answers) == {200, 429}
+
+
+def test_the_privacy_page_says_what_the_code_does():
+    """The sentences the owner accepted with the shared package's design (wts-core docs/adr/0008, questions 3 and 4),
+    and the figures in the code that make them true."""
+    import re
+    from pathlib import Path
+
+    from landlords.config import load_toml
+    from landlords.replies import RULES
+    from landlords.state import BACKUPS_KEPT_DAYS
+
+    sections = dict(load_toml("wording.toml")["privacy"]["sections"])
+    assert ("is kept while the statement is waiting or shown, and deleted three months after it is withdrawn, "
+            "declined or removed.") in sections["Statements from landlords"]
+    assert RULES.email_kept_months == 3
+    assert sections["Backups"] == ("Backups of the site's database are kept for up to two months, so a deleted "
+                                   "address can remain in a backup until then.")
+    # one backup a night, and the newest 60 kept off-site (wts_core.ops.send_offsite's own figure; 14 on the server):
+    # two months. The copy made before the move onto the shared package is deleted at the same age.
+    import inspect
+
+    from wts_core import ops
+
+    deploy = Path(__file__).parents[1] / "deploy"
+    assert re.search(r"^OnCalendar=\*-\*-\* \d\d:\d\d:\d\d UTC$", (deploy / "landlords-backup.timer").read_text(), re.M)
+    assert inspect.signature(ops.send_offsite).parameters["keep"].default == BACKUPS_KEPT_DAYS == 60
+    named = " ".join(str(x) for section in load_toml("pages.toml")["named"]["section"] for x in section.get("text", []))
+    assert ("We keep it while the statement is waiting or shown, and delete it three months after the statement is "
+            "withdrawn, declined or removed.") in named
+    assert load_toml("wording.toml")["statement"]["email_hint"].endswith("withdrawn, declined or removed.")

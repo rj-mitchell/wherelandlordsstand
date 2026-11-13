@@ -170,6 +170,8 @@ serve` (on the server and on your own computer), but not when the built files ar
 a `kind`: `wrong` ("Something is wrong"), `unfair` ("You've been characterised unfairly"), `takedown` (a person's
 details to remove: deal with these first) or `other` (docs/DECISIONS.md, 15). A link to
 `/corrections/?kind=unfair&page=landlords/abri-group/` opens the form with that kind chosen and the page filled in.
+The report form and the statement form each have a hidden field that people never see or reach, labelled "Leave this
+empty": a post with it filled in comes from a robot, so it is thanked like any other and nothing is kept.
 
 If a report shows a mistake of ours, fix it, add a line to `data_static/corrections.csv` (shown on the corrections
 page), rebuild and publish. If it is about a publisher's figure, we don't change it: reply and point to the publisher.

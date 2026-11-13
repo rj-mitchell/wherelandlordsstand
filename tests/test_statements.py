@@ -385,6 +385,28 @@ def test_report_kinds_and_links_that_choose_one(client, settings):
     assert [r[2] for r in State(settings.data_dir / "state.db").open_reports()] == ["takedown", "unfair"]  # first
 
 
+def test_the_hidden_field_robots_fill_in_keeps_no_report(client, settings):
+    """The report form has the statement form's trap: a field people never see or reach, which a robot fills in."""
+    from landlords.site_pages import corrections_html
+
+    html = corrections_html(W)
+    assert ('<div class="hp" aria-hidden="true"><label for="website">Leave this empty</label>'
+            '<input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></div>') in html
+    assert html.index('name="email"') < html.index('name="website"') < html.index('<button type="submit">')
+    assert "<script" not in html.split("<main", 1)[1].split("</main>", 1)[0]
+    (settings.data_dir / "site" / "corrections").mkdir()
+    (settings.data_dir / "site" / "corrections" / "thanks.html").write_text("thanks")
+    report = {"kind": "wrong", "message": "Buy cheap pills", "email": "robot@spam.example"}
+    r = client.post("/api/corrections", data={**report, "website": "https://spam.example"}, follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/corrections/thanks.html"   # thanked like anyone
+    r = client.post("/api/corrections", json={**report, "website": "https://spam.example"})
+    assert r.status_code == 200 and r.json() == {"ok": True}
+    state = State(settings.data_dir / "state.db")
+    assert state.open_reports() == []                                # and nothing kept
+    r = client.post("/api/corrections", data={**report, "website": " "}, follow_redirects=False)
+    assert r.status_code == 303 and len(state.open_reports()) == 1   # left empty, as people leave it: kept
+
+
 def test_the_named_page(settings, client):
     from landlords.site_pages import named_html
 

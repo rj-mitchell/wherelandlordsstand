@@ -2,7 +2,8 @@
 
 * ``POST /api/corrections``: a reader reports a mistake, or something unfair (its ``kind``). The form works without
   JavaScript (it posts, then goes to a thank-you page). The report is kept in ``data/state.db`` until it is dealt with;
-  the email address, if given, is deleted when the report is closed (`landlords reports --close`).
+  the email address, if given, is deleted when the report is closed (`landlords reports --close`). Like the statement
+  form, it has a hidden field people leave empty: a post with it filled in is thanked, and nothing is kept.
 * ``POST /api/statements``: a landlord, or someone acting for it, sends a statement in its own words to show beside
   what the site says about it (the right of reply; src/landlords/statements.py). It is kept as pending until the owner
   publishes or declines it (`landlords statements`).
@@ -341,6 +342,10 @@ def create_app(settings: Settings, behind_proxy: bool = False) -> FastAPI:
         except ValueError:
             return JSONResponse({"ok": False, "error": "the report couldn't be read; please send it again"},
                                 status_code=400)
+        if str(data.get("website", "")).strip():
+            # the hidden field people leave empty, as on the statement form: a robot filled it in. Thank it, keep
+            # nothing.
+            return {"ok": True} if is_json else RedirectResponse("/corrections/thanks.html", status_code=303)
         fields = {k: str(data.get(k, "")).strip()[:n] for k, n in LIMITS.items()}
         if not fields["message"]:
             return JSONResponse({"ok": False, "error": "please say what is wrong"}, status_code=400)

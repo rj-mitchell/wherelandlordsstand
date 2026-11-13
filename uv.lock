@@ -161,6 +161,7 @@ dependencies = [
     { name = "rapidfuzz" },
     { name = "typer" },
     { name = "uvicorn" },
+    { name = "wts-core", extra = ["cli", "offsite"] },
 ]
 
 [package.dev-dependencies]
@@ -180,6 +181,7 @@ requires-dist = [
     { name = "rapidfuzz", specifier = ">=3.9" },
     { name = "typer", specifier = ">=0.12" },
     { name = "uvicorn", specifier = ">=0.30" },
+    { name = "wts-core", extras = ["cli", "offsite"], url = "https://github.com/rj-mitchell/wts-core/releases/download/v0.1.0/wts_core-0.1.0-py3-none-any.whl" },
 ]
 
 [package.metadata.requires-dev]
@@ -833,3 +835,32 @@ sdist = { url = "https://files.pythonhosted.org/packages/da/34/30e9280707135d2cf
 wheels = [
     { url = "https://files.pythonhosted.org/packages/38/0c/b54a4fdd7f90a3af8b02ebc9ce6712c2c208b7926a2f7bad95c33ebbe943/uvicorn-0.54.0-py3-none-any.whl", hash = "sha256:505bdb0f318731d45f1f712071fc781a8981f6847a31c902c9f5e652d4f67faf", size = 87427, upload-time = "2026-09-25T06:52:35.829Z" },
 ]
+
+[[package]]
+name = "wts-core"
+version = "0.1.0"
+source = { url = "https://github.com/rj-mitchell/wts-core/releases/download/v0.1.0/wts_core-0.1.0-py3-none-any.whl" }
+wheels = [
+    { url = "https://github.com/rj-mitchell/wts-core/releases/download/v0.1.0/wts_core-0.1.0-py3-none-any.whl", hash = "sha256:29d6f59d302a4c22864166e05efca9b4bea30f75d2e8e35daf8d2ce2bc982572" },
+]
+
+[package.optional-dependencies]
+cli = [
+    { name = "typer" },
+]
+offsite = [
+    { name = "httpx" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "anthropic", marker = "extra == 'ai'", specifier = ">=2.3,<3" },
+    { name = "duckdb", marker = "extra == 'duckdb'", specifier = ">=2.0,<3" },
+    { name = "fastembed", marker = "extra == 'ai'", specifier = ">=0.9,<1" },
+    { name = "httpx", marker = "extra == 'offsite'", specifier = ">=0.28" },
+    { name = "lancedb", marker = "extra == 'ai'", specifier = ">=0.40,<1" },
+    { name = "numpy", marker = "extra == 'ai'", specifier = ">=2.5" },
+    { name = "pyarrow", marker = "extra == 'ai'", specifier = ">=26" },
+    { name = "typer", marker = "extra == 'cli'", specifier = ">=0.27" },
+]
+provides-extras = ["ai", "cli", "duckdb", "offsite"]

@@ -49,6 +49,21 @@ def test_a_missed_search_keeps_only_the_words(client, settings):
     assert [c[1] for c in db.execute("pragma table_info(missed)")] == ["day", "query", "count"]
 
 
+@pytest.mark.parametrize("body", [b"{not json", b'["a", "list"]', b"\xff\xfe"])
+def test_a_json_body_that_cannot_be_read_is_refused_and_nothing_kept(client, settings, body):
+    from landlords.api import State
+
+    json_body = {"content": body, "headers": {"content-type": "application/json"}}
+    r = client.post("/api/corrections", **json_body)
+    assert r.status_code == 400
+    assert r.json() == {"ok": False, "error": "the report couldn't be read; please send it again"}
+    r = client.post("/api/missed", **json_body)
+    assert r.status_code == 400 and r.json() == {"ok": False}
+    state = State(settings.data_dir / "state.db")
+    assert state.open_reports() == [] and state.top_missed() == []
+    assert client.post("/api/corrections", json={"message": "Wrong grade"}).json() == {"ok": True, "id": 1}
+
+
 def _fake_build(settings, name, failed=()):
     d = publish.builds_dir(settings) / name
     d.mkdir(parents=True)

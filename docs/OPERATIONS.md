@@ -182,7 +182,10 @@ working days, decide within 20. The weekly email counts open reports and stateme
 to wait for the first reply: look at `landlords reports` and `landlords statements` at least twice a week.
 
 **Statements from landlords** (the right of reply; `src/landlords/statements.py`). A landlord, or someone acting for
-it, sends a statement of up to 150 words from the form on "If you're named" (`/named/`). It is kept as pending:
+it, sends a statement of up to 150 words from the form on "If you're named" (`/named/`). One that breaks a limit
+(150 words or 2,000 characters; a name of 120 characters, a role of 200, a link of 300) is refused, and the sender is
+told which limit and by how much: nothing sent is ever cut to fit, because a statement is published as written or
+declined, never edited. The same limits hold for `--update`. A statement that passes is kept as pending:
 
 ```bash
 uv run landlords statements                                # those waiting, with their email and word count

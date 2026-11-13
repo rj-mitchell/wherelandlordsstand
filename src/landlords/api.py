@@ -36,6 +36,7 @@ from landlords.config import Settings
 from landlords.register import normalise
 
 LIMITS = {"page": 300, "message": 4000, "email": 200}
+MAX_BODY = 20000                    # bytes of a posted report or statement that are read
 # The routes of the charity's impartiality policy (section 7.1) on the report form, by the family glossary's names
 # (config/wording.toml, [corrections] kinds). The third route, a statement, has its own form. "takedown" is a request to
 # remove a person's details, dealt with first. A report from an older copy of the form has no kind.
@@ -230,6 +231,16 @@ def prefill(html: str, kind: str = "", page: str = "", part: str = "") -> str:
     return html
 
 
+def posted(body: bytes, is_json: bool, keep_blank: bool = False) -> dict:
+    """The fields of a posted form, or of a JSON object. Raises ValueError if a JSON body can't be read as one."""
+    if not is_json:
+        return {k: v[0] for k, v in parse_qs(body.decode("utf-8", "replace"), keep_blank_values=keep_blank).items()}
+    data = json.loads(body or b"{}")
+    if not isinstance(data, dict):
+        raise ValueError("not a JSON object")
+    return data
+
+
 class Limiter:
     """At most ``per_minute`` posts a minute from one visitor, counted in memory only and never written down. Safe to
     call from several threads at once (the approval pages run on a pool of them). Once more than ``forget_over``
@@ -323,12 +334,13 @@ def create_app(settings: Settings, behind_proxy: bool = False) -> FastAPI:
     async def corrections(request: Request):
         if not limiter.allow(visitor(request)):
             return JSONResponse({"ok": False, "error": "too many reports; try again in a minute"}, status_code=429)
-        body = (await request.body())[:20000]
+        body = (await request.body())[:MAX_BODY]
         is_json = request.headers.get("content-type", "").startswith("application/json")
-        if is_json:
-            data = json.loads(body or b"{}")
-        else:
-            data = {k: v[0] for k, v in parse_qs(body.decode("utf-8", "replace")).items()}
+        try:
+            data = posted(body, is_json)
+        except ValueError:
+            return JSONResponse({"ok": False, "error": "the report couldn't be read; please send it again"},
+                                status_code=400)
         fields = {k: str(data.get(k, "")).strip()[:n] for k, n in LIMITS.items()}
         if not fields["message"]:
             return JSONResponse({"ok": False, "error": "please say what is wrong"}, status_code=400)
@@ -348,27 +360,33 @@ def create_app(settings: Settings, behind_proxy: bool = False) -> FastAPI:
         is_json = request.headers.get("content-type", "").startswith("application/json")
         if not limiter.allow(visitor(request)):
             return JSONResponse({"ok": False, "error": "too many tries; try again in a minute"}, status_code=429)
-        body = (await request.body())[:20000]
-        if is_json:
-            data = json.loads(body or b"{}")
-        else:
-            data = {k: v[0] for k, v in parse_qs(body.decode("utf-8", "replace"), keep_blank_values=True).items()}
-        if str(data.get("website", "")).strip():
-            # the hidden field people leave empty: a robot filled it in. Thank it, keep nothing.
-            return {"ok": True} if is_json else RedirectResponse("/named/thanks.html", status_code=303)
+        body = await request.body()
+        data: dict | None = None            # None until the body has been read
         try:
+            # Nothing sent is cut to fit and kept (a statement is published as written or declined, never edited):
+            # what is too long, here or in st.submit, is refused with words for the sender.
+            if len(body) > MAX_BODY:
+                raise st.StatementError(f"What you sent is too long. A statement can be up to {st.MAX_WORDS} words.")
+            try:
+                data = posted(body, is_json, keep_blank=True)
+            except ValueError:
+                raise st.StatementError("We couldn't read what was sent. Please send it again.") from None
+            if str(data.get("website", "")).strip():
+                # the hidden field people leave empty: a robot filled it in. Thank it, keep nothing.
+                return {"ok": True} if is_json else RedirectResponse("/named/thanks.html", status_code=303)
             sid = st.submit(state, data, lambda page: (site_dir(settings) / page / "index.html").is_file())
         except st.StatementError as exc:
             if is_json:
                 return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
             from html import escape
 
-            text = str(data.get("text", ""))[:st.LIMITS["text"]]
+            # Their words are given back whole, to copy: what is too long is theirs to shorten, not ours to cut
+            words = "</p>" if data is None else (
+                f' Here it is too, so you can copy it.</p><label for="words">Your statement</label>'
+                f'<textarea id="words" rows="8" readonly>{escape(str(data.get("text", "")))}</textarea>')
             return admin_page("Your statement wasn't sent", (
                 f"<p>{escape(str(exc))}</p><p>Go back to the form to change it: your browser should still have what "
-                f'you wrote. Here it is too, so you can copy it.</p><label for="words">Your statement</label>'
-                f'<textarea id="words" rows="8" readonly>{escape(text)}</textarea>'
-                f'<p><a href="/named/index.html#send">Back to the form</a></p>'), 400)
+                f'you wrote.{words}<p><a href="/named/index.html#send">Back to the form</a></p>'), 400)
         if is_json:
             return {"ok": True, "id": sid}
         return RedirectResponse("/named/thanks.html", status_code=303)
@@ -399,7 +417,10 @@ def create_app(settings: Settings, behind_proxy: bool = False) -> FastAPI:
     async def missed(request: Request):
         if not limiter.allow(visitor(request)):
             return JSONResponse({"ok": False}, status_code=429)
-        data = json.loads((await request.body())[:2000] or b"{}")
+        try:
+            data = posted((await request.body())[:2000], True)
+        except ValueError:
+            return JSONResponse({"ok": False}, status_code=400)
         q = normalise(str(data.get("q", "")))[:80]
         if len(q) >= 2:
             state.missed(q)

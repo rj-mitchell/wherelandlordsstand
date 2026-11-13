@@ -68,6 +68,6 @@ Where Councils Stand do.
 ## Every week
 
 - Every Thursday (in alpha too): read the update's email, look at a few changed pages, and press Publish.
-- Weekly: `landlords reports` (reply, fix our mistakes, log them in `data_static/corrections.csv`) and
+- Weekly: `landlords reports list` (reply, fix our mistakes, log them in `data_static/corrections.csv`) and
   `landlords missed` (add aliases for real names).
 - When `landlords check` warns about a rights page date: check the sources, update the section and its dates.

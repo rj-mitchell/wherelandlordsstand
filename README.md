@@ -50,10 +50,15 @@ approval page's Undo button, or `landlords rollback`, puts back the pages before
 
 ## In the family
 
-- **Where its code came from.** Written for this site: it has no AI and shares no engine with its sister sites. It
-  shares their licence, server, typeface and look, and the family's binding (the endorsement, the footer shelf, the
-  icons and link card) comes from the charity's family kit, copied into `src/landlords/family/`
-  ([`docs/DESIGN.md`](docs/DESIGN.md)).
+- **Where its code came from.** Everything about landlords (the data, the method, the pages, every word a reader
+  sees) is written for this site, and it has no AI. The parts every site in the family carries come from the
+  charity's shared package, [wts-core](https://github.com/rj-mitchell/wts-core): settings, the state database, the
+  limit on posts, readers' reports and the right of reply, backups, and the owner's commands for them. This site
+  installs it without its AI part, so no AI library is ever installed here (docs/DECISIONS.md, 6 and 16;
+  `tests/test_dependencies.py`). What the site passes to the package is in `src/landlords/config.py`, `state.py`,
+  `replies.py` and `cli.py`. It also shares the family's licence, server, typeface and look, and the family's binding
+  (the endorsement, the footer shelf, the icons and link card) comes from the charity's family kit, copied into
+  `src/landlords/family/` ([`docs/DESIGN.md`](docs/DESIGN.md)).
 - **Where it runs.** On the charity's shared server, in `/opt/wherelandlordsstand`, behind the front door in Where MPs
   Stand's checkout. [`docs/DEPLOY.md`](docs/DEPLOY.md) has this site's steps and links to Where MPs Stand's
   [`docs/HOSTING.md`](https://github.com/rj-mitchell/wherempsstand/blob/main/docs/HOSTING.md) for the shared server.
@@ -122,7 +127,12 @@ uv run pytest
 
 GitHub Actions (`.github/workflows/ci.yml`) runs ruff and the tests on every pull request; builds the real pages from
 the publishers' files (kept in the Actions cache, fetched again only when `config/sources.toml` changes), runs the
-tests on them and checks them with axe-core (`scripts/a11y.mjs`); and builds the server's image.
+tests on them and checks them with axe-core (`scripts/a11y.mjs`); and builds the server's image. The jobs that are the
+same on every site in the family are the shared workflows in wts-core's repository, called at the tag of the release
+this site installs.
+
+`tests/golden/` holds what the site's own code gave on 13 November 2026, before it moved onto the shared package, and
+`tests/test_parity.py` and `tests/test_import.py` check the site still gives the same.
 
 ## Known limitations
 

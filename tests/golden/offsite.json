@@ -1,0 +1,205 @@
+[
+ {
+  "check": {
+   "error": "not set up: add LANDLORDS_B2_BUCKET, LANDLORDS_B2_KEY_ID and LANDLORDS_B2_APPLICATION_KEY to deploy/.env",
+   "ok": false
+  },
+  "name": "not set up",
+  "sent": {
+   "offsite": "not set up"
+  }
+ },
+ {
+  "b2": {
+   "fail_uploads": 1
+  },
+  "check": {
+   "backups": 2,
+   "bucket": "wts-backups",
+   "newest": "landlords-state-20261012-045200.sqlite.gz",
+   "ok": true
+  },
+  "days": [
+   "20261010-045200",
+   "20261011-045200",
+   "20261012-045200"
+  ],
+  "in_the_bucket": [
+   "landlords-state-20261011-045200.sqlite.gz",
+   "landlords-state-20261012-045200.sqlite.gz"
+  ],
+  "keep": 2,
+  "name": "three nights, one upload retried, the newest two kept",
+  "recorded": {
+   "bucket": "wts-backups",
+   "deleted": 1,
+   "file": "landlords-state-20261012-045200.sqlite.gz",
+   "ok": true,
+   "stored": 2
+  },
+  "recorded_when": true,
+  "sent": [
+   {
+    "bucket": "wts-backups",
+    "deleted": 0,
+    "file": "landlords-state-20261010-045200.sqlite.gz",
+    "ok": true,
+    "stored": 1
+   },
+   {
+    "bucket": "wts-backups",
+    "deleted": 0,
+    "file": "landlords-state-20261011-045200.sqlite.gz",
+    "ok": true,
+    "stored": 2
+   },
+   {
+    "bucket": "wts-backups",
+    "deleted": 1,
+    "file": "landlords-state-20261012-045200.sqlite.gz",
+    "ok": true,
+    "stored": 2
+   }
+  ]
+ },
+ {
+  "b2": {
+   "can_delete": false
+  },
+  "check": {
+   "backups": 2,
+   "bucket": "wts-backups",
+   "newest": "landlords-state-20261012-045200.sqlite.gz",
+   "ok": true
+  },
+  "days": [
+   "20261011-045200",
+   "20261012-045200"
+  ],
+  "in_the_bucket": [
+   "landlords-state-20261011-045200.sqlite.gz",
+   "landlords-state-20261012-045200.sqlite.gz"
+  ],
+  "keep": 1,
+  "name": "a key without delete rights still stores",
+  "recorded": {
+   "bucket": "wts-backups",
+   "deleted": 0,
+   "file": "landlords-state-20261012-045200.sqlite.gz",
+   "ok": true,
+   "stored": 2
+  },
+  "recorded_when": true,
+  "sent": [
+   {
+    "bucket": "wts-backups",
+    "deleted": 0,
+    "file": "landlords-state-20261011-045200.sqlite.gz",
+    "ok": true,
+    "stored": 1
+   },
+   {
+    "bucket": "wts-backups",
+    "deleted": 0,
+    "file": "landlords-state-20261012-045200.sqlite.gz",
+    "ok": true,
+    "stored": 2
+   }
+  ]
+ },
+ {
+  "b2": {},
+  "check": {
+   "raised": "Backblaze did not accept the key: check LANDLORDS_B2_KEY_ID and LANDLORDS_B2_APPLICATION_KEY"
+  },
+  "days": [
+   "20261012-045200"
+  ],
+  "env": {
+   "LANDLORDS_B2_APPLICATION_KEY": "wrong"
+  },
+  "in_the_bucket": [],
+  "keep": 60,
+  "name": "a key Backblaze does not accept",
+  "recorded": {
+   "error": "Backblaze did not accept the key: check LANDLORDS_B2_KEY_ID and LANDLORDS_B2_APPLICATION_KEY",
+   "ok": false
+  },
+  "recorded_when": true,
+  "sent": [
+   {
+    "raised": "Backblaze did not accept the key: check LANDLORDS_B2_KEY_ID and LANDLORDS_B2_APPLICATION_KEY"
+   }
+  ]
+ },
+ {
+  "b2": {
+   "bucket": "someone-else"
+  },
+  "check": {
+   "raised": "the key is for the bucket 'someone-else', not 'wts-backups'"
+  },
+  "days": [
+   "20261012-045200"
+  ],
+  "in_the_bucket": [],
+  "keep": 60,
+  "name": "a key for another bucket",
+  "recorded": {
+   "error": "the key is for the bucket 'someone-else', not 'wts-backups'",
+   "ok": false
+  },
+  "recorded_when": true,
+  "sent": [
+   {
+    "raised": "the key is for the bucket 'someone-else', not 'wts-backups'"
+   }
+  ]
+ },
+ {
+  "already": [
+   "where-they-stand-2026-10-01.tar.gz"
+  ],
+  "b2": {},
+  "check": {
+   "backups": 1,
+   "bucket": "wts-backups",
+   "newest": "landlords-state-20261012-045200.sqlite.gz",
+   "ok": true
+  },
+  "days": [
+   "20261011-045200",
+   "20261012-045200"
+  ],
+  "in_the_bucket": [
+   "landlords-state-20261012-045200.sqlite.gz",
+   "where-they-stand-2026-10-01.tar.gz"
+  ],
+  "keep": 1,
+  "name": "another site's backups in the same bucket are left alone",
+  "recorded": {
+   "bucket": "wts-backups",
+   "deleted": 1,
+   "file": "landlords-state-20261012-045200.sqlite.gz",
+   "ok": true,
+   "stored": 1
+  },
+  "recorded_when": true,
+  "sent": [
+   {
+    "bucket": "wts-backups",
+    "deleted": 0,
+    "file": "landlords-state-20261011-045200.sqlite.gz",
+    "ok": true,
+    "stored": 1
+   },
+   {
+    "bucket": "wts-backups",
+    "deleted": 1,
+    "file": "landlords-state-20261012-045200.sqlite.gz",
+    "ok": true,
+    "stored": 1
+   }
+  ]
+ }
+]

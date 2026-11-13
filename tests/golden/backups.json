@@ -1,0 +1,179 @@
+{
+ "commands": [
+  {
+   "args": [
+    "backup",
+    "--to",
+    "<tmp>/backups",
+    "--keep",
+    "2"
+   ],
+   "case": "the newest two kept",
+   "exit_code": 0,
+   "left": 2,
+   "output": "Backed up to <tmp>/backups/landlords-state-<now>.sqlite.gz (2 kept)\nOff-site copy: not set up\n"
+  },
+  {
+   "args": [
+    "backup",
+    "--to",
+    "<tmp>/backups",
+    "--keep",
+    "0"
+   ],
+   "case": "keeping none deletes nothing",
+   "exit_code": 0,
+   "left": 2,
+   "output": "Backed up to <tmp>/backups/landlords-state-<now>.sqlite.gz (2 kept)\nOff-site copy: not set up\n"
+  },
+  {
+   "args": [
+    "backup",
+    "--to",
+    "<tmp>/bad-backups"
+   ],
+   "case": "a copy that fails its check",
+   "exit_code": 1,
+   "left": 0,
+   "output": "Backup failed: the backup copy failed its integrity check: *** in database main ***\nPage 9: never used\nPage 10: never used\nPage 11: never used\nPage 12: never used\n"
+  },
+  {
+   "args": [
+    "backup",
+    "--to",
+    "<tmp>/new-backups"
+   ],
+   "case": "a new site",
+   "exit_code": 0,
+   "left": 0,
+   "output": "No state database yet: nothing to back up.\n"
+  },
+  {
+   "args": [
+    "offsite"
+   ],
+   "case": "off-site copies not set up",
+   "exit_code": 0,
+   "output": "{\n  \"ok\": false,\n  \"error\": \"not set up: add LANDLORDS_B2_BUCKET, LANDLORDS_B2_KEY_ID and LANDLORDS_B2_APPLICATION_KEY to deploy/.env\"\n}\n"
+  }
+ ],
+ "damaged": {
+  "error": "the backup copy failed its integrity check: *** in database main ***\nPage 9: never used\nPage 10: never used\nPage 11: never used\nPage 12: never used",
+  "folder": []
+ },
+ "made": [
+  {
+   "folder": [
+    "landlords-state-20261101-045200.sqlite.gz"
+   ],
+   "inside": {
+    "mode": "0o600",
+    "rows": {
+     "approvals": 0,
+     "missed": 0,
+     "reports": 50
+    },
+    "sha256": "f0550f1fb2fdcf2f7a3c8adbaa446015045888bd1e735d7925c01632aaba9061"
+   },
+   "keep": 2,
+   "name": "landlords-state-20261101-045200.sqlite.gz",
+   "stamp": "20261101-045200"
+  },
+  {
+   "folder": [
+    "landlords-state-20261101-045200.sqlite.gz",
+    "landlords-state-20261102-045200.sqlite.gz"
+   ],
+   "inside": {
+    "mode": "0o600",
+    "rows": {
+     "approvals": 0,
+     "missed": 0,
+     "reports": 50
+    },
+    "sha256": "f0550f1fb2fdcf2f7a3c8adbaa446015045888bd1e735d7925c01632aaba9061"
+   },
+   "keep": 2,
+   "name": "landlords-state-20261102-045200.sqlite.gz",
+   "stamp": "20261102-045200"
+  },
+  {
+   "folder": [
+    "landlords-state-20261102-045200.sqlite.gz",
+    "landlords-state-20261102-180000.sqlite.gz"
+   ],
+   "inside": {
+    "mode": "0o600",
+    "rows": {
+     "approvals": 0,
+     "missed": 0,
+     "reports": 50
+    },
+    "sha256": "f0550f1fb2fdcf2f7a3c8adbaa446015045888bd1e735d7925c01632aaba9061"
+   },
+   "keep": 2,
+   "name": "landlords-state-20261102-180000.sqlite.gz",
+   "stamp": "20261102-180000"
+  },
+  {
+   "folder": [
+    "landlords-state-20261102-045200.sqlite.gz",
+    "landlords-state-20261102-180000.sqlite.gz",
+    "landlords-state-20261103-045200.sqlite.gz"
+   ],
+   "inside": {
+    "mode": "0o600",
+    "rows": {
+     "approvals": 0,
+     "missed": 0,
+     "reports": 50
+    },
+    "sha256": "f0550f1fb2fdcf2f7a3c8adbaa446015045888bd1e735d7925c01632aaba9061"
+   },
+   "keep": 0,
+   "name": "landlords-state-20261103-045200.sqlite.gz",
+   "stamp": "20261103-045200"
+  },
+  {
+   "folder": [
+    "landlords-state-20261102-045200.sqlite.gz",
+    "landlords-state-20261102-180000.sqlite.gz",
+    "landlords-state-20261103-045200.sqlite.gz",
+    "landlords-state-20261104-045200.sqlite.gz"
+   ],
+   "inside": {
+    "mode": "0o600",
+    "rows": {
+     "approvals": 0,
+     "missed": 0,
+     "reports": 50
+    },
+    "sha256": "f0550f1fb2fdcf2f7a3c8adbaa446015045888bd1e735d7925c01632aaba9061"
+   },
+   "keep": -1,
+   "name": "landlords-state-20261104-045200.sqlite.gz",
+   "stamp": "20261104-045200"
+  },
+  {
+   "folder": [
+    "landlords-state-20261102-045200.sqlite.gz",
+    "landlords-state-20261102-180000.sqlite.gz",
+    "landlords-state-20261103-045200.sqlite.gz",
+    "landlords-state-20261104-045200.sqlite.gz",
+    "landlords-state-20261105-045200.sqlite.gz"
+   ],
+   "inside": {
+    "mode": "0o600",
+    "rows": {
+     "approvals": 0,
+     "missed": 0,
+     "reports": 50
+    },
+    "sha256": "f0550f1fb2fdcf2f7a3c8adbaa446015045888bd1e735d7925c01632aaba9061"
+   },
+   "keep": 14,
+   "name": "landlords-state-20261105-045200.sqlite.gz",
+   "stamp": "20261105-045200"
+  }
+ ]
+}

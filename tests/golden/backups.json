@@ -17,14 +17,14 @@
    "args": [
     "backup",
     "--to",
-    "<tmp>/backups",
+    "<tmp>/backups-kept",
     "--keep",
     "0"
    ],
    "case": "keeping none deletes nothing",
    "exit_code": 0,
-   "left": 2,
-   "output": "Backed up to <tmp>/backups/landlords-state-<now>.sqlite.gz (2 kept)\nOff-site copy: not set up\n"
+   "left": 4,
+   "output": "Backed up to <tmp>/backups-kept/landlords-state-<now>.sqlite.gz (4 kept)\nOff-site copy: not set up\n"
   },
   {
    "args": [
@@ -175,5 +175,6 @@
    "name": "landlords-state-20261105-045200.sqlite.gz",
    "stamp": "20261105-045200"
   }
- ]
+ ],
+ "sqlite": "3.53.1"
 }

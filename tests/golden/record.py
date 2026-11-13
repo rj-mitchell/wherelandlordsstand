@@ -12,13 +12,9 @@ does not run on the code as it is now: check out the old commit to record again.
 
 from __future__ import annotations
 
-import gzip
-import hashlib
 import json
 import os
-import re
 import sqlite3
-import stat
 import sys
 import tempfile
 import types
@@ -112,100 +108,24 @@ def limiter() -> dict:
 # ---- backups -------------------------------------------------------------------------------------------------------
 
 
-def database(path: Path, damaged: bool = False) -> Path:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    con = sqlite3.connect(path)
-    con.execute("create table reports (id integer primary key, message text)")
-    con.executemany("insert into reports (message) values (?)", [("a mistake " * 20,)] * 50)
-    con.execute("create table missed (day text, query text, count integer)")
-    con.execute("create table approvals (token_hash text primary key)")
-    if damaged:
-        con.execute("create index by_message on reports (message)")
-        con.commit()
-        con.execute("pragma writable_schema = on")
-        con.execute("delete from sqlite_master where name = 'by_message'")
-    con.commit()
-    con.close()
-    return path
-
-
-def inside(archive: Path) -> dict:
-    raw = gzip.decompress(archive.read_bytes())
-    with tempfile.TemporaryDirectory() as tmp:
-        (Path(tmp) / "db").write_bytes(raw)
-        con = sqlite3.connect(Path(tmp) / "db")
-        tables = {name: con.execute(f"select count(*) from {name}").fetchone()[0]  # noqa: S608
-                  for (name,) in con.execute("select name from sqlite_master where type = 'table' order by name")}
-        con.close()
-    return {"sha256": hashlib.sha256(raw).hexdigest(), "rows": tables,
-            "mode": oct(stat.S_IMODE(archive.stat().st_mode))}
-
-
-def names(folder: Path) -> list[str]:
-    return sorted(p.name for p in folder.iterdir()) if folder.exists() else []
-
-
-def run(args: list[str], tmp: Path) -> dict:
-    result = CliRunner().invoke(cli.app, args)
-    output = re.sub(r"landlords-state-\d{8}-\d{6}", "landlords-state-<now>", plain(result.output, tmp))
-    return {"args": [plain(a, tmp) for a in args], "exit_code": result.exit_code, "output": output}
-
-
 def backups(tmp: Path) -> dict:
-    environment(tmp)
-    out: dict = {"made": [], "commands": []}
-    db, dest = database(tmp / "data" / "state.db"), tmp / "backups"
-    for stamp, keep in (("20261101-045200", 2), ("20261102-045200", 2), ("20261102-180000", 2),
-                        ("20261103-045200", 0), ("20261104-045200", -1), ("20261105-045200", 14)):
-        made = cli.make_backup(db, dest, keep=keep, stamp=stamp)
-        out["made"].append({"stamp": stamp, "keep": keep, "name": made.name, "folder": names(dest),
-                            "inside": inside(made)})
-    out["commands"].append({"case": "the newest two kept", **run(["backup", "--to", str(dest), "--keep", "2"], tmp),
-                            "left": len(names(dest))})
-    out["commands"].append({"case": "keeping none deletes nothing",
-                            **run(["backup", "--to", str(dest), "--keep", "0"], tmp), "left": len(names(dest))})
-    try:
-        cli.make_backup(database(tmp / "bad" / "state.db", damaged=True), tmp / "bad-backups", stamp="20261106-045200")
-    except RuntimeError as exc:
-        out["damaged"] = {"error": str(exc), "folder": names(tmp / "bad-backups")}
-    environment(tmp / "bad", **{k: "x" for k in shared.B2_ENV})
-    (tmp / "bad" / "data").mkdir()
-    (tmp / "bad" / "state.db").rename(tmp / "bad" / "data" / "state.db")
-    out["commands"].append({"case": "a copy that fails its check", "left": len(names(tmp / "bad-backups")),
-                            **run(["backup", "--to", str(tmp / "bad-backups")], tmp)})
-    environment(tmp / "new")
-    out["commands"].append({"case": "a new site", **run(["backup", "--to", str(tmp / "new-backups")], tmp),
-                            "left": len(names(tmp / "new-backups"))})
-    out["commands"].append({"case": "off-site copies not set up", **run(["offsite"], tmp)})
-    return out
+    def run(args: list[str]) -> tuple[int, str]:
+        result = CliRunner().invoke(cli.app, args)
+        return result.exit_code, result.output
+
+    def env(data_dir: Path, **more: str) -> None:
+        environment(data_dir.parent, **more)
+
+    return shared.backups_scenario(
+        tmp, run=run, environment=env,
+        make_backup=lambda db, to, keep, stamp: cli.make_backup(db, to, keep=keep, stamp=stamp))
 
 
 def offsite_copies(tmp: Path) -> list[dict]:
-    out = [{"name": "not set up", "sent": offsite.send(tmp / "landlords-state-x.sqlite.gz", env={}),
-            "check": offsite.check(env={})}]
-    for n, case in enumerate(shared.OFFSITE_CASES):
-        folder = tmp / f"offsite-{n}"
-        folder.mkdir()
-        b2 = shared.FakeB2(**case["b2"])
-        b2.files.update({name: b"another site's" for name in case.get("already", [])})
-        env = {**shared.B2_ENV, **case.get("env", {})}
-        sent = []
-        for day in case["days"]:
-            archive = folder / f"landlords-state-{day}.sqlite.gz"
-            archive.write_bytes(f"backup {day}".encode())
-            try:
-                status = offsite.send(archive, keep=case["keep"], env=env, client=shared.b2_client(b2))
-            except offsite.OffsiteError as exc:
-                status = {"raised": str(exc)}
-            sent.append({k: v for k, v in status.items() if k != "when"})
-        recorded = json.loads((folder / "offsite.json").read_text())
-        try:
-            check = offsite.check(env=env, client=shared.b2_client(b2))
-        except offsite.OffsiteError as exc:
-            check = {"raised": str(exc)}
-        out.append({**case, "sent": sent, "recorded": {k: v for k, v in recorded.items() if k != "when"},
-                    "recorded_when": bool(recorded.get("when")), "in_the_bucket": sorted(b2.files), "check": check})
-    return out
+    return shared.offsite_scenario(
+        tmp, error=offsite.OffsiteError,
+        send=lambda archive, keep, env, client: offsite.send(archive, keep=keep, env=env, client=client),
+        check=lambda env, client: offsite.check(env=env, client=client))
 
 
 # ---- reports and statements: what is sent, and what the owner types ----------------------------------------------

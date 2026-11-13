@@ -5,8 +5,14 @@ Backblaze B2, and the scripts themselves. Nothing here imports the site's code, 
 
 from __future__ import annotations
 
+import gzip
 import hashlib
 import json
+import re
+import sqlite3
+import stat
+import tempfile
+from collections.abc import Callable
 from pathlib import Path
 
 import httpx
@@ -102,6 +108,93 @@ LIMITER_SCRIPT = (
     + [[60.2, B]] * 10 + [[120.0, B], [120.3, B], [120.3, B], [200.0, A], [200.0, B]]
 )
 
+# ---- backups -----------------------------------------------------------------------------------------------------
+
+
+def database(path: Path, damaged: bool = False) -> Path:
+    """A state database with fifty reports in it and the site's own two tables. ``damaged``: one whose pages
+    SQLite's integrity check finds fault with (an index dropped from the list of tables, so its pages belong to
+    nothing), though it still opens and copies."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    con = sqlite3.connect(path)
+    con.execute("create table reports (id integer primary key, message text)")
+    con.executemany("insert into reports (message) values (?)", [("a mistake " * 20,)] * 50)
+    con.execute("create table missed (day text, query text, count integer)")
+    con.execute("create table approvals (token_hash text primary key)")
+    if damaged:
+        con.execute("create index by_message on reports (message)")
+        con.commit()
+        con.execute("pragma writable_schema = on")
+        con.execute("delete from sqlite_master where name = 'by_message'")
+    con.commit()
+    con.close()
+    return path
+
+
+def inside(archive: Path) -> dict:
+    """What a backup holds: its tables and how many rows each has, the hash of the database inside it, its mode."""
+    raw = gzip.decompress(archive.read_bytes())
+    with tempfile.TemporaryDirectory() as tmp:
+        (Path(tmp) / "db").write_bytes(raw)
+        con = sqlite3.connect(Path(tmp) / "db")
+        tables = {name: con.execute(f"select count(*) from {name}").fetchone()[0]  # noqa: S608
+                  for (name,) in con.execute("select name from sqlite_master where type = 'table' order by name")}
+        con.close()
+    return {"sha256": hashlib.sha256(raw).hexdigest(), "rows": tables,
+            "mode": oct(stat.S_IMODE(archive.stat().st_mode))}
+
+
+def names(folder: Path) -> list[str]:
+    return sorted(p.name for p in folder.iterdir()) if folder.exists() else []
+
+
+def said(output: str, tmp: Path) -> str:
+    """A command's output with the scenario's folder and the time in a backup's name taken out."""
+    return re.sub(r"landlords-state-\d{8}-\d{6}", "landlords-state-<now>", output.replace(str(tmp), "<tmp>"))
+
+
+BACKUPS_MADE = [("20261101-045200", 2), ("20261102-045200", 2), ("20261102-180000", 2), ("20261103-045200", 0),
+                ("20261104-045200", -1), ("20261105-045200", 14)]
+
+
+def backups_scenario(tmp: Path, *, make_backup: Callable[[Path, Path, int, str], Path],
+                     run: Callable[[list[str]], tuple[int, str]], environment: Callable[..., None]) -> dict:
+    """Backups made one after another with different numbers kept, then the commands. ``make_backup(db, to, keep,
+    stamp)`` makes one named for the time ``stamp``; ``run(args)`` runs the site's command line and gives the exit
+    code and what was printed; ``environment(data_dir, **more)`` sets LANDLORDS_DATA_DIR and nothing else of ours."""
+
+    def command(case: str, args: list[str], left: Path | None = None) -> dict:
+        code, output = run(args)
+        return {"case": case, "args": [a.replace(str(tmp), "<tmp>") for a in args], "exit_code": code,
+                "output": said(output, tmp), **({"left": len(names(left))} if left else {})}
+
+    environment(tmp / "data")
+    out: dict = {"sqlite": sqlite3.sqlite_version, "made": [], "commands": []}
+    db, dest = database(tmp / "data" / "state.db"), tmp / "backups"
+    for stamp, keep in BACKUPS_MADE:
+        made = make_backup(db, dest, keep, stamp)
+        out["made"].append({"stamp": stamp, "keep": keep, "name": made.name, "folder": names(dest),
+                            "inside": inside(made)})
+    out["commands"].append(command("the newest two kept", ["backup", "--to", str(dest), "--keep", "2"], dest))
+    # in a folder of its own: two backups by the command within one second have one name, and are one file
+    for stamp in ("20261101-045200", "20261102-045200", "20261103-045200"):
+        make_backup(db, tmp / "backups-kept", 14, stamp)
+    out["commands"].append(command("keeping none deletes nothing",
+                                   ["backup", "--to", str(tmp / "backups-kept"), "--keep", "0"], tmp / "backups-kept"))
+    try:
+        make_backup(database(tmp / "bad" / "data" / "state.db", damaged=True), tmp / "bad-backups", 14,
+                    "20261106-045200")
+    except RuntimeError as exc:
+        out["damaged"] = {"error": str(exc), "folder": names(tmp / "bad-backups")}
+    environment(tmp / "bad" / "data", **dict.fromkeys(B2_ENV, "x"))
+    out["commands"].append(command("a copy that fails its check", ["backup", "--to", str(tmp / "bad-backups")],
+                                   tmp / "bad-backups"))
+    environment(tmp / "new" / "data")
+    out["commands"].append(command("a new site", ["backup", "--to", str(tmp / "new-backups")], tmp / "new-backups"))
+    out["commands"].append(command("off-site copies not set up", ["offsite"]))
+    return out
+
+
 # ---- off-site copies: a simulated Backblaze B2 ------------------------------------------------------------------
 
 B2_ENV = {"LANDLORDS_B2_BUCKET": "wts-backups", "LANDLORDS_B2_KEY_ID": "kid", "LANDLORDS_B2_APPLICATION_KEY": "secret"}
@@ -158,6 +251,37 @@ OFFSITE_CASES = [
     {"name": "another site's backups in the same bucket are left alone", "b2": {}, "keep": 1,
      "days": ["20261011-045200", "20261012-045200"], "already": ["where-they-stand-2026-10-01.tar.gz"]},
 ]
+
+
+def offsite_scenario(tmp: Path, *, send: Callable[..., dict], check: Callable[..., dict], error: type) -> list[dict]:
+    """Each case's archives sent in turn to a simulated bucket. ``send(archive, keep=, env=, client=)`` sends one and
+    gives the record of it; ``check(env=, client=)`` is what `landlords offsite` prints; both raise ``error``."""
+    out = [{"name": "not set up", "sent": send(tmp / "landlords-state-x.sqlite.gz", keep=60, env={}, client=None),
+            "check": check(env={}, client=None)}]
+    for n, case in enumerate(OFFSITE_CASES):
+        folder = tmp / f"offsite-{n}"
+        folder.mkdir()
+        b2 = FakeB2(**case["b2"])
+        b2.files.update(dict.fromkeys(case.get("already", []), b"another site's"))
+        env = {**B2_ENV, **case.get("env", {})}
+        sent = []
+        for day in case["days"]:
+            archive = folder / f"landlords-state-{day}.sqlite.gz"
+            archive.write_bytes(f"backup {day}".encode())
+            try:
+                status = send(archive, keep=case["keep"], env=env, client=b2_client(b2))
+            except error as exc:
+                status = {"raised": str(exc)}
+            sent.append({k: v for k, v in status.items() if k != "when"})
+        recorded = json.loads((folder / "offsite.json").read_text())
+        try:
+            answer = check(env=env, client=b2_client(b2))
+        except error as exc:
+            answer = {"raised": str(exc)}
+        out.append({**case, "sent": sent, "recorded": {k: v for k, v in recorded.items() if k != "when"},
+                    "recorded_when": bool(recorded.get("when")), "in_the_bucket": sorted(b2.files), "check": answer})
+    return out
+
 
 # ---- what is sent to the API ------------------------------------------------------------------------------------
 # Each step is a request (the clock moves on 61 seconds first, so the limit of ten a minute never bites), until

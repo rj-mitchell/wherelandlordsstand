@@ -67,3 +67,48 @@ def test_ci_calls_the_shared_workflows_at_the_tag_of_the_package_installed():
     version = re.search(r"/download/(v[\d.]+)/", requirement())[1]
     called = re.findall(r"uses: rj-mitchell/wts-core/\S+@(\S+)", (ROOT / ".github" / "workflows" / "ci.yml").read_text())
     assert len(called) == 4 and set(called) == {version}
+
+
+def test_the_site_uses_only_what_the_shared_package_makes_public():
+    """Everything the site (and its tests) takes from wts-core is in the ``__all__`` of the module it comes from: the
+    package may change anything else without notice (wts-core docs/adr/0007)."""
+    import ast
+    import importlib
+
+    def public(module: str, name: str) -> bool:
+        try:
+            importlib.import_module(f"{module}.{name}")          # a module of the package
+            return True
+        except ImportError:
+            return name in importlib.import_module(module).__all__
+
+    checked = 0
+    for path in (*sorted((ROOT / "src").rglob("*.py")), *sorted((ROOT / "tests").rglob("*.py"))):
+        tree = ast.parse(path.read_text())
+        modules: dict[str, str] = {}                                 # a name in this file -> the module it stands for
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and (node.module or "").split(".")[0] == "wts_core":
+                for alias in node.names:
+                    assert public(node.module, alias.name), f"{path.name}: {node.module}.{alias.name} is private"
+                    checked += 1
+                    try:
+                        importlib.import_module(f"{node.module}.{alias.name}")
+                        modules[alias.asname or alias.name] = f"{node.module}.{alias.name}"
+                    except ImportError:
+                        pass
+            elif isinstance(node, ast.Import):
+                assert not any(a.name.split(".")[0] == "wts_core" for a in node.names), f"{path.name}: import wts_core"
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id in modules \
+                    and not _shadowed(tree, node.value.id):
+                assert public(modules[node.value.id], node.attr), f"{path.name}: {modules[node.value.id]}.{node.attr}"
+                checked += 1
+    assert checked > 60
+
+
+def _shadowed(tree, name: str) -> bool:
+    """Whether a file also gives the name to something of its own (a variable called ``replies``, say)."""
+    import ast
+
+    return any(isinstance(n, ast.Name) and n.id == name and isinstance(n.ctx, ast.Store) for n in ast.walk(tree)) \
+        or any(isinstance(n, ast.arg) and n.arg == name for n in ast.walk(tree))

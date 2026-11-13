@@ -183,7 +183,8 @@ def test_the_weekly_update_publishes_the_first_pages_and_asks_for_the_rest(tmp_p
     monkeypatch.setattr(publish, "code_version", lambda: "a-new-version")
     asked = publish.update(s, fetch=False, notify=False)            # a new version of the site, before launch
     assert asked["build"] and asked["approval"] and publish.current(s) == first["build"]   # waits for approval
-    [(build,)] = State(data / "state.db").connect().execute("select build from approvals").fetchall()
+    with State(data / "state.db").connect() as db:
+        [(build,)] = db.execute("select build from approvals").fetchall()
     assert build == asked["build"]
 
     launched = dataclasses.replace(s, raw={**s.raw, "site": {**s.section("site"), "launched": True,

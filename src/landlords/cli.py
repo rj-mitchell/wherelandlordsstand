@@ -197,7 +197,10 @@ def reports(close: int = typer.Option(None, help="close this report (its email a
 
 @app.command()
 def statements(publish: int = typer.Option(None, help="show this statement on the site, once you know who sent it"),
-               checked: str = typer.Option("", help="with --publish: how you confirmed who sent it, for the log"),
+               checked: str = typer.Option("", help="with --publish: how you confirmed who sent it, for the log. The "
+                                                    "note is kept for good, so leave the sender's email address out "
+                                                    "of it: that address is deleted three months after a statement "
+                                                    "is withdrawn or declined"),
                landlord: str = typer.Option("", help="with --publish: the landlord it speaks for (its slug), for a "
                                                      "statement about an area's page"),
                decline: int = typer.Option(None, help="decline this pending statement (give --reason)"),
@@ -247,42 +250,65 @@ def statements(publish: int = typer.Option(None, help="show this statement on th
                           | st.refresh(s)))
 
 
+def make_backup(state_db: Path, to: Path, keep: int = 14, stamp: str | None = None) -> Path:
+    """A checked copy of the state database, compressed into ``to`` as ``landlords-state-YYYYMMDD-HHMMSS.sqlite.gz``
+    and readable by its owner only (readers' reports and statements can hold email addresses). Then all but the newest
+    ``keep`` of this site's copies there are deleted; none when ``keep`` is zero or less.
+
+    Made as the sister sites make theirs (Where Councils Stand, councils/backup.py): the copy and the archive are
+    written in a temporary folder inside ``to``, and the archive is moved to its name only once the copy has passed
+    SQLite's integrity check. So a backup that fails, or is stopped half way, leaves no file that could be taken for a
+    good one. Raises RuntimeError if the copy fails the check."""
+    import gzip
+    import shutil
+    import sqlite3
+    import tempfile
+    from datetime import UTC, datetime
+
+    from landlords.offsite import PREFIX
+
+    to.mkdir(parents=True, exist_ok=True)
+    out = to / f"{PREFIX}{stamp or datetime.now(UTC).strftime('%Y%m%d-%H%M%S')}.sqlite.gz"
+    with tempfile.TemporaryDirectory(dir=to) as tmp:      # its owner only, as the copy inside it must be
+        copy = Path(tmp) / "state.db"
+        src, dst = sqlite3.connect(state_db), sqlite3.connect(copy)
+        try:
+            src.backup(dst)  # a consistent copy, even while the site is writing
+            ok = dst.execute("PRAGMA integrity_check").fetchone()[0]
+        finally:
+            dst.close()
+            src.close()
+        if ok != "ok":
+            raise RuntimeError(f"the backup copy failed its integrity check: {ok}")
+        partial = Path(tmp) / out.name
+        with open(copy, "rb") as fi, gzip.open(partial, "wb") as fo:
+            shutil.copyfileobj(fi, fo)
+        partial.chmod(0o600)
+        partial.replace(out)  # there whole, or not at all
+    for old in sorted(to.glob(f"{PREFIX}*.sqlite.gz"))[:-keep] if keep > 0 else []:
+        old.unlink()
+    return out
+
+
 @app.command()
 def backup(to: Path = typer.Option(..., help="folder for the copies"), keep: int = typer.Option(14)) -> None:
     """Copy the state database (readers' reports, statements, missed searches): the one thing that can't be rebuilt."""
-    import gzip
-    import os
-    import shutil
     import sqlite3
-    from datetime import UTC, datetime
+
+    from landlords.offsite import PREFIX, OffsiteError, send
 
     src = load_settings().data_dir / "state.db"
     if not src.exists():
         typer.echo("No state database yet: nothing to back up.")
         return
-    to.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
-    tmp = to / f"landlords-state-{stamp}.sqlite"
-    # Readers' reports and statements can hold email addresses: the copies are readable by their owner only, as the other
-    # sites' backups are.
-    old_umask = os.umask(0o077)
     try:
-        with sqlite3.connect(src) as a, sqlite3.connect(tmp) as b:
-            a.backup(b)  # a consistent copy, even while the site is writing
-        with open(tmp, "rb") as fi, gzip.open(f"{tmp}.gz", "wb") as fo:
-            shutil.copyfileobj(fi, fo)
-    finally:
-        os.umask(old_umask)
-    os.chmod(f"{tmp}.gz", 0o600)
-    tmp.unlink()
-    copies = sorted(to.glob("landlords-state-*.sqlite.gz"))
-    for old in copies[:-keep]:
-        old.unlink()
-    typer.echo(f"Backed up to {tmp}.gz ({len(copies[-keep:])} kept)")
-    from landlords.offsite import OffsiteError, send
-
+        out = make_backup(src, to, keep)
+    except (RuntimeError, sqlite3.Error) as exc:      # the copy can't be trusted: nothing is kept or sent off-site
+        typer.echo(f"Backup failed: {exc}")
+        raise typer.Exit(1) from exc
+    typer.echo(f"Backed up to {out} ({len(list(to.glob(f'{PREFIX}*.sqlite.gz')))} kept)")
     try:
-        status = send(Path(f"{tmp}.gz"))
+        status = send(out)
     except OffsiteError as exc:
         typer.echo(f"Off-site copy failed: {exc}")
         raise typer.Exit(1) from exc

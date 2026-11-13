@@ -98,6 +98,57 @@ def test_what_is_needed(client, state, field, value, says):
     assert state.statements() == []
 
 
+def test_what_is_too_long_is_refused_never_cut_to_fit(client, state):
+    """A statement is published as written or declined, never edited (the policy, 7.2): so one longer than a limit
+    is refused, with words for the sender, where it used to be cut at the limit and kept."""
+    long = " ".join(["extraordinarily"] * 140)                    # within 150 words, but 2,239 characters
+    r = post(client, text=long)
+    assert r.status_code == 400 and "A statement can be up to 2,000 characters. This one is 2,239." in r.text
+    assert f">{long}</textarea>" in r.text                       # given back whole, to copy and shorten
+    for field, value, says in (
+            ("text", long, "A statement can be up to 2,000 characters. This one is 2,239."),
+            ("name", "N" * 121, "Your name can be up to 120 characters. This one is 121."),
+            ("role", "R" * 201, "Your role can be up to 200 characters. This one is 201."),
+            ("link", "https://example.org/" + "a" * 281, "The link to the record can be up to 300 characters. This "
+                                                         "one is 301."),
+            ("email", "a" * 189 + "@example.org", "Please give an email address, so we can confirm who the statement "
+                                                  "is from.")):
+        r = client.post("/api/statements", json={**FORM, field: value})
+        assert r.status_code == 400 and r.json() == {"ok": False, "error": says}, field
+    assert state.statements() == []
+
+
+def test_what_is_just_within_the_limits_is_kept_as_written(client, state):
+    words = ["a" * 20] + ["b" * 19] * 99                           # 100 words; 2,000 characters with a space between
+    exact = {"name": "N" * 120, "role": "R" * 200, "text": " ".join(words),
+             "link": "https://example.org/" + "a" * 280, "email": "a" * 188 + "@example.org"}
+    assert [len(v) for v in exact.values()] == [120, 200, 2000, 300, 200]
+    assert client.post("/api/statements", json={**FORM, **exact}).status_code == 200
+    # a browser sends each line break as two characters: they are counted as one, as its own limit counts them
+    assert post(client, text="\r\n".join(words)).status_code == 303
+    one, two = state.statements()
+    assert {k: one[k] for k in exact} == exact
+    assert two["text"] == "\n".join(words)
+
+
+def test_more_than_the_form_can_take_is_refused_unread(client, state):
+    r = post(client, text="word " * 5000)                          # 150 words would fit many times over
+    assert r.status_code == 400 and "What you sent is too long. A statement can be up to 150 words." in r.text
+    assert "Back to the form" in r.text and "<textarea" not in r.text
+    r = client.post("/api/statements", json={**FORM, "text": "word " * 5000})
+    assert r.status_code == 400 and r.json() == {"ok": False, "error": "What you sent is too long. A statement can be "
+                                                                       "up to 150 words."}
+    assert state.statements() == []
+
+
+@pytest.mark.parametrize("body", [b"{not json", b'["a", "list"]', b'"words"', b"\xff\xfe"])
+def test_a_json_body_that_cannot_be_read_is_refused_like_any_other(client, state, body):
+    r = client.post("/api/statements", content=body, headers={"content-type": "application/json"})
+    assert r.status_code == 400
+    assert r.json() == {"ok": False, "error": "We couldn't read what was sent. Please send it again."}
+    assert state.statements() == []
+
+
 def test_the_page_can_be_given_in_any_of_the_ways_people_copy_it():
     for address in ("https://wherelandlordsstand.com/landlords/example-housing/",
                     "https://www.wherelandlordsstand.com/landlords/example-housing/index.html",
@@ -134,8 +185,12 @@ def test_the_owner_lists_publishes_updates_and_withdraws(client, state, site, tm
     assert code == 0 and [json.loads(x)["id"] for x in out.splitlines()] == [1, 2]
 
     assert run("--publish", "1")[0] == 1                                # how was the sender confirmed?
-    code, out = run("--publish", "1", "--checked", "reply from jane@example-housing.org.uk")
+    note = "replied from the landlord's own address, 14 Nov"
+    code, out = run("--publish", "1", "--checked", note)
     assert code == 0 and json.loads(out)["status"] == "published"
+    # the note is kept for good (in the log, and in the statement's own row), so it holds no email address: the
+    # sender's is deleted three months after a statement is withdrawn or declined
+    assert state.statement(1)["checked"] == state.statement_log(1)[1][2] == note
     page = (site / "landlords" / "example-housing" / "index.html").read_text()
     assert "Statement from Jane Example, " in page                     # on the site at once
 
@@ -153,6 +208,15 @@ def test_the_owner_lists_publishes_updates_and_withdraws(client, state, site, tm
     assert state.statement(1)["updated_at"]
     words.write_text(" ".join(["word"] * 151))
     assert run("--update", "1", "--text-file", str(words))[0] == 1     # an update keeps to the rules too
+
+    words.write_text(" ".join(["extraordinarily"] * 140))
+    code, out = run("--update", "1", "--text-file", str(words))        # and is never cut to fit either
+    assert code == 1 and "Not done: A statement can be up to 2,000 characters. This one is 2,239." in out
+    assert run("--update", "1", "--name", "N" * 121)[0] == 1
+    assert run("--update", "1", "--role", "R" * 201)[0] == 1
+    assert run("--update", "1", "--link", "https://example.org/" + "a" * 281)[0] == 1
+    assert state.statement(1)["text"] == "Our newer results are published every quarter on our website."
+    assert (state.statement(1)["name"], state.statement(1)["link"]) == (FORM["name"], FORM["link"])
 
     assert run("--withdraw", "1")[0] == 1                              # why?
     assert run("--withdraw", "1", "--reason", "withdrawn by the author")[0] == 0
@@ -323,6 +387,28 @@ def test_report_kinds_and_links_that_choose_one(client, settings):
     assert r.status_code == 303
     client.post("/api/corrections", data={"kind": "takedown", "message": "my name"})
     assert [r[2] for r in State(settings.data_dir / "state.db").open_reports()] == ["takedown", "unfair"]  # first
+
+
+def test_the_hidden_field_robots_fill_in_keeps_no_report(client, settings):
+    """The report form has the statement form's trap: a field people never see or reach, which a robot fills in."""
+    from landlords.site_pages import corrections_html
+
+    html = corrections_html(W)
+    assert ('<div class="hp" aria-hidden="true"><label for="website">Leave this empty</label>'
+            '<input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></div>') in html
+    assert html.index('name="email"') < html.index('name="website"') < html.index('<button type="submit">')
+    assert "<script" not in html.split("<main", 1)[1].split("</main>", 1)[0]
+    (settings.data_dir / "site" / "corrections").mkdir()
+    (settings.data_dir / "site" / "corrections" / "thanks.html").write_text("thanks")
+    report = {"kind": "wrong", "message": "Buy cheap pills", "email": "robot@spam.example"}
+    r = client.post("/api/corrections", data={**report, "website": "https://spam.example"}, follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/corrections/thanks.html"   # thanked like anyone
+    r = client.post("/api/corrections", json={**report, "website": "https://spam.example"})
+    assert r.status_code == 200 and r.json() == {"ok": True}
+    state = State(settings.data_dir / "state.db")
+    assert state.open_reports() == []                                # and nothing kept
+    r = client.post("/api/corrections", data={**report, "website": " "}, follow_redirects=False)
+    assert r.status_code == 303 and len(state.open_reports()) == 1   # left empty, as people leave it: kept
 
 
 def test_the_named_page(settings, client):

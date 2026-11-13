@@ -75,10 +75,18 @@ def clean_text(text: str) -> str:
     return re.sub(r"\n{3,}", "\n\n", text)
 
 
+def not_too_long(what: str, value: str, field: str) -> None:
+    """Refuse what is longer than its limit, with words for the sender. Nothing sent is ever cut to fit: a statement
+    is published as written or declined, never edited (the policy, 7.2)."""
+    if len(value) > LIMITS[field]:
+        raise StatementError(f"{what} can be up to {LIMITS[field]:,} characters. This one is {len(value):,}.")
+
+
 def clean_link(link: str) -> str:
     link = (link or "").strip()
     if not link:
         return ""
+    not_too_long("The link to the record", link, "link")
     parsed = urlparse(link)
     if parsed.scheme not in ("http", "https") or not parsed.netloc or re.search(r"[\s\"'<>]", link):
         raise StatementError("The link to the record should be a full web address, starting https://.")
@@ -109,25 +117,30 @@ def check(name: str, role: str, text: str, email: str | None) -> None:
     """The rules a statement must meet to be kept. ``email`` is None when the owner updates one already kept."""
     if len(name.strip()) < 2:
         raise StatementError("Please give the name the statement is from.")
+    not_too_long("Your name", name.strip(), "name")
     if len(role.strip()) < 2:
         raise StatementError("Please give your role and the landlord you speak for, for example \"Chief executive, "
                              "Example Housing\".")
+    not_too_long("Your role", role.strip(), "role")
     words = word_count(text)
     if words < 3:
         raise StatementError("Please write the statement: a sentence or more.")
     if words > MAX_WORDS:
         raise StatementError(f"A statement can be up to {MAX_WORDS} words. This one is {words}.")
-    if email is not None and not EMAIL.match(email.strip()):
+    not_too_long("A statement", text, "text")
+    if email is not None and (not EMAIL.match(email.strip()) or len(email.strip()) > LIMITS["email"]):
         raise StatementError("Please give an email address, so we can confirm who the statement is from.")
 
 
 def submit(state, data: dict, page_exists: Callable[[str], bool]) -> int:
     """Keep a statement sent through the form as pending. ``data`` is the form's fields; ``page_exists`` says whether
-    a page is on the live site. Raises StatementError if it can't be accepted."""
-    f = {k: str(data.get(k, "") or "").strip()[:n] for k, n in LIMITS.items()}
-    text = clean_text(str(data.get("text", "") or "")[:LIMITS["text"]])
+    a page is on the live site. Raises StatementError if it can't be accepted: a name, role, statement, link or
+    email address longer than its limit (LIMITS) is refused, never cut to fit and kept."""
+    f = {k: str(data.get(k, "") or "").strip() for k in LIMITS}
+    text = clean_text(f["text"])
     check(f["name"], f["role"], text, f["email"])
-    page, part, landlord = item(f["page"], f["part"])
+    # The page's address and the part are only read, to find the page (``item``): what is kept is ours, not theirs
+    page, part, landlord = item(f["page"][:LIMITS["page"]], f["part"][:LIMITS["part"]])
     if not page_exists(page):
         raise StatementError("We couldn't find that page on the site. Please copy its address from your browser.")
     sid = state.add_statement(f["name"], f["role"], page, part, text, clean_link(f["link"]), f["email"], landlord)

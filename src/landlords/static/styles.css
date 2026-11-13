@@ -86,7 +86,7 @@ legend{font:600 .95rem/1.4 var(--sans);padding:0;margin-block-end:.2rem}
 .choice{display:grid;grid-template-columns:auto 1fr;column-gap:.6rem;align-items:start;max-width:44rem;margin:.55rem 0}
 .choice input{inline-size:1.25rem;block-size:1.25rem;margin:.15rem 0 0;accent-color:var(--slate)}
 .choice label{margin:0}.choice .hint{grid-column:2;margin:.1rem 0 0}
-/* the hidden field robots fill in and people never see (the statement form) */
+/* the hidden field robots fill in and people never see (the report form and the statement form) */
 .hp{position:absolute;inset-inline-start:-9999px;inline-size:1px;block-size:1px;overflow:hidden}
 /* the response times, on the corrections page and "If you're named" */
 .times{border-inline-start:3px solid var(--slate);padding-inline-start:.85rem}

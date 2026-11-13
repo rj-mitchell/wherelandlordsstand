@@ -273,6 +273,10 @@ def corrections_html(w: dict) -> str:
             f'maxlength="4000" required></textarea><label for="email">{esc(t["email"])}</label>'
             f'<input id="email" name="email" type="email" maxlength="200" autocomplete="email" '
             f'aria-describedby="email-hint"><p class="hint" id="email-hint">{esc(t["email_hint"])}</p>'
+            # the hidden field ("Leave this empty") is for robots, as on the statement form: a report with it filled
+            # in is thanked and dropped (src/landlords/api.py)
+            f'<div class="hp" aria-hidden="true"><label for="website">{esc(t["honeypot"])}</label>'
+            f'<input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></div>'
             f'<p><button type="submit">{esc(t["send"])}</button></p></form>')
     # The form posts to the site's small API (src/landlords/api.py), which serves every page, so it always works for
     # readers. Opened as plain files, without `landlords serve`, it can't send (docs/OPERATIONS.md).

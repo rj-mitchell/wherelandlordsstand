@@ -220,6 +220,8 @@ page_hint = "Copy its address from your browser, or say which landlord or area i
 message = "What is wrong?"
 email = "Your email (optional)"
 email_hint = "Only if you want a reply. We delete it when we close your report."
+# The label of a field people never see, for robots to fill in, as on the statement form ([statement] honeypot)
+honeypot = "Leave this empty"
 send = "Send"
 log_heading = "Mistakes we have fixed"
 log_empty = "None yet."

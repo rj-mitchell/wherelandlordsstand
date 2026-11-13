@@ -94,8 +94,10 @@ Commands are run in `/opt/wherelandlordsstand/deploy`. Any `landlords` command r
 * **Backups:** everything but the state database (readers' reports, statements, missed searches, approval links) can be rebuilt
   from the raw files. That database is copied every night (`landlords-backup.timer`) to
   `/opt/wherelandlordsstand/deploy/backups`, the last 14 kept, and to the charity's B2 bucket under this site's own
-  names (each site deletes only its own old copies). To set up the off-site copy, once, copy the bucket and key from
-  Where MPs Stand's settings and check them:
+  names (each site deletes only its own old copies). Each copy is checked before it is kept (SQLite's integrity
+  check, as the sister sites' backups are): if it fails, the command says `Backup failed: ...` and exits 1, so the
+  alert email is sent, and nothing is kept, deleted or sent off-site. To set up the off-site copy, once, copy the
+  bucket and key from Where MPs Stand's settings and check them:
   ```bash
   cd /opt/wherelandlordsstand/deploy
   for k in BUCKET KEY_ID APPLICATION_KEY; do v=$(grep "^HANSARD_B2_$k=" /opt/hansardgpt/deploy/.env | cut -d= -f2-); \

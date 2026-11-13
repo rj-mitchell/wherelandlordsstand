@@ -59,3 +59,11 @@ def test_the_site_runs_without_them():
     loaded = set(eval(subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True).stdout))
     assert "wts_core" in loaded
     assert not AI_LIBRARIES & loaded
+
+
+def test_ci_calls_the_shared_workflows_at_the_tag_of_the_package_installed():
+    """One number to raise: the release of wts-core in pyproject.toml is the tag every shared workflow and action is
+    called at in .github/workflows/ci.yml (wts-core docs/adr/0010)."""
+    version = re.search(r"/download/(v[\d.]+)/", requirement())[1]
+    called = re.findall(r"uses: rj-mitchell/wts-core/\S+@(\S+)", (ROOT / ".github" / "workflows" / "ci.yml").read_text())
+    assert len(called) == 4 and set(called) == {version}

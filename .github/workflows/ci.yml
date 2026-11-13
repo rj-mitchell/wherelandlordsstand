@@ -6,20 +6,20 @@ on:
   pull_request:
   workflow_dispatch:
 
+# The jobs that are the same on every Where They Stand site are the family's shared workflows, in the repository of
+# the shared package (wts-core), called at the same tag as the package this site installs (pyproject.toml): one
+# number to raise, and CI can't change under the site (wts-core docs/adr/0010). What is this site's own stays here:
+# how its pages are built from the publishers' files, and the tests on them.
+
+permissions:
+  contents: read
+
 jobs:
-  # Lint and the tests that need no data. The tests on the real data (tests/test_data.py: the 100 KB page budget, no
-  # scripts on landlords' pages, the family binding, reconciliation) skip themselves here; the next job runs them.
+  # Lint and the tests that need no data, with the family's toolchain (Python 3.12, uv 0.11.32): uv sync --frozen,
+  # ruff check ., pytest. The tests on the real data (tests/test_data.py: the 100 KB page budget, no scripts on
+  # landlords' pages, the family binding, reconciliation) skip themselves here; the next job runs them.
   tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-        with:
-          version: "0.11.32"
-      - run: uv python install 3.12
-      - run: uv sync --frozen --python 3.12
-      - run: uv run ruff check .
-      - run: uv run pytest
+    uses: rj-mitchell/wts-core/.github/workflows/python.yml@v0.1.0
 
   # The real pages, built from the publishers' files, then the tests on them and the accessibility check. The files are
   # kept in the Actions cache and fetched again only when config/sources.toml changes, so the publishers' servers are
@@ -28,10 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-        with:
-          version: "0.11.32"
-      - run: uv python install 3.12
+      - uses: rj-mitchell/wts-core/.github/actions/setup@v0.1.0
       - run: uv sync --frozen --python 3.12
       - name: The publishers' files, from the cache
         id: raw
@@ -51,17 +48,12 @@ jobs:
         run: |
           uv run landlords serve --port 8000 > serve.log 2>&1 &
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8000/api/health && break; sleep 1; done
-      - uses: actions/setup-node@v4
+      # axe, WCAG 2.2 AA, light and dark, desktop and phone: scripts/a11y.mjs, with Node 22, Playwright and axe at the
+      # family's versions
+      - name: Accessibility check
+        uses: rj-mitchell/wts-core/.github/actions/a11y@v0.1.0
         with:
-          node-version: "22"
-      - name: Accessibility check (axe, WCAG 2.2 AA, light and dark, desktop and phone)
-        run: |
-          mkdir -p /tmp/a11y && cp scripts/a11y.mjs /tmp/a11y/
-          cd /tmp/a11y
-          npm init -y > /dev/null
-          npm install --no-audit --no-fund playwright@1.63.0 axe-core@4.14.0
-          npx playwright install --with-deps chromium
-          node a11y.mjs http://127.0.0.1:8000
+          url: http://127.0.0.1:8000
       - name: Show the server's log if anything failed
         if: failure()
         run: cat serve.log || true
@@ -71,17 +63,10 @@ jobs:
         if: always()
         run: pkill -f "landlords serve" || true
 
-  # The server's image must build, and its command must run inside it.
+  # The server's image must build, and its command must run inside it. The image has no git: the shared package is
+  # installed from the wheel of its release (pyproject.toml), which this job proves on every pull request.
   docker:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          load: true
-          tags: wherelandlordsstand:ci
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-      - run: docker run --rm wherelandlordsstand:ci landlords --help
+    uses: rj-mitchell/wts-core/.github/workflows/docker.yml@v0.1.0
+    with:
+      tag: wherelandlordsstand:ci
+      run: landlords --help

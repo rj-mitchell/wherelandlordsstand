@@ -217,3 +217,28 @@ def test_backup_check_says_when_backups_or_their_copies_have_stopped(settings, t
     assert (result.exit_code, result.output) == (1, (
         f"error: The last backup was made over two days ago ({archive.name}).\n"
         "error: The last off-site copy failed (2026-11-01T04:52): no network\n"))
+
+
+def test_the_servers_timers_run_commands_the_site_has_and_update_sh_installs_them():
+    """deploy/*.service: each `landlords …` a unit runs is a command of the site's, with the options it is given; and
+    deploy/update.sh copies and enables every unit and timer there is."""
+    import re
+    from pathlib import Path
+
+    import typer.main
+
+    deploy = Path(__file__).parents[1] / "deploy"
+    commands = typer.main.get_command(app).commands
+    ran = []
+    for unit in sorted(deploy.glob("landlords-*.service")):
+        for line in re.findall(r"^ExecStart(?:Post)?=.* app landlords (.+)$", unit.read_text(), re.M):
+            name, *args = line.split()
+            options = {opt for p in commands[name].params for opt in p.opts}
+            assert {a for a in args if a.startswith("--")} <= options, (unit.name, line)
+            ran.append(name)
+    assert ran == ["backup-check", "backup", "nightly"]      # the weekly update runs through deploy/run-update.sh
+    assert "app landlords update" in (deploy / "run-update.sh").read_text() and "update" in commands
+    update = (deploy / "update.sh").read_text()
+    for unit in (*deploy.glob("landlords-*.service"), *deploy.glob("landlords-*.timer")):
+        assert unit.name in update, unit.name
+    assert update.count(".timer") == 2 * len(list(deploy.glob("landlords-*.timer"))) + 1   # copied, enabled; one shown

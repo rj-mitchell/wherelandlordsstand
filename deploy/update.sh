@@ -20,9 +20,10 @@ cd "$DIR/deploy"
 [[ -f .env ]] || { echo "No settings yet: cp .env.example .env, and run this again (docs/DEPLOY.md)."; exit 1; }
 
 echo "==> Refreshing the update and backup timers"
-cp landlords-update.service landlords-update.timer landlords-backup.service landlords-backup.timer /etc/systemd/system/
+cp landlords-update.service landlords-update.timer landlords-backup.service landlords-backup.timer \
+  landlords-backup-check.service landlords-backup-check.timer /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable --now landlords-update.timer landlords-backup.timer >/dev/null
+systemctl enable --now landlords-update.timer landlords-backup.timer landlords-backup-check.timer >/dev/null
 
 echo "==> Rebuilding the site"
 mkdir -p backups

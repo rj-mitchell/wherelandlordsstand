@@ -13,20 +13,36 @@
     landlords update                    # weekly: fetch, load, check, score, build into data/builds/; email to approve
     landlords email-test                # a test email, through the outbox like the weekly one
     landlords publish                   # by hand: make the newest build live; `landlords rollback` undoes it
-    landlords reports / missed          # readers' reports of mistakes; searches that found nothing
-    landlords statements                # statements from landlords waiting; --publish, --decline, --update, --withdraw
+    landlords reports list / missed     # readers' reports of mistakes; searches that found nothing
+    landlords reports close 3 --outcome resolved --note "fixed alias"
+    landlords statements list           # statements from landlords waiting; then publish, decline, update, withdraw,
+                                        # remove, show or log, each with the statement's number
+    landlords waiting                   # how many reports and statements are waiting, and for how long
+    landlords backup --to FOLDER        # copy the state database; `restore` puts a copy back; `backup-check`; `offsite`
+    landlords nightly                   # the nightly housekeeping: email addresses deleted when their time is up
     landlords sister-councils           # which councils Where Councils Stand covers, for the links to it
+
+The commands for reports, statements and backups are the Where They Stand sites' shared ones (wts-core,
+``wts_core.cli``), under this site's names and printing this site's lines. `landlords statements --publish 3` and
+`landlords reports --close 3 --outcome "..."`, the shape these had before, still work for now.
 """
 
 from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Mapping
 from pathlib import Path
+from typing import Any
 
 import typer
+from wts_core import cli as shared
+from wts_core.ops import AlertWording
+from wts_core.ports import SYSTEM_CLOCK
+from wts_core.replies import REPORT_OUTCOMES, NotDone, Refused, Replies, word_count
 
-from landlords.config import load_settings
+from landlords.config import SITE, load_settings
+from landlords.state import BACKUPS, BACKUPS_KEPT_DAYS
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 
@@ -181,154 +197,286 @@ def rollback() -> None:
     typer.echo(json.dumps(publish.rollback(load_settings())))
 
 
-@app.command()
-def reports(close: int = typer.Option(None, help="close this report (its email address is deleted)"),
-            outcome: str = typer.Option("", help="what was done, when closing")) -> None:
-    """Readers' reports of mistakes that are still open."""
-    from landlords.api import State
+# ---- Readers' reports and statements from landlords (src/landlords/replies.py) -------------------------------------
+# The shared package's commands, under this site's names, printing this site's lines: one JSON object a line.
 
-    state = State(load_settings().data_dir / "state.db")
-    if close is not None:
-        typer.echo(json.dumps({"closed": state.close_report(close, outcome)}))
+
+CLOCK = SYSTEM_CLOCK        # the time the owner's commands record; a test stands another in its place
+
+
+def _replies() -> Replies:
+    from landlords.replies import open_replies
+
+    return open_replies(load_settings(), clock=CLOCK)
+
+
+def _report_line(r: Mapping[str, Any]) -> list[str]:
+    row = {"id": r["id"], "at": r["at"], "kind": r["kind"], "page": r["page"] or "", "message": r["message"],
+           "email": r["contact"]}
+    if r["closed_at"]:        # only `reports list --all` and `reports show` meet a closed one
+        row |= {"closed_at": r["closed_at"], "outcome": r["status"], "note": r["resolution"],
+                "public_note": r["public_note"]}
+    return [json.dumps(row)]
+
+
+def _statement_row(s: Mapping[str, Any]) -> dict[str, Any]:
+    """A statement under this site's own names for its fields: the page it is about, the landlord it speaks for, and
+    how its sender was confirmed (the note of its publishing, which is kept in its log)."""
+    checked = next((e["note"] for e in s["log"] if e["action"] == "published" and e["note"]), None)
+    return {"id": s["id"], "at": s["at"], "name": s["name"], "role": s["role"], "page": s["item"], "part": s["part"],
+            "text": s["text"], "link": s["link"], "email": s["email"], "status": s["status"], "landlord": s["about"],
+            "checked": checked, "reason": s["reason"], "published_at": s["published_at"],
+            "updated_at": s["updated_at"], "closed_at": s["closed_at"]}
+
+
+def _statement_line(s: Mapping[str, Any]) -> list[str]:
+    return [json.dumps(_statement_row(s) | {"words": s["words"]})]
+
+
+def _done_line(s: Mapping[str, Any]) -> str:
+    row = _statement_row(s)
+    return json.dumps({k: row[k] for k in ("id", "status", "name", "page", "part", "landlord", "email")}
+                      | {"pages_changed": s["pages_changed"], "shown": s["shown"]})
+
+
+def _log_line(e: Mapping[str, Any]) -> list[str]:
+    return [json.dumps({"at": e["at"], "action": e["action"], "note": e["note"]}
+                       | ({"previous": e["previous"]} if e.get("previous") else {}))]
+
+
+def _written_again(statement: Mapping[str, Any]) -> dict:
+    """After each change to a statement: the published ones written again into the live pages and every kept build,
+    so the change is on the site at once."""
+    from landlords import statements
+
+    return statements.refresh(load_settings())
+
+
+def _landlord(slug: str) -> str:
+    from landlords.replies import landlord
+
+    return landlord(load_settings(), slug)
+
+
+REPLIES_WORDING = shared.RepliesWording(
+    report=_report_line, statement=_statement_line, log_entry=_log_line,
+    published=_done_line, declined=_done_line, updated=_done_line, withdrawn=_done_line, removed=_done_line,
+    closed=lambda r: json.dumps({"closed": True}),
+    waiting=lambda w: json.dumps(dict(w)),
+    # this site hides nothing yet (no `hide` command: see _commands), but the package asks for every line
+    hidden_item=lambda h: [json.dumps(dict(h))], hid=lambda h: json.dumps({"hidden": h["item"]}),
+    unhid=lambda h: json.dumps({"shown": h["item"]}),
+    not_done="Not done: {message}", refused="Not done: {message}", errors_to_stderr=False)
+
+_NO_COMMAND = dict.fromkeys(
+    ("reports_list", "reports_show", "reports_close", "statements_list", "statements_show", "statements_publish",
+     "statements_decline", "statements_update", "statements_withdraw", "statements_remove", "statements_log", "hide",
+     "unhide", "hidden", "waiting"))
+_HELP = {
+    "reports_list": "Readers' reports that are still open, requests to remove a person's details first.",
+    "reports_close": "Close a report. The reporter's email address is deleted.",
+    "reports_close.note": "what was found and done (kept privately)",
+    "reports_close.public_note": "a note that may be made public. It is kept, but this site's list of fixes "
+                                 "(\"Mistakes we have fixed\") is still data_static/corrections.csv: add a row there too",
+    "statements_list": "Statements waiting for a decision, with the address to confirm who sent each.",
+    "statements_publish": "Show a waiting statement on the site, as written, once you know who sent it. It goes on "
+                          "the live pages at once.",
+    "statements_publish.checked": "how you confirmed who sent it, for the log. The note is kept for good, so leave "
+                                  "the sender's email address out of it: that address is deleted three months after "
+                                  "a statement is withdrawn, declined or removed",
+    "statements_publish.about": "the landlord it speaks for (its slug), for a statement about an area's page",
+    "statements_withdraw": "Take a statement down, or stop one waiting, because its author asked. Say so with "
+                           "--reason, for the log.",
+    "statements_remove": "Take a published statement down because it breaks the rules (give --reason).",
+}
+
+
+def _commands(**names: str) -> shared.RepliesCommands:
+    """The shared package's commands that go in one place, each under the name given; the rest are left out there.
+    `hide`, `unhide` and `hidden` are left out everywhere: the pages are built ahead of time and none of them can
+    yet show a note in an item's place, so the commands would hide nothing."""
+    return shared.RepliesCommands(listed=("pending",), about_option="--landlord", withdraw_note_required=True,
+                                  help=_HELP, **{**_NO_COMMAND, **names})
+
+
+def _add(to: typer.Typer, **names: str) -> None:
+    to.add_typer(shared.replies_commands(_replies, _commands(**names), REPLIES_WORDING, about=_landlord,
+                                         changed=_written_again))
+
+
+reports_app = typer.Typer(help="Readers' reports of mistakes: list, show and close them. With no command, those still "
+                               "open.")
+statements_app = typer.Typer(help="Statements from landlords in their own words (the right of reply): list, show, "
+                                  "publish, decline, update, withdraw and remove them, and read a statement's log. "
+                                  "With no command, those waiting for a decision.")
+_add(reports_app, reports_list="list", reports_show="show", reports_close="close")
+_add(statements_app, statements_list="list", statements_show="show", statements_publish="publish",
+     statements_decline="decline", statements_update="update", statements_withdraw="withdraw",
+     statements_remove="remove", statements_log="log")
+_add(app, waiting="waiting")
+app.add_typer(reports_app, name="reports")
+app.add_typer(statements_app, name="statements")
+
+# The shape these two commands had before the shared package: one command, with an option for each action
+# (`landlords statements --publish 3 --checked "..."`, `landlords reports --close 2 --outcome "fixed alias"`). It
+# still works for now, so that nothing the owner types from habit, or has written down, fails. The commands above
+# (`landlords statements publish 3 --checked "..."`) are the way from here on, and the only one the docs give.
+_OLD = "The old way of typing `landlords {new}`, kept for now"
+
+
+def _not_done(exc: Exception) -> typer.Exit:
+    typer.echo(f"Not done: {exc}")
+    return typer.Exit(1)
+
+
+@reports_app.callback(invoke_without_command=True)
+def reports(ctx: typer.Context,
+            close: int = typer.Option(None, help=_OLD.format(new="reports close N --outcome resolved --note \"...\"")),
+            outcome: str = typer.Option("", help="with --close: what was done (kept privately as the note)")) -> None:
+    if ctx.invoked_subcommand is not None:
         return
-    for r in state.open_reports():
-        typer.echo(json.dumps(dict(zip(("id", "at", "kind", "page", "message", "email"), r, strict=True))))
+    desk = _replies()
+    if close is None:
+        for row in desk.reports():
+            typer.echo(_report_line(row)[0])
+        return
+    said = outcome.strip()
+    try:        # the old --outcome was free text: it is kept as the private note, and the report recorded as resolved
+        if said.lower() in REPORT_OUTCOMES:
+            desk.close(close, outcome=said.lower())
+        else:
+            desk.close(close, outcome="resolved", note=said)
+    except NotDone as exc:
+        raise _not_done(exc) from exc
+    typer.echo(json.dumps({"closed": True}))
 
 
-@app.command()
-def statements(publish: int = typer.Option(None, help="show this statement on the site, once you know who sent it"),
-               checked: str = typer.Option("", help="with --publish: how you confirmed who sent it, for the log. The "
-                                                    "note is kept for good, so leave the sender's email address out "
-                                                    "of it: that address is deleted three months after a statement "
-                                                    "is withdrawn or declined"),
+@statements_app.callback(invoke_without_command=True)
+def statements(ctx: typer.Context,
+               publish: int = typer.Option(None, help=_OLD.format(new="statements publish N --checked \"...\"")),
+               checked: str = typer.Option("", help="with --publish: how you confirmed who sent it, for the log. Leave "
+                                                    "the sender's email address out of it"),
                landlord: str = typer.Option("", help="with --publish: the landlord it speaks for (its slug), for a "
                                                      "statement about an area's page"),
-               decline: int = typer.Option(None, help="decline this pending statement (give --reason)"),
-               update: int = typer.Option(None, help="replace this statement's words (--text-file), name, role or link "
-                                                     "with the author's new version"),
+               decline: int = typer.Option(None, help=_OLD.format(new="statements decline N --reason \"...\"")),
+               update: int = typer.Option(None, help=_OLD.format(new="statements update N --text-file FILE")),
                text_file: Path = typer.Option(None, help="with --update: a file holding the new words"),
                name: str = typer.Option(None, help="with --update: the new name"),
                role: str = typer.Option(None, help="with --update: the new role"),
                link: str = typer.Option(None, help="with --update: the new link to the record (\"\" for none)"),
-               withdraw: int = typer.Option(None, help="take this statement down (give --reason)"),
-               reason: str = typer.Option("", help="why it was declined or taken down (the sender is told), or what "
-                                                   "an update took out"),
-               show_all: bool = typer.Option(False, "--all", help="list every statement, not only those waiting"),
-               log: int = typer.Option(None, help="what was done to this statement, and why")) -> None:
-    """Statements from landlords in their own words (the right of reply; src/landlords/statements.py). With no options,
-    those waiting for a decision. Publishing, declining, updating or withdrawing one writes the live pages again at
-    once, and deletes the email addresses of statements withdrawn or declined three months ago."""
-    from landlords import statements as st
-    from landlords.api import State, site_dir
+               withdraw: int = typer.Option(None, help=_OLD.format(new="statements withdraw N --reason \"...\"")),
+               reason: str = typer.Option("", help="with --decline, --withdraw or --update: why"),
+               show_all: bool = typer.Option(False, "--all", help=_OLD.format(new="statements list --all")),
+               log: int = typer.Option(None, help=_OLD.format(new="statements log N"))) -> None:
+    if ctx.invoked_subcommand is not None:
+        return
+    desk = _replies()
 
-    s = load_settings()
-    state = State(s.data_dir / "state.db")
-    st.forget_old_emails(state)
+    def whole(row: Mapping[str, Any]) -> dict[str, Any]:
+        return {**row, "words": word_count(row["text"]), "log": desk.log(row["id"])}
+
     if log is not None:
-        for at, action, note in state.statement_log(log):
-            typer.echo(json.dumps({"at": at, "action": action, "note": note}))
+        for entry in desk.log(log):
+            typer.echo(_log_line(entry)[0])
         return
     try:
         if publish is not None:
-            exists = lambda slug: (site_dir(s) / "landlords" / slug / "index.html").is_file()  # noqa: E731
-            done = st.publish(state, publish, checked, landlord or None, exists)
+            try:
+                about = _landlord(landlord) if landlord.strip() else None
+            except ValueError as exc:
+                raise NotDone(str(exc)) from exc
+            desk.publish(publish, checked=checked, about=about)
+            sid = publish
         elif decline is not None:
-            done = st.decline(state, decline, reason)
+            desk.decline(decline, reason)
+            sid = decline
         elif update is not None:
             text = text_file.read_text(encoding="utf-8") if text_file else None
-            done = st.update(state, update, reason, text=text, name=name, role=role, link=link)
+            desk.update(update, text=text, name=name, role=role, link=link, note=reason)
+            sid = update
         elif withdraw is not None:
-            done = st.withdraw(state, withdraw, reason)
+            if not reason.strip():
+                raise NotDone("say why it is withdrawn (--reason), for the log")
+            desk.withdraw(withdraw, reason)
+            sid = withdraw
         else:
-            for row in state.statements(None if show_all else "pending"):
-                typer.echo(json.dumps(row | {"words": st.word_count(row["text"])}))
+            for row in desk.statements(None if show_all else "pending"):
+                typer.echo(_statement_line(whole(row))[0])
             return
-    except st.StatementError as exc:
-        typer.echo(f"Not done: {exc}")
-        raise typer.Exit(1) from exc
-    typer.echo(json.dumps({k: done[k] for k in ("id", "status", "name", "page", "part", "landlord", "email")}
-                          | st.refresh(s)))
-
-
-def make_backup(state_db: Path, to: Path, keep: int = 14, stamp: str | None = None) -> Path:
-    """A checked copy of the state database, compressed into ``to`` as ``landlords-state-YYYYMMDD-HHMMSS.sqlite.gz``
-    and readable by its owner only (readers' reports and statements can hold email addresses). Then all but the newest
-    ``keep`` of this site's copies there are deleted; none when ``keep`` is zero or less.
-
-    Made as the sister sites make theirs (Where Councils Stand, councils/backup.py): the copy and the archive are
-    written in a temporary folder inside ``to``, and the archive is moved to its name only once the copy has passed
-    SQLite's integrity check. So a backup that fails, or is stopped half way, leaves no file that could be taken for a
-    good one. Raises RuntimeError if the copy fails the check."""
-    import gzip
-    import shutil
-    import sqlite3
-    import tempfile
-    from datetime import UTC, datetime
-
-    from landlords.offsite import PREFIX
-
-    to.mkdir(parents=True, exist_ok=True)
-    out = to / f"{PREFIX}{stamp or datetime.now(UTC).strftime('%Y%m%d-%H%M%S')}.sqlite.gz"
-    with tempfile.TemporaryDirectory(dir=to) as tmp:      # its owner only, as the copy inside it must be
-        copy = Path(tmp) / "state.db"
-        src, dst = sqlite3.connect(state_db), sqlite3.connect(copy)
-        try:
-            src.backup(dst)  # a consistent copy, even while the site is writing
-            ok = dst.execute("PRAGMA integrity_check").fetchone()[0]
-        finally:
-            dst.close()
-            src.close()
-        if ok != "ok":
-            raise RuntimeError(f"the backup copy failed its integrity check: {ok}")
-        partial = Path(tmp) / out.name
-        with open(copy, "rb") as fi, gzip.open(partial, "wb") as fo:
-            shutil.copyfileobj(fi, fo)
-        partial.chmod(0o600)
-        partial.replace(out)  # there whole, or not at all
-    for old in sorted(to.glob(f"{PREFIX}*.sqlite.gz"))[:-keep] if keep > 0 else []:
-        old.unlink()
-    return out
+    except (NotDone, Refused) as exc:
+        raise _not_done(exc) from exc
+    done = whole(desk.statement(sid))
+    typer.echo(_done_line(done | _written_again(done)))
 
 
 @app.command()
-def backup(to: Path = typer.Option(..., help="folder for the copies"), keep: int = typer.Option(14)) -> None:
-    """Copy the state database (readers' reports, statements, missed searches): the one thing that can't be rebuilt."""
-    import sqlite3
+def nightly() -> None:
+    """The nightly housekeeping, run after the backup (deploy/landlords-backup.service): email addresses deleted
+    when their time is up, and the copy of the database made before it moved onto the shared package deleted once
+    it is older than the backups are kept."""
+    from landlords import statements as pages
+    from landlords.state import open_state
 
-    from landlords.offsite import PREFIX, OffsiteError, send
-
-    src = load_settings().data_dir / "state.db"
-    if not src.exists():
-        typer.echo("No state database yet: nothing to back up.")
+    settings = load_settings()
+    if not settings.state_db.exists():
+        typer.echo("No state database yet: nothing to tidy.")
         return
-    try:
-        out = make_backup(src, to, keep)
-    except (RuntimeError, sqlite3.Error) as exc:      # the copy can't be trusted: nothing is kept or sent off-site
-        typer.echo(f"Backup failed: {exc}")
-        raise typer.Exit(1) from exc
-    typer.echo(f"Backed up to {out} ({len(list(to.glob(f'{PREFIX}*.sqlite.gz')))} kept)")
-    try:
-        status = send(out)
-    except OffsiteError as exc:
-        typer.echo(f"Off-site copy failed: {exc}")
-        raise typer.Exit(1) from exc
-    typer.echo(f"Off-site copy: {status.get('offsite') or 'stored in ' + status['bucket']}")
+    db = open_state(settings)
+    desk = _replies()
+    lapsed, contacts = desk.lapse_undecided()
+    out = {"emails_deleted": desk.forget_old_emails(), "statements_lapsed": lapsed, "report_emails_deleted": contacts,
+           "old_copies_deleted": [p.name for p in db.forget_old_copies(BACKUPS_KEPT_DAYS)]}
+    desk.forget_old_counts()
+    typer.echo(json.dumps(out | pages.refresh(settings)))
 
 
-@app.command()
-def offsite() -> None:
-    """Check the off-site backup bucket: whether the key works, and how many of this site's backups are there."""
-    from landlords.offsite import check
+# ---- Backups of the state database (src/landlords/state.py, BACKUPS) ---------------------------------------------
+# The shared package's commands, printing this site's lines.
 
-    typer.echo(json.dumps(check(), indent=2))
+_BACKUP_ALERTS = AlertWording(
+    no_backups="No backups have been made yet.",
+    backup_stale="The last backup was made over two days ago ({name}).",
+    server_only="Backups are kept on this server only: no off-site copy is set up.",
+    no_offsite_yet="No off-site copy has been made yet; one is made with the next backup.",
+    offsite_failed="The last off-site copy failed ({when}): {error}",
+    offsite_stale="The last off-site copy was over two days ago ({day}).")
+
+OPS_WORDING = shared.OpsWording(
+    backup=shared.BackupWords(
+        folder=None, keep=BACKUPS.keep, nothing_to_back_up="No state database yet: nothing to back up.",
+        backed_up="Backed up to {archive} ({kept} kept)", failed="Backup failed: {error}",
+        offsite_stored="Off-site copy: stored in {bucket}", offsite_not_set_up="Off-site copy: not set up",
+        offsite_failed="Off-site copy failed: {error}",
+        help="Copy the state database (readers' reports, statements, missed searches): the one thing that can't be "
+             "rebuilt.",
+        to_help="folder for the copies"),
+    restore=shared.RestoreWords(
+        archive_must_exist=False, says_aborted=False,
+        confirm="Replace {state_db} with {archive}? Stop the site first.",
+        restored="Restored {state_db} from {archive}", replaced="; the database it replaced is kept as {kept}",
+        not_restored="Not restored: {error}",
+        help="Put a backup of the state database back. Stop the site first. The copy is checked before anything is "
+             "replaced, and the database it replaces is kept beside it.",
+        archive_help="a backup: /backups/landlords-state-YYYYMMDD-HHMMSS.sqlite.gz", yes_help="don't ask first"),
+    backup_check=shared.BackupCheckWords(
+        folder="/backups", no_folder="error: there is no backup folder at {folder}", alert="{level}: {text}",
+        up_to_date="Backups are up to date.", alerts=_BACKUP_ALERTS,
+        help="Say whether the nightly backup and its off-site copy have stopped. Exits 1 if the last backup or copy "
+             "is over two days old, or the last copy failed.",
+        folder_help="the folder the backups are written to"),
+    errors_to_stderr=False,
+    offsite_help="Check the off-site backup bucket: whether the key works, and how many of this site's backups are "
+                 "there.")
+
+app.add_typer(shared.ops_commands(SITE, load_settings, BACKUPS, OPS_WORDING))    # backup, restore, backup-check, offsite
 
 
 @app.command()
 def missed(days: int = typer.Option(28)) -> None:
     """Searches that found nothing, most frequent first: names to consider adding as aliases."""
-    from landlords.api import State
+    from landlords.state import own
 
-    for q, n in State(load_settings().data_dir / "state.db").top_missed(days):
+    for q, n in own(load_settings()).top_missed(days):
         typer.echo(f"{n}\t{q}")
 
 

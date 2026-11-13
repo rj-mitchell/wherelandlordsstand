@@ -7,8 +7,8 @@ import re
 import pytest
 
 from landlords import publish, site, status
-from landlords.api import State
 from landlords.config import load_toml
+from landlords.state import own
 
 
 def _text(html: str) -> str:
@@ -70,7 +70,7 @@ def test_the_live_status_page_is_written_again_after_each_update_publish_and_und
     assert "No new pages are waiting" in _text(live.read_text())
     assert "These pages were made on 1 November 2026." in _text(live.read_text())
 
-    State(staged.data_dir / "state.db").add_approval("20261105-000000", 14)
+    own(staged).add_approval("20261105-000000", 14)
     assert status.refresh(staged)
     assert "New pages, made on 5 November 2026, are waiting to be checked" in _text(live.read_text())
 
@@ -85,8 +85,8 @@ def test_failed_or_missing_pages_are_not_waiting_and_old_builds_are_left_alone(s
     _live_build(staged, "20261101-000000")
     _live_build(staged, "20261105-000000", checks_failed=["a check"])
     publish.publish(staged, "20261101-000000")
-    State(staged.data_dir / "state.db").add_approval("20261105-000000", 14)
-    State(staged.data_dir / "state.db").add_approval("20261109-000000", 14)        # its pages cleared away
+    own(staged).add_approval("20261105-000000", 14)
+    own(staged).add_approval("20261109-000000", 14)        # its pages cleared away
     assert status.waiting(staged, "20261101-000000") is None
     old = publish.builds_dir(staged) / "20261020-000000"                            # built before the status page
     old.mkdir()

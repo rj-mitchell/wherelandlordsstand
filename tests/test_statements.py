@@ -1,19 +1,23 @@
 """Statements in a landlord's own words, beside what the site says about it: the right of reply (the charity's
-impartiality policy, section 7.2; docs/DECISIONS.md, 15; src/landlords/statements.py)."""
+impartiality policy, section 7.2; docs/DECISIONS.md, 15). The Where They Stand sites' shared package keeps them and
+their rules (wts-core, ``wts_core.replies``); what this site passes to it is in src/landlords/replies.py, and how a
+statement is shown on the pages in src/landlords/statements.py."""
 
 import json
 import re
 import sqlite3
-from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 from typer.testing import CliRunner
+from wts_core.replies import Item
+from wts_core.testing import FixedClock
 
 from landlords import statements as st
-from landlords.api import State, create_app, report_kind
+from landlords.api import create_app
 from landlords.config import load_toml
+from landlords.replies import PARTS, Items, open_replies, report_kind
 from landlords.statements import slot
 
 W = load_toml("wording.toml")
@@ -22,7 +26,7 @@ FORM = {"name": "Jane Example", "role": "Chief executive, Example Housing", "pag
         "part": "", "text": WORDS, "link": "https://example.org/results", "email": "jane@example-housing.org.uk"}
 
 
-def landlord_page(slug: str, name: str, parts=st.PARTS) -> str:
+def landlord_page(slug: str, name: str, parts=PARTS) -> str:
     """A landlord's page as the build writes it, cut down to its slots: one beside each part of the card, one after."""
     card = "".join(f'<section><h3 id="{p}">{p}</h3><p>Our words.</p>{slot(p)}</section>' for p in parts)
     return f'<h1>{name}</h1><section class="card">{card}</section>{slot("page")}<h2>Figures</h2>'
@@ -32,7 +36,7 @@ def landlord_page(slug: str, name: str, parts=st.PARTS) -> str:
 def site(settings):
     """data/site with two landlords' pages and an area's page, and the files that hold the published figures."""
     root = settings.data_dir / "site"
-    for slug, name, parts in (("example-housing", "Example Housing", st.PARTS),
+    for slug, name, parts in (("example-housing", "Example Housing", PARTS),
                               ("example-council", "Example Council", ("grade", "bands", "ombudsman"))):
         (root / "landlords" / slug).mkdir(parents=True)
         (root / "landlords" / slug / "index.html").write_text(landlord_page(slug, name, parts))
@@ -57,7 +61,8 @@ def client(settings, site):
 
 @pytest.fixture
 def state(settings):
-    return State(settings.data_dir / "state.db")
+    """Reports and statements as the owner's commands and the endpoints see them."""
+    return open_replies(settings)
 
 
 def post(client, **fields):
@@ -71,10 +76,10 @@ def test_a_statement_from_the_form_is_kept_as_pending(client, state):
     r = post(client)
     assert r.status_code == 303 and r.headers["location"] == "/named/thanks.html"
     [s] = state.statements()
-    assert (s["status"], s["page"], s["part"], s["landlord"]) == ("pending", "landlords/example-housing/", "",
-                                                                   "example-housing")
+    assert (s["status"], s["item"], s["part"], s["about"]) == ("pending", "landlords/example-housing/", "",
+                                                                "example-housing")
     assert (s["name"], s["role"], s["text"], s["email"]) == (FORM["name"], FORM["role"], WORDS, FORM["email"])
-    assert state.statement_log(s["id"])[0][1] == "received"
+    assert state.log(s["id"])[0]["action"] == "received"
 
 
 def test_up_to_150_words(client, state):
@@ -126,7 +131,7 @@ def test_what_is_just_within_the_limits_is_kept_as_written(client, state):
     assert client.post("/api/statements", json={**FORM, **exact}).status_code == 200
     # a browser sends each line break as two characters: they are counted as one, as its own limit counts them
     assert post(client, text="\r\n".join(words)).status_code == 303
-    one, two = state.statements()
+    two, one = state.statements()                                  # the newest first
     assert {k: one[k] for k in exact} == exact
     assert two["text"] == "\n".join(words)
 
@@ -149,16 +154,23 @@ def test_a_json_body_that_cannot_be_read_is_refused_like_any_other(client, state
     assert state.statements() == []
 
 
-def test_the_page_can_be_given_in_any_of_the_ways_people_copy_it():
+def test_the_page_can_be_given_in_any_of_the_ways_people_copy_it(settings):
+    from landlords.replies import beside
+
+    def item(address: str, part: str = "") -> Item:
+        return Items(settings).resolve(beside(address, part))
+
     for address in ("https://wherelandlordsstand.com/landlords/example-housing/",
                     "https://www.wherelandlordsstand.com/landlords/example-housing/index.html",
                     "wherelandlordsstand.com/landlords/example-housing", "/landlords/example-housing/"):
-        assert st.item(address) == ("landlords/example-housing/", "", "example-housing"), address
-    assert st.item("https://wherelandlordsstand.com/landlords/example-housing/#bands") == (
-        "landlords/example-housing/", "bands", "example-housing")
-    assert st.item("landlords/example-housing/#figures")[1] == ""          # not a part of the card: after it
-    assert st.item("landlords/example-housing/", "safety")[1] == "safety"
-    assert st.item("https://wherelandlordsstand.com/areas/leeds/", "grade") == ("areas/leeds/", "", None)
+        assert item(address) == Item("landlords/example-housing/", "example-housing", ""), address
+    assert item("https://wherelandlordsstand.com/landlords/example-housing/#bands") == Item(
+        "landlords/example-housing/", "example-housing", "bands")
+    assert item("landlords/example-housing/#figures").part == ""           # not a part of the card: after it
+    assert item("landlords/example-housing/", "safety").part == "safety"
+    assert item("landlords/example-housing/#bands", "safety").part == "safety"   # the form's own field comes first
+    assert item("landlords/example-housing/#bands", "figures").part == ""
+    assert item("https://wherelandlordsstand.com/areas/leeds/", "grade") == Item("areas/leeds/", None, "")
 
 
 def test_the_hidden_field_robots_fill_in_keeps_nothing(client, state):
@@ -181,92 +193,169 @@ def test_the_owner_lists_publishes_updates_and_withdraws(client, state, site, tm
     post(client)
     post(client, page="https://wherelandlordsstand.com/areas/leeds/", name="Sam Officer",
          role="Head of housing, Example Council")
-    code, out = run()
-    assert code == 0 and [json.loads(x)["id"] for x in out.splitlines()] == [1, 2]
+    code, out = run("list")
+    assert code == 0 and [json.loads(x)["id"] for x in out.splitlines()] == [2, 1]      # the newest first
+    assert run()[1] == out                                              # with no command: those waiting, too
 
-    assert run("--publish", "1")[0] == 1                                # how was the sender confirmed?
+    assert run("publish", "1")[0] == 2                                  # how was the sender confirmed?
     note = "replied from the landlord's own address, 14 Nov"
-    code, out = run("--publish", "1", "--checked", note)
+    code, out = run("publish", "1", "--checked", note)
     assert code == 0 and json.loads(out)["status"] == "published"
-    # the note is kept for good (in the log, and in the statement's own row), so it holds no email address: the
-    # sender's is deleted three months after a statement is withdrawn or declined
-    assert state.statement(1)["checked"] == state.statement_log(1)[1][2] == note
+    # the note is kept for good, in the log, so it holds no email address: the sender's is deleted three months
+    # after a statement is withdrawn, declined or removed
+    assert state.log(1)[1]["note"] == note and json.loads(run("show", "1")[1].splitlines()[0])["checked"] == note
     page = (site / "landlords" / "example-housing" / "index.html").read_text()
     assert "Statement from Jane Example, " in page                     # on the site at once
 
-    code, out = run("--publish", "2", "--checked", "phoned the council")
-    assert code == 1 and "--landlord" in out                           # an area's page: which landlord?
-    assert run("--publish", "2", "--checked", "phoned", "--landlord", "nobody")[0] == 1
-    assert run("--publish", "2", "--checked", "phoned the council", "--landlord", "example-council")[0] == 0
+    code, out = run("publish", "2", "--checked", "phoned the council")
+    assert code == 1 and "say whom it speaks for" in out               # an area's page: which landlord?
+    code, out = run("publish", "2", "--checked", "phoned", "--landlord", "nobody")
+    assert code == 1 and out == "Not done: no landlord's page landlords/nobody/ on the site\n"
+    assert run("publish", "2", "--checked", "phoned the council", "--landlord", "example-council")[0] == 0
     assert "Statement from Sam Officer" in (site / "areas" / "leeds" / "index.html").read_text()
     assert "Statement from Sam Officer" in (site / "landlords" / "example-council" / "index.html").read_text()
 
     words = tmp_path / "new.txt"
     words.write_text("Our newer results are published every quarter on our website.")
-    assert run("--update", "1", "--text-file", str(words), "--reason", "the author's new version")[0] == 0
+    assert run("update", "1", "--text-file", str(words), "--reason", "the author's new version")[0] == 0
     assert "every quarter" in (site / "landlords" / "example-housing" / "index.html").read_text()
     assert state.statement(1)["updated_at"]
+    assert state.log(1)[2]["previous"] == {"text": WORDS}               # the words it replaced are kept in the log
     words.write_text(" ".join(["word"] * 151))
-    assert run("--update", "1", "--text-file", str(words))[0] == 1     # an update keeps to the rules too
+    assert run("update", "1", "--text-file", str(words))[0] == 1       # an update keeps to the rules too
 
     words.write_text(" ".join(["extraordinarily"] * 140))
-    code, out = run("--update", "1", "--text-file", str(words))        # and is never cut to fit either
+    code, out = run("update", "1", "--text-file", str(words))          # and is never cut to fit either
     assert code == 1 and "Not done: A statement can be up to 2,000 characters. This one is 2,239." in out
-    assert run("--update", "1", "--name", "N" * 121)[0] == 1
-    assert run("--update", "1", "--role", "R" * 201)[0] == 1
-    assert run("--update", "1", "--link", "https://example.org/" + "a" * 281)[0] == 1
+    assert run("update", "1", "--name", "N" * 121)[0] == 1
+    assert run("update", "1", "--role", "R" * 201)[0] == 1
+    assert run("update", "1", "--link", "https://example.org/" + "a" * 281)[0] == 1
     assert state.statement(1)["text"] == "Our newer results are published every quarter on our website."
     assert (state.statement(1)["name"], state.statement(1)["link"]) == (FORM["name"], FORM["link"])
 
-    assert run("--withdraw", "1")[0] == 1                              # why?
-    assert run("--withdraw", "1", "--reason", "withdrawn by the author")[0] == 0
+    code, out = run("withdraw", "1")                                    # why?
+    assert code == 1 and out == "Not done: say why it is withdrawn (--reason), for the log\n"
+    assert run("withdraw", "1", "--reason", "withdrawn by the author")[0] == 0
     assert "Statement from" not in (site / "landlords" / "example-housing" / "index.html").read_text()
-    assert run("--publish", "1", "--checked", "again")[0] == 1         # only a pending one can be published
+    assert run("publish", "1", "--checked", "again")[0] == 1           # only a pending one can be published
 
-    code, out = run("--log", "1")
+    code, out = run("log", "1")
     assert [json.loads(x)["action"] for x in out.splitlines()] == ["received", "published", "updated", "withdrawn"]
-    code, out = run("--all")
-    assert [json.loads(x)["status"] for x in out.splitlines()] == ["withdrawn", "published"]
+    code, out = run("list", "--all")
+    assert [json.loads(x)["status"] for x in out.splitlines()] == ["published", "withdrawn"]
+    code, out = run("remove", "2", "--reason", "it names a tenant")     # it broke the rules: removed, and said so
+    assert code == 0 and json.loads(out) | {"email": ""} == {
+        "id": 2, "status": "removed", "name": "Sam Officer", "page": "areas/leeds/", "part": "", "email": "",
+        "landlord": "example-council", "pages_changed": 2, "shown": 0}
+    assert "Statement from" not in (site / "areas" / "leeds" / "index.html").read_text()
 
 
 def test_the_owner_declines_with_reasons(client, state, site):
     post(client)
-    assert run("--decline", "1")[0] == 1
-    assert run("--decline", "1", "--reason", "it is about a tenant")[0] == 0
+    assert run("decline", "1")[0] == 2
+    assert run("decline", "1", "--reason", "it is about a tenant")[0] == 0
     s = state.statement(1)
     assert (s["status"], s["reason"]) == ("declined", "it is about a tenant") and s["closed_at"]
     assert "Statement from" not in (site / "landlords" / "example-housing" / "index.html").read_text()
-    assert run()[1] == ""                                              # nothing waiting
+    assert run("list")[1] == ""                                        # nothing waiting
 
 
-def test_the_email_is_deleted_three_months_after_a_statement_is_withdrawn_or_declined(client, state):
+def test_the_way_the_commands_were_typed_before_still_works(client, state, site, tmp_path):
+    """`landlords statements --publish 1 --checked "..."`, one command with an option for each action, was the shape
+    before the shared commands. It still works for now, and prints what the new commands print."""
     for _ in range(3):
         post(client)
-    st.decline(state, 1, "breaks the rules")
-    st.withdraw(state, 2, "withdrawn by the author")
-    db = sqlite3.connect(state.path)
-    db.execute("update statements set closed_at = '2026-08-12T10:00:00+00:00' where id in (1, 2)")
+    assert [json.loads(x)["id"] for x in run()[1].splitlines()] == [3, 2, 1]
+    assert run("--publish", "1")[0] == 1                               # how was the sender confirmed?
+    code, out = run("--publish", "1", "--checked", "phoned the office")
+    assert code == 0 and json.loads(out) == {
+        "id": 1, "status": "published", "name": "Jane Example", "page": "landlords/example-housing/", "part": "",
+        "landlord": "example-housing", "email": FORM["email"], "pages_changed": 1, "shown": 1}
+    assert "Statement from Jane Example, " in (site / "landlords" / "example-housing" / "index.html").read_text()
+    words = tmp_path / "new.txt"
+    words.write_text("Our newer results are published every quarter on our website.")
+    assert run("--update", "1", "--text-file", str(words), "--reason", "the author's new version")[0] == 0
+    assert "every quarter" in (site / "landlords" / "example-housing" / "index.html").read_text()
+    assert run("--withdraw", "1")[0] == 1                              # why?
+    assert run("--withdraw", "1", "--reason", "withdrawn by the author")[0] == 0
+    assert run("--decline", "2")[0] == 1
+    assert run("--decline", "2", "--reason", "it is about a tenant")[0] == 0
+    code, out = run("--log", "1")
+    assert [json.loads(x)["action"] for x in out.splitlines()] == ["received", "published", "updated", "withdrawn"]
+    assert [json.loads(x)["status"] for x in run("--all")[1].splitlines()] == ["pending", "declined", "withdrawn"]
+    from landlords.cli import app
+
+    client.post("/api/corrections", json={"kind": "wrong", "message": "Wrong grade", "email": "a@b.org"})
+    result = CliRunner().invoke(app, ["reports", "--close", "1", "--outcome", "fixed alias"])
+    assert (result.exit_code, result.output) == (0, '{"closed": true}\n')
+    [closed] = state.reports(open_only=False)
+    assert (closed["status"], closed["resolution"], closed["contact"]) == ("resolved", "fixed alias", None)
+    for old in ("--publish", "--decline", "--update", "--withdraw", "--log", "--all"):
+        assert f"{old} " in run("--help")[1] and "The old way of typing" in run("--help")[1]
+
+
+def test_the_email_is_deleted_three_months_after_a_statement_is_withdrawn_or_declined(client, settings, site):
+    from wts_core.replies import months_before
+
+    clock = FixedClock("2026-11-12T09:00:00+00:00")
+    state = open_replies(settings, clock=clock)
+    for _ in range(4):
+        post(client)
+    state.decline(1, "breaks the rules")
+    state.withdraw(2, "withdrawn by the author")
+    state.publish(3, checked="phoned")
+    state.remove(3, "it names a tenant")
+    db = sqlite3.connect(settings.state_db)
+    db.execute("update wts_statements set closed_at = '2026-08-12T10:00:00+00:00' where id in (1, 2, 3)")
     db.commit()
-    assert st.forget_old_emails(state, datetime(2026, 11, 12, 9, 0, tzinfo=UTC)) == 0      # not yet three months
-    assert st.forget_old_emails(state, datetime(2026, 11, 12, 11, 0, tzinfo=UTC)) == 2
-    assert [s["email"] for s in state.statements()] == [None, None, FORM["email"]]          # kept while pending
-    assert st.months_ago(datetime(2026, 5, 31, tzinfo=UTC), 3) == datetime(2026, 2, 28, tzinfo=UTC)
+    db.close()
+    assert state.forget_old_emails() == 0                                                   # not yet three months
+    clock.advance(hours=2)
+    assert state.forget_old_emails() == 3
+    assert [s["email"] for s in state.statements()] == [FORM["email"], None, None, None]    # kept while pending
+    assert months_before(clock.now().replace(month=5, day=31), 3).date().isoformat() == "2026-02-28"
+
+
+def test_the_nightly_housekeeping_deletes_what_is_due(client, settings, site):
+    """`landlords nightly` runs after each night's backup (deploy/landlords-backup.service), so an email address is
+    deleted on time in a week when the owner types no command."""
+    from landlords.cli import app
+
+    post(client)
+    client.post("/api/corrections", json={"message": "Wrong grade", "email": "a@b.org"})
+    state = open_replies(settings)
+    state.decline(1, "breaks the rules")
+    db = sqlite3.connect(settings.state_db)
+    db.execute("update wts_statements set closed_at = '2026-08-12T10:00:00+00:00'")     # declined over three months ago
+    db.execute("update wts_reports set at = '2026-08-01T10:00:00+00:00'")                # and a report open as long
+    db.commit()
+    db.close()
+    old_copy = settings.data_dir / "state.pre-wts-core.2026-08-01.db"                    # older than any backup
+    old_copy.write_bytes(b"a copy of the database as it was")
+    result = CliRunner().invoke(app, ["nightly"])
+    assert result.exit_code == 0 and json.loads(result.output) == {
+        "emails_deleted": 1, "statements_lapsed": 0, "report_emails_deleted": 1,
+        "old_copies_deleted": ["state.pre-wts-core.2026-08-01.db"], "pages_changed": 0, "shown": 0}
+    assert state.statement(1)["email"] is None and not old_copy.exists()
+    [report] = state.reports()                                          # still open, and its sender forgotten
+    assert report["contact"] is None
 
 
 def test_the_weekly_email_says_how_many_are_waiting():
     from landlords.notify import report
 
     _, body = report({"build": None}, None, {"pending_statements": 2})
-    assert "Statements from landlords waiting for a decision: 2 (landlords statements)" in body
+    assert "Statements from landlords waiting for a decision: 2 (landlords statements list)" in body
 
 
 # How it is shown -------------------------------------------------------------------------------------------------------
 
 
 def shown(**s) -> dict:
-    return {"id": 7, "name": "Jane Example", "role": "Chief executive, Example Housing", "page":
-            "landlords/example-housing/", "part": "", "text": WORDS, "link": "", "landlord": "example-housing",
-            "published_at": "2026-11-12T10:00:00+00:00", "updated_at": None} | s
+    """A published statement as the shared package gives it to the pages (``statements.published``)."""
+    return {"id": 7, "name": "Jane Example", "role": "Chief executive, Example Housing", "item":
+            "landlords/example-housing/", "part": "", "text": WORDS, "link": None, "about": "example-housing",
+            "date": "2026-11-12"} | s
 
 
 def test_a_statement_is_headed_and_marked_as_the_glossary_says():
@@ -279,13 +368,14 @@ def test_a_statement_is_headed_and_marked_as_the_glossary_says():
     assert "<p>Line one &lt;b&gt;bold&lt;/b&gt;<br>line two</p><p>para two</p>" in html     # as written, escaped
     assert '<a href="https://example.org/r?a=1&amp;b=2" rel="nofollow">The record they point to</a>' in html
     assert "updated" not in html and "Right of reply" not in html
-    assert "13 November 2026" in st.render(shown(updated_at="2026-11-13T09:00:00+00:00"), W, 2)  # the newer version
+    assert "13 November 2026" in st.render(shown(date="2026-11-13"), W, 2)                  # the newer version
+    assert "<a " not in st.render(shown(link="javascript:alert(1)"), W, 2)   # a link is checked again when shown
 
 
 def test_beside_its_item_and_on_the_landlords_own_page(site):
-    items = [shown(id=1, part="bands"), shown(id=2, part="safety", page="landlords/example-council/",
-                                                 landlord="example-council"),
-             shown(id=3, page="areas/leeds/", landlord="example-council", name="Sam Officer")]
+    items = [shown(id=1, part="bands"), shown(id=2, part="safety", item="landlords/example-council/",
+                                                 about="example-council"),
+             shown(id=3, item="areas/leeds/", about="example-council", name="Sam Officer")]
     assert st.write_into(site, items) == 3
     housing = (site / "landlords" / "example-housing" / "index.html").read_text()
     council = (site / "landlords" / "example-council" / "index.html").read_text()
@@ -314,12 +404,12 @@ def test_published_now_and_kept_through_a_build_publish_and_undo(client, setting
         (b / "build-info.json").write_text(json.dumps({"build": name, "checks_failed": []}))
     publish.publish(settings, "20261110-000000")
     post(client)
-    st.publish(state, 1, "checked", None, lambda slug: True)
+    state.publish(1, checked="checked")
     assert st.refresh(settings) == {"pages_changed": 3, "shown": 1}    # both builds and data/site
     publish.publish(settings, "20261111-000000")                       # approving the waiting pages keeps it
     assert "Statement from Jane Example" in (settings.data_dir / "live" / "landlords" / "example-housing" /
                                              "index.html").read_text()
-    st.withdraw(state, 1, "withdrawn by the author")
+    state.withdraw(1, "withdrawn by the author")
     publish.rollback(settings)                                         # an undo doesn't bring it back
     assert "Statement from" not in (settings.data_dir / "live" / "landlords" / "example-housing" /
                                     "index.html").read_text()
@@ -340,17 +430,20 @@ def test_statements_never_reach_the_search_the_compare_data_or_the_downloads(sit
 
 def test_only_the_statements_module_and_the_api_read_the_statements_table():
     """The figures, bands, checks, search index, compare data and downloads are made by modules that never read
-    statements: only statements.py (and the owner's command, through it) reads them, only api.py touches the table."""
+    statements: only statements.py asks for the published ones, only the owner's commands, the endpoints and the
+    weekly update's count reach the shared package's desk, and only the one-off import names its tables."""
     src = Path(__file__).parents[1] / "src" / "landlords"
     for path in src.rglob("*.py"):
         text = path.read_text()
         name = path.relative_to(src).as_posix()
-        if name != "api.py":
-            assert not re.search(r"(from|into|update|table)\s+statements\b", text, re.I), name
-        if name not in ("statements.py", "cli.py", "api.py"):
+        if name != "state.py":                                 # the one-off import of the old rows (state.imports)
+            assert not re.search(r"(from|into|update|table)\s+(wts_)?statements\b", text, re.I), name
+            assert "wts_statement" not in text and "wts_reports" not in text, name
+        if name not in ("statements.py", "cli.py", "api.py", "publish.py", "replies.py"):
+            assert "open_replies" not in text and "wts_core.replies" not in text, name
             assert ".statements(" not in text and ".statement(" not in text, name
         if name not in ("statements.py", "site.py"):           # the build writes the published ones into its pages
-            assert "statements.published" not in text, name
+            assert "statements.published" not in text and ".published(" not in text, name
     for name in ("profile.py", "score.py", "checks.py", "area.py", "register.py", "load/common.py"):
         assert "statement" not in (src / name).read_text().lower(), name
     pages = (src / "site_pages.py").read_text()
@@ -386,7 +479,7 @@ def test_report_kinds_and_links_that_choose_one(client, settings):
                     follow_redirects=False)
     assert r.status_code == 303
     client.post("/api/corrections", data={"kind": "takedown", "message": "my name"})
-    assert [r[2] for r in State(settings.data_dir / "state.db").open_reports()] == ["takedown", "unfair"]  # first
+    assert [r["kind"] for r in open_replies(settings).reports()] == ["takedown", "unfair"]  # first
 
 
 def test_the_hidden_field_robots_fill_in_keeps_no_report(client, settings):
@@ -405,10 +498,10 @@ def test_the_hidden_field_robots_fill_in_keeps_no_report(client, settings):
     assert r.status_code == 303 and r.headers["location"] == "/corrections/thanks.html"   # thanked like anyone
     r = client.post("/api/corrections", json={**report, "website": "https://spam.example"})
     assert r.status_code == 200 and r.json() == {"ok": True}
-    state = State(settings.data_dir / "state.db")
-    assert state.open_reports() == []                                # and nothing kept
+    state = open_replies(settings)
+    assert state.reports() == []                                     # and nothing kept
     r = client.post("/api/corrections", data={**report, "website": " "}, follow_redirects=False)
-    assert r.status_code == 303 and len(state.open_reports()) == 1   # left empty, as people leave it: kept
+    assert r.status_code == 303 and len(state.reports()) == 1        # left empty, as people leave it: kept
 
 
 def test_the_named_page(settings, client):

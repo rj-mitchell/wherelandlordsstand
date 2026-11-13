@@ -33,6 +33,12 @@ def history_path(settings: Settings) -> Path:
     return settings.data_dir / "published.jsonl"
 
 
+def site_dir(settings: Settings) -> Path:
+    """The published pages: data/live (`landlords publish`), or data/site while nothing is published."""
+    live = live_link(settings)
+    return live if live.exists() else settings.data_dir / "site"
+
+
 def code_version() -> str:
     """A fingerprint of everything that shapes the pages besides the data: the code, config/ and data_static/.
     A new version of the site (merged and installed on the server) changes it, so the pages are rebuilt."""
@@ -114,10 +120,10 @@ def update(settings: Settings, fetch: bool = True, notify: bool = True) -> dict:
             publish(settings, info["build"])
             info["published"] = f"The new pages are live: {why}."
         else:
-            from landlords.api import State
+            from landlords.state import own
 
             days = int(cfg.get("approval_days", 14))
-            token = State(settings.data_dir / "state.db").add_approval(info["build"], days)
+            token = own(settings).add_approval(info["build"], days)
             url = (settings.section("site").get("url") or "").rstrip("/")
             links = {"approve": f"{url}/admin/approve/{token}", "preview": f"{url}/admin/preview/{token}/index.html",
                      "days": days}
@@ -128,14 +134,15 @@ def update(settings: Settings, fetch: bool = True, notify: bool = True) -> dict:
     _prune(settings, int(cfg.get("keep_builds", 6)), {info["build"], live, current(settings)})
 
     # The weekly email ------------------------------------------------------------------------------------------
-    from landlords.api import State
+    from landlords.replies import open_replies
+    from landlords.state import State, open_state
 
-    state = State(settings.data_dir / "state.db")
-    from landlords import statements
-
-    statements.forget_old_emails(state)        # three months after a statement is withdrawn or declined
-    extra = {"rights_due": rights.get("rows") or [], "open_reports": state.open_report_count(),
-             "pending_statements": state.pending_statement_count(), "missed": state.top_missed(7, 5)}
+    db = open_state(settings)
+    # asking what is waiting also deletes the email address of each statement withdrawn, declined or removed three
+    # months ago, as every owner's command and `landlords nightly` do
+    waiting = open_replies(settings, db).waiting()
+    extra = {"rights_due": rights.get("rows") or [], "open_reports": waiting.reports,
+             "pending_statements": waiting.statements, "missed": State(db).top_missed(7, 5)}
     changes_path = settings.staging_dir / "change-report.json"
     extra["changes"] = json.loads(changes_path.read_text()) if changes_path.exists() else {}
     worth_sending = (info["build"] or info["checks_failed"] or info.get("fetch_failed") or info.get("unlisted")

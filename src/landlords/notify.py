@@ -161,10 +161,11 @@ def report(info: dict, links: dict | None, extra: dict) -> tuple[str, str]:
         lines += ["The rights page has sections due to be checked again (config/rights.toml):"]
         lines += [f"  - {x}" for x in extra["rights_due"]] + [""]
     if extra.get("open_reports"):
-        lines += [f"Readers' reports of mistakes waiting: {extra['open_reports']} (landlords reports)", ""]
+        lines += [f"Readers' reports of mistakes waiting: {extra['open_reports']} (landlords reports list)", ""]
     if extra.get("pending_statements"):
         lines += [f"Statements from landlords waiting for a decision: {extra['pending_statements']} "
-                  "(landlords statements). We reply within 5 working days, and decide within 20 working days.", ""]
+                  "(landlords statements list). We reply within 5 working days, and decide within 20 working days.",
+                  ""]
     if extra.get("missed"):
         lines += ["Most searched-for names that found nothing this week:"]
         lines += [f"  - {q} ({n})" for q, n in extra["missed"][:5]] + [""]

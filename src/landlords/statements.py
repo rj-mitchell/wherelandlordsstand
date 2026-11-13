@@ -1,11 +1,12 @@
 """Statements in a landlord's own words, beside what the site says about it: the right of reply (the charity's
-impartiality policy, section 7.2; docs/DECISIONS.md, 15).
+impartiality policy, section 7.2; docs/DECISIONS.md, 15). This file is how they are shown on the pages.
 
 A landlord this site covers, or someone acting for it, can send a statement of up to 150 words about a page that names
 it: its own page, one part of it (the grade, the bands, the Ombudsman's figures, the safety checks), or a council
 area's page that lists it. The form is on the "If you're named" page (``named/``) and posts to ``/api/statements``
-(src/landlords/api.py), which keeps it in the state database as pending. Nothing is shown until the owner has
-confirmed who sent it and published it (`landlords statements --publish`). It is published as written, or declined
+(src/landlords/api.py). The Where They Stand sites' shared package keeps it and its rules (wts-core,
+``wts_core.replies``; what this site passes to it is in src/landlords/replies.py). Nothing is shown until the owner
+has confirmed who sent it and published it (`landlords statements publish`). It is published as written, or declined
 with reasons; it is never edited, except to take out something the rules don't allow, with the author's agreement.
 
 Where it is shown: beside the item it is about, and on the landlord's own page, headed "Statement from [name],
@@ -16,12 +17,10 @@ runs, and every owner's command that changes a statement fills them again in the
 (``refresh``), as the status page writes itself again (src/landlords/status.py). So a published statement is on the
 site at once, and stays there in the next build and after an undo.
 
-A statement is never part of the published figures: only this module and the API read the statements table. Search
-(names.json), the compare page's data, the downloads, the bands and the checks never see it (tests/test_statements.py).
-
-The email address given is used only to confirm who sent it, and to let them update or withdraw it. It is kept while
-the statement is pending or shown, and deleted three months after it is withdrawn or declined (the privacy page), by
-``forget_old_emails``, which runs with every owner's command and every weekly update.
+A statement is never part of the published figures: only this module asks the shared package for the published
+statements, and it is given only what a page shows (never the email address, the owner's notes or the log). Search
+(names.json), the compare page's data, the downloads, the bands and the checks never see one
+(tests/test_statements.py).
 """
 
 from __future__ import annotations
@@ -29,32 +28,17 @@ from __future__ import annotations
 import logging
 import re
 from collections import defaultdict
-from collections.abc import Callable
-from datetime import UTC, datetime
 from pathlib import Path
-from urllib.parse import urlparse
+
+from wts_core.replies import safe_link
 
 from landlords.config import Settings
+from landlords.replies import PARTS, open_replies
 
 log = logging.getLogger(__name__)
 
-MAX_WORDS = 150
-EMAIL_KEPT_MONTHS = 3                     # after a statement is withdrawn or declined (the privacy page)
-LIMITS = {"name": 120, "role": 200, "page": 300, "part": 20, "text": 2000, "link": 300, "email": 200}
-SITE_HOSTS = ("wherelandlordsstand.com", "www.wherelandlordsstand.com")
-EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-# The pages a statement can sit beside: a landlord's page, and a council area's page (which lists landlords)
-PAGE = re.compile(r"^(landlords|areas)/([a-z0-9][a-z0-9-]*)/?(?:index\.html)?$")
-# The parts of a landlord's "Before you bid" card a statement can sit beside, by the id of each part's heading. A
-# statement about anything else on the page (its names, a merger, the figures, the areas) sits after the card.
-PARTS = ("grade", "bands", "ombudsman", "safety")
-STATUSES = ("pending", "published", "declined", "withdrawn")
 SLOT = re.compile(r"<!--statements:(\w+)-->.*?<!--/statements:\1-->", re.S)
 SLOT_KEY = re.compile(r"<!--statements:(\w+)-->")
-
-
-class StatementError(ValueError):
-    """A statement that can't be accepted as sent; the message says why, in words for the person who sent it."""
 
 
 def slot(key: str) -> str:
@@ -62,186 +46,16 @@ def slot(key: str) -> str:
     return f"<!--statements:{key}--><!--/statements:{key}-->"
 
 
-# Checking what was sent -----------------------------------------------------------------------------------------------
-
-
-def word_count(text: str) -> int:
-    return len(text.split())
-
-
-def clean_text(text: str) -> str:
-    """Line endings made plain and runs of blank lines closed up; the words themselves are never changed."""
-    text = (text or "").replace("\r\n", "\n").replace("\r", "\n").strip()
-    return re.sub(r"\n{3,}", "\n\n", text)
-
-
-def not_too_long(what: str, value: str, field: str) -> None:
-    """Refuse what is longer than its limit, with words for the sender. Nothing sent is ever cut to fit: a statement
-    is published as written or declined, never edited (the policy, 7.2)."""
-    if len(value) > LIMITS[field]:
-        raise StatementError(f"{what} can be up to {LIMITS[field]:,} characters. This one is {len(value):,}.")
-
-
-def clean_link(link: str) -> str:
-    link = (link or "").strip()
-    if not link:
-        return ""
-    not_too_long("The link to the record", link, "link")
-    parsed = urlparse(link)
-    if parsed.scheme not in ("http", "https") or not parsed.netloc or re.search(r"[\s\"'<>]", link):
-        raise StatementError("The link to the record should be a full web address, starting https://.")
-    return link
-
-
-def item(address: str, part: str = "") -> tuple[str, str, str | None]:
-    """The page a statement is about, from what someone pasted (a full address, or a path), as ``(page, part,
-    landlord)``: "landlords/abri-group/", "grade", "abri-group". A part of a landlord's page comes from ``part``, or
-    from the address's #fragment; the landlord is known from its own page's address, and for an area's page is set by
-    the owner when publishing."""
-    address = (address or "").strip()
-    if "://" not in address:            # "wherelandlordsstand.com/landlords/…", or a path
-        host = address.split("/")[0]
-        address = "https://" + (address if host in SITE_HOSTS else "wherelandlordsstand.com/" + address.lstrip("/"))
-    parsed = urlparse(address)
-    found = PAGE.match(parsed.path.lstrip("/")) if parsed.hostname in SITE_HOSTS else None
-    if not found:
-        raise StatementError("Please give the address of a page on wherelandlordsstand.com that names your landlord: "
-                             "its own page (with /landlords/ in it), or a council area's page (with /areas/ in it).")
-    kind, slug = found.groups()
-    part = (part or parsed.fragment or "").strip().lower()
-    part = part if kind == "landlords" and part in PARTS else ""
-    return f"{kind}/{slug}/", part, slug if kind == "landlords" else None
-
-
-def check(name: str, role: str, text: str, email: str | None) -> None:
-    """The rules a statement must meet to be kept. ``email`` is None when the owner updates one already kept."""
-    if len(name.strip()) < 2:
-        raise StatementError("Please give the name the statement is from.")
-    not_too_long("Your name", name.strip(), "name")
-    if len(role.strip()) < 2:
-        raise StatementError("Please give your role and the landlord you speak for, for example \"Chief executive, "
-                             "Example Housing\".")
-    not_too_long("Your role", role.strip(), "role")
-    words = word_count(text)
-    if words < 3:
-        raise StatementError("Please write the statement: a sentence or more.")
-    if words > MAX_WORDS:
-        raise StatementError(f"A statement can be up to {MAX_WORDS} words. This one is {words}.")
-    not_too_long("A statement", text, "text")
-    if email is not None and (not EMAIL.match(email.strip()) or len(email.strip()) > LIMITS["email"]):
-        raise StatementError("Please give an email address, so we can confirm who the statement is from.")
-
-
-def submit(state, data: dict, page_exists: Callable[[str], bool]) -> int:
-    """Keep a statement sent through the form as pending. ``data`` is the form's fields; ``page_exists`` says whether
-    a page is on the live site. Raises StatementError if it can't be accepted: a name, role, statement, link or
-    email address longer than its limit (LIMITS) is refused, never cut to fit and kept."""
-    f = {k: str(data.get(k, "") or "").strip() for k in LIMITS}
-    text = clean_text(f["text"])
-    check(f["name"], f["role"], text, f["email"])
-    # The page's address and the part are only read, to find the page (``item``): what is kept is ours, not theirs
-    page, part, landlord = item(f["page"][:LIMITS["page"]], f["part"][:LIMITS["part"]])
-    if not page_exists(page):
-        raise StatementError("We couldn't find that page on the site. Please copy its address from your browser.")
-    sid = state.add_statement(f["name"], f["role"], page, part, text, clean_link(f["link"]), f["email"], landlord)
-    forget_old_emails(state)
-    return sid
-
-
-# The owner's decisions (`landlords statements`) -----------------------------------------------------------------------
-
-
-def _now() -> str:
-    return datetime.now(UTC).isoformat(timespec="seconds")
-
-
-def _get(state, sid: int, *allowed: str) -> dict:
-    s = state.statement(sid)
-    if not s:
-        raise StatementError(f"no statement {sid}")
-    if allowed and s["status"] not in allowed:
-        raise StatementError(f"statement {sid} is {s['status']}, not {' or '.join(allowed)}")
-    return s
-
-
-def publish(state, sid: int, checked: str, landlord: str | None, landlord_exists: Callable[[str], bool]) -> dict:
-    """Show a pending statement, once the owner has confirmed who sent it (``checked`` says how). A statement about an
-    area's page needs ``landlord``, the slug of the landlord it speaks for, whose own page shows it too."""
-    s = _get(state, sid, "pending")
-    if not checked.strip():
-        raise StatementError("say how you confirmed who sent it (--checked), for the log")
-    landlord = (landlord or s["landlord"] or "").strip()
-    if not landlord:
-        raise StatementError(f"statement {sid} is about {s['page']}: say which landlord it speaks for (--landlord)")
-    if not landlord_exists(landlord):
-        raise StatementError(f"no landlord's page landlords/{landlord}/ on the site")
-    state.change_statement(sid, "published", checked, status="published", landlord=landlord, checked=checked,
-                           published_at=_now())
-    return state.statement(sid)
-
-
-def decline(state, sid: int, reason: str) -> dict:
-    """Decline a pending statement, with the reasons the sender is told (the policy: never edited, published as written
-    or declined with reasons)."""
-    _get(state, sid, "pending")
-    if not reason.strip():
-        raise StatementError("give the reasons (--reason): the sender is told why")
-    state.change_statement(sid, "declined", reason, status="declined", reason=reason, closed_at=_now())
-    return state.statement(sid)
-
-
-def update(state, sid: int, note: str, text: str | None = None, name: str | None = None, role: str | None = None,
-           link: str | None = None) -> dict:
-    """The author's new version of a published or pending statement, as they sent it (or with something the rules
-    don't allow taken out, with their agreement: ``note`` says which)."""
-    s = _get(state, sid, "pending", "published")
-    new = {k: v for k, v in (("text", clean_text(text) if text is not None else None), ("name", name), ("role", role))
-           if v is not None}
-    if link is not None:
-        new["link"] = clean_link(link) or None
-    if not new:
-        raise StatementError("nothing to change: give --text-file, --name, --role or --link")
-    merged = {**s, **new}
-    check(merged["name"], merged["role"], merged["text"], None)
-    state.change_statement(sid, "updated", note, **new, updated_at=_now() if s["status"] == "published" else None)
-    return state.statement(sid)
-
-
-def withdraw(state, sid: int, reason: str) -> dict:
-    """Take a statement down: the author withdrew it, or it broke the rules (``reason`` says which; the policy: the
-    charity says why)."""
-    _get(state, sid, "pending", "published")
-    if not reason.strip():
-        raise StatementError("say why (--reason): \"withdrawn by the author\", or the rule it broke")
-    state.change_statement(sid, "withdrawn", reason, status="withdrawn", reason=reason, closed_at=_now())
-    return state.statement(sid)
-
-
-def months_ago(now: datetime, months: int) -> datetime:
-    """The same moment ``months`` calendar months earlier (the month's last day when that day is missing)."""
-    import calendar
-
-    y, m = divmod(now.year * 12 + now.month - 1 - months, 12)
-    return now.replace(year=y, month=m + 1, day=min(now.day, calendar.monthrange(y, m + 1)[1]))
-
-
-def forget_old_emails(state, now: datetime | None = None) -> int:
-    """Delete the email address of every statement withdrawn or declined more than three months ago."""
-    cutoff = months_ago(now or datetime.now(UTC), EMAIL_KEPT_MONTHS)
-    return state.forget_statement_emails(cutoff.isoformat(timespec="seconds"))
-
-
 # Showing them --------------------------------------------------------------------------------------------------------
 
 
 def published(settings: Settings) -> list[dict]:
-    """The statements shown now. Only what a page shows is kept: never the email address."""
-    from landlords.api import State
-
-    if not (settings.data_dir / "state.db").exists():
+    """The statements shown now, oldest first, as the shared package gives them to the public: ``id``, ``item`` (the
+    page it is about), ``part``, ``about`` (the landlord it speaks for), ``name``, ``role``, ``text``, ``link`` and
+    ``date`` (when the words now shown were first shown). Never the email address."""
+    if not settings.state_db.exists():
         return []
-    keep = ("id", "name", "role", "page", "part", "text", "link", "landlord", "published_at", "updated_at")
-    return [{k: s[k] for k in keep} for s in State(settings.data_dir / "state.db").statements("published")]
+    return open_replies(settings).published(everywhere=True)
 
 
 def render(s: dict, w: dict, level: int, about: str = "") -> str:
@@ -252,7 +66,7 @@ def render(s: dict, w: dict, level: int, about: str = "") -> str:
 
     t = w["statement"]
     sid = f"statement-{s['id']}"
-    when = s.get("date") or nice_date((s.get("updated_at") or s["published_at"])[:10])
+    when = s.get("dated") or nice_date(s["date"])      # "dated": the date already in words (the form's example)
     words = "".join("<p>" + "<br>".join(esc(line) for line in para.split("\n")) + "</p>"
                     for para in s["text"].split("\n\n"))
     out = [f'<div class="statement" role="note" id="{sid}" aria-labelledby="{sid}-h">',
@@ -261,8 +75,9 @@ def render(s: dict, w: dict, level: int, about: str = "") -> str:
     if about:
         out.append(f'<p class="st-about">{fill_html(t["about"], page=about)}</p>')
     out.append(f'<blockquote class="st-words">{words}</blockquote>')
-    if s.get("link"):
-        out.append(f'<p class="st-link"><a href="{esc(s["link"])}" rel="nofollow">{esc(t["record"])}</a></p>')
+    link = safe_link(s.get("link"))          # checked again when shown, as it was when it was sent
+    if link:
+        out.append(f'<p class="st-link"><a href="{esc(link)}" rel="nofollow">{esc(t["record"])}</a></p>')
     out.append(f'<p class="st-note">{fill(t["endorsed"], site=w["site"]["name"])}</p></div>')
     return "".join(out)
 
@@ -272,11 +87,11 @@ def placements(items: list[dict]) -> dict[tuple[str, str], list[tuple[dict, str]
     from it). Beside its item: a part of a landlord's card, or the end of the page's own content. And on the
     landlord's own page, after the card, when the item is on another page."""
     out: dict[tuple[str, str], list] = defaultdict(list)
-    for s in sorted(items, key=lambda s: (s.get("updated_at") or s.get("published_at") or "", s["id"])):
-        out[(s["page"], s["part"] or "page")].append((s, ""))
-        home = f"landlords/{s['landlord']}/" if s.get("landlord") else s["page"]
-        if home != s["page"]:
-            out[(home, "page")].append((s, s["page"]))
+    for s in items:                     # oldest first, as ``published`` gives them
+        out[(s["item"], s["part"] or "page")].append((s, ""))
+        home = f"landlords/{s['about']}/" if s.get("about") else s["item"]
+        if home != s["item"]:
+            out[(home, "page")].append((s, s["item"]))
     return out
 
 

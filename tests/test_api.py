@@ -116,3 +116,112 @@ def test_every_file_a_page_uses_is_fingerprinted_under_assets(tmp_path):
     assert json.loads((tmp_path / "assets.json").read_text()) == names
     assert site.write_assets(tmp_path / "again") == names          # the same files give the same names
     assert 'width="52" height="52"' in site.MARK                    # stays small without the stylesheet
+
+
+# The limit on posts: ten a minute from one visitor (api.Limiter) ---------------------------------------------------
+
+
+@pytest.fixture
+def clock(monkeypatch):
+    """The limiter's clock, moved by hand: ``clock.now = 61`` is 61 seconds on."""
+    import types
+
+    from landlords import api
+
+    c = types.SimpleNamespace(now=1000.0)
+    monkeypatch.setattr(api.time, "monotonic", lambda: c.now)
+    return c
+
+
+def test_ten_posts_a_minute_from_one_visitor_and_no_more_until_a_minute_has_passed(clock):
+    from landlords.api import Limiter
+
+    limiter = Limiter()
+    assert [limiter.allow("203.0.113.7") for _ in range(11)] == [True] * 10 + [False]
+    assert limiter.allow("203.0.113.8")                              # another visitor is counted on their own
+    clock.now += 59
+    assert not limiter.allow("203.0.113.7")                          # a refused try doesn't count against them
+    clock.now += 2                                                   # the minute has passed since the first ten
+    assert [limiter.allow("203.0.113.7") for _ in range(11)] == [True] * 10 + [False]
+    assert all("203.0.113" not in key and len(key) == 16 for key in limiter.seen)   # never the address itself
+
+
+def test_the_limiter_forgets_visitors_with_nothing_in_the_last_minute(clock):
+    from landlords.api import Limiter
+
+    limiter = Limiter(per_minute=2, forget_over=3)
+    for who in ("a", "b", "c"):
+        assert limiter.allow(who)
+    assert len(limiter.seen) == 3                                    # three remembered: not over three, so all kept
+    clock.now += 30
+    assert limiter.allow("d") and len(limiter.seen) == 4             # over three, but all were here this minute
+    clock.now += 40                                                  # a, b and c were last here 70 seconds ago
+    assert limiter.allow("d") and not limiter.allow("d")             # d is still counted: two this minute
+    assert limiter.allow("e")
+    assert len(limiter.seen) == 2                                    # d and e; a, b and c are forgotten
+    assert not limiter.allow("d")
+    assert Limiter().forget_over == 50_000 and Limiter().per_minute == 10
+
+
+def test_the_limiter_counts_rightly_from_many_threads():
+    from concurrent.futures import ThreadPoolExecutor
+
+    from landlords.api import Limiter
+
+    limiter = Limiter(per_minute=100, forget_over=50)
+    with ThreadPoolExecutor(8) as pool:
+        mine = list(pool.map(lambda _: limiter.allow("one visitor"), range(400)))
+        others = list(pool.map(lambda i: limiter.allow(f"visitor {i}"), range(400)))
+    assert sum(mine) == 100 and all(others)
+
+
+def test_each_route_says_too_many_in_its_own_words(client, settings):
+    for _ in range(10):
+        assert client.post("/api/missed", json={"q": "nobody homes"}).status_code == 200
+    r = client.post("/api/missed", json={"q": "nobody homes"})
+    assert r.status_code == 429 and r.json() == {"ok": False}
+    r = client.post("/api/corrections", json={"message": "Wrong grade"})
+    assert r.status_code == 429 and r.json() == {"ok": False, "error": "too many reports; try again in a minute"}
+    r = client.post("/api/statements", json={"name": "Jane Example"})
+    assert r.status_code == 429 and r.json() == {"ok": False, "error": "too many tries; try again in a minute"}
+    r = client.get("/admin/approve/not-a-token")
+    assert r.status_code == 429 and "<h1>Too many tries</h1><p>Try again in a minute.</p>" in r.text
+    from landlords.api import State
+
+    state = State(settings.data_dir / "state.db")
+    assert state.open_reports() == [] and state.statements() == []   # nothing refused was kept
+    assert state.top_missed() == [("nobody homes", 10)]
+
+
+# The state database's connections ------------------------------------------------------------------------------------
+
+
+def test_every_connection_to_the_state_database_is_closed_after_use(settings, monkeypatch):
+    from landlords import status
+    from landlords.api import State
+
+    opened = []
+    connect = sqlite3.connect
+    monkeypatch.setattr(sqlite3, "connect", lambda *a, **k: opened.append(connect(*a, **k)) or opened[-1])
+    state = State(settings.data_dir / "state.db")
+    rid = state.add_report("landlords/x/", "Wrong grade", "a@b.org", "wrong")
+    sid = state.add_statement("Jane Example", "Chief executive", "landlords/x/", "", "Our own words.", "", "a@b.org",
+                              "x")
+    state.change_statement(sid, "published", "phoned", status="published")
+    token = state.add_approval("20261101-000000", 7)
+    state.mark(token, "published_at")
+    state.missed("nobody homes")
+    assert state.close_report(rid, "fixed") and state.open_reports() == [] and state.open_report_count() == 0
+    assert state.statement(sid)["status"] == "published" and state.pending_statement_count() == 0
+    assert [row[1] for row in state.statement_log(sid)] == ["received", "published"]
+    assert state.approval(token)["published_at"] and state.top_missed() == [("nobody homes", 1)]
+    assert state.forget_statement_emails("2026-01-01") == 0
+    assert status.waiting(settings, None) is None
+    with pytest.raises(sqlite3.OperationalError), state.connect() as db:
+        db.execute("insert into missed (day, query, count) values ('2026-11-12', 'half done', 1)")
+        db.execute("insert into no_such_table values (1)")
+    assert state.top_missed() == [("nobody homes", 1)]              # an error undoes the work, and still closes
+    assert len(opened) >= 15
+    for con in opened:
+        with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+            con.execute("select 1")

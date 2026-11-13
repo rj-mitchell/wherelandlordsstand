@@ -55,13 +55,14 @@ def waiting(settings: Settings, live: str | None) -> str | None:
     """The newest build waiting for approval: an approval link not yet used or out of date, for pages that passed their
     checks and aren't live. Its build name, or None."""
     import sqlite3
+    from contextlib import closing
 
     db = settings.data_dir / "state.db"
     if not db.exists():
         return None
     now = datetime.now(UTC).isoformat(timespec="seconds")
     try:
-        with sqlite3.connect(db, timeout=10) as con:
+        with closing(sqlite3.connect(db, timeout=10)) as con:      # read only: nothing to commit; closed after
             rows = con.execute("select build from approvals where published_at is null and expires > ? "
                                "order by build desc", (now,)).fetchall()
     except sqlite3.Error:

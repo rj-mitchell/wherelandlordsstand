@@ -18,8 +18,11 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
+import threading
 import time
 from collections import defaultdict, deque
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import UTC, date, datetime
 from hashlib import sha256
 from pathlib import Path
@@ -72,8 +75,16 @@ class State:
             if "kind" not in {c[1] for c in db.execute("pragma table_info(reports)")}:
                 db.execute("alter table reports add column kind text")   # a database made before kinds
 
-    def connect(self) -> sqlite3.Connection:
-        return sqlite3.connect(self.path, timeout=10)
+    @contextmanager
+    def connect(self) -> Iterator[sqlite3.Connection]:
+        """A connection for one piece of work: committed at the end of the ``with`` block, and always closed (on an
+        error, without committing, which undoes the work), as the sister sites' state databases do."""
+        db = sqlite3.connect(self.path, timeout=10)
+        try:
+            yield db
+            db.commit()
+        finally:
+            db.close()
 
     def add_report(self, page: str, message: str, email: str, kind: str = "") -> int:
         with self.connect() as db:
@@ -220,22 +231,30 @@ def prefill(html: str, kind: str = "", page: str = "", part: str = "") -> str:
 
 
 class Limiter:
-    """At most ``per_minute`` posts a minute from one visitor, counted in memory only and never written down."""
+    """At most ``per_minute`` posts a minute from one visitor, counted in memory only and never written down. Safe to
+    call from several threads at once (the approval pages run on a pool of them). Once more than ``forget_over``
+    visitors are remembered, those with nothing in the last minute are forgotten, so the memory used stays small."""
 
-    def __init__(self, per_minute: int = 10):
+    def __init__(self, per_minute: int = 10, forget_over: int = 50_000):
         self.per_minute = per_minute
+        self.forget_over = forget_over
         self.seen: dict[str, deque] = defaultdict(deque)
+        self.lock = threading.Lock()
 
     def allow(self, who: str) -> bool:
         key = sha256(who.encode()).hexdigest()[:16]
         now = time.monotonic()
-        q = self.seen[key]
-        while q and now - q[0] > 60:
-            q.popleft()
-        if len(q) >= self.per_minute:
-            return False
-        q.append(now)
-        return True
+        with self.lock:
+            q = self.seen[key]
+            while q and now - q[0] > 60:
+                q.popleft()
+            if len(q) >= self.per_minute:
+                return False
+            q.append(now)
+            if len(self.seen) > self.forget_over:  # forget idle visitors
+                for k in [k for k, v in self.seen.items() if not v or now - v[-1] > 60]:
+                    del self.seen[k]
+            return True
 
 
 def site_dir(settings: Settings) -> Path:

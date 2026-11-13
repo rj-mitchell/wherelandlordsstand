@@ -335,7 +335,7 @@ def test_the_nightly_housekeeping_deletes_what_is_due(client, settings, site):
     result = CliRunner().invoke(app, ["nightly"])
     assert result.exit_code == 0 and json.loads(result.output) == {
         "emails_deleted": 1, "statements_lapsed": 0, "report_emails_deleted": 1,
-        "old_copies_deleted": ["state.pre-wts-core.2026-08-01.db"], "pages_changed": 0, "shown": 0}
+        "old_copies_deleted": ["state.pre-wts-core.2026-08-01.db"]}
     assert state.statement(1)["email"] is None and not old_copy.exists()
     [report] = state.reports()                                          # still open, and its sender forgotten
     assert report["contact"] is None

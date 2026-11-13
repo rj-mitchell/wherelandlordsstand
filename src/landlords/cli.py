@@ -413,8 +413,7 @@ def statements(ctx: typer.Context,
 def nightly() -> None:
     """The nightly housekeeping, run after the backup (deploy/landlords-backup.service): email addresses deleted
     when their time is up, and the copy of the database made before it moved onto the shared package deleted once
-    it is older than the backups are kept."""
-    from landlords import statements as pages
+    it is older than the backups are kept. It changes no page: a statement that lapses was never shown."""
     from landlords.state import open_state
 
     settings = load_settings()
@@ -427,7 +426,7 @@ def nightly() -> None:
     out = {"emails_deleted": desk.forget_old_emails(), "statements_lapsed": lapsed, "report_emails_deleted": contacts,
            "old_copies_deleted": [p.name for p in db.forget_old_copies(BACKUPS_KEPT_DAYS)]}
     desk.forget_old_counts()
-    typer.echo(json.dumps(out | pages.refresh(settings)))
+    typer.echo(json.dumps(out))
 
 
 # ---- Backups of the state database (src/landlords/state.py, BACKUPS) ---------------------------------------------

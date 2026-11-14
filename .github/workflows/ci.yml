@@ -27,12 +27,12 @@ jobs:
   pages:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: rj-mitchell/wts-core/.github/actions/setup@v0.1.0
       - run: uv sync --frozen --python 3.12
       - name: The publishers' files, from the cache
         id: raw
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: data/raw
           key: raw-${{ hashFiles('config/sources.toml') }}

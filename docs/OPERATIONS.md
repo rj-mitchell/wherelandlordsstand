@@ -159,11 +159,22 @@ biggest movers). The last six builds are kept, and never the live one or the one
 ## Readers' reports, statements and missed searches
 
 ```bash
-uv run landlords reports                                   # open reports; requests to remove a person's details first
-uv run landlords reports --close 3 --outcome "fixed alias"   # closes it and deletes the reporter's email address
+uv run landlords waiting                                   # how many reports and statements are waiting, and how long
+uv run landlords reports list                              # open reports; requests to remove a person's details first
+uv run landlords reports show 3                            # one report
+uv run landlords reports close 3 --outcome resolved --note "fixed alias"   # and deletes the reporter's email address
+uv run landlords reports close 4 --outcome dismissed --note "the regulator's figure, not ours"
+uv run landlords reports list --all                        # closed ones too, with how each ended and the note
 uv run landlords missed                                    # searches that found nothing, most frequent first
 uv run landlords backup --to backups                       # copy the state database
 ```
+
+These commands, and those for statements below, are the Where They Stand sites' shared ones (the shared package,
+wts-core), under this site's names; each prints one JSON object a line. A report is closed as `resolved` (put right)
+or `dismissed` (looked at, and nothing of ours to change), with a private note of what was found and done. Lists
+show the newest first. Before the shared package these were typed `landlords reports --close 3 --outcome "fixed
+alias"` and `landlords statements --publish 4 --checked "..."`. That shape still works for now, and `--help` marks
+it as the old way; it will be taken out in a later release, so use the commands shown here.
 
 The "report a mistake" form posts to the site's small API, so it works wherever the pages are served by `landlords
 serve` (on the server and on your own computer), but not when the built files are opened on their own. Each report has
@@ -181,44 +192,85 @@ if they break it, put them right in the same way. A missed search that is really
 
 **Response times** (the impartiality policy, 7.3; said on the corrections page and "If you're named"): reply within 5
 working days, decide within 20. The weekly email counts open reports and statements waiting, but a week is too long
-to wait for the first reply: look at `landlords reports` and `landlords statements` at least twice a week.
+to wait for the first reply: look at `landlords waiting` (or `landlords reports list` and `landlords statements
+list`) at least twice a week. `waiting` also says how many working days the oldest has waited. Once
+`LANDLORDS_CHECK_TOKEN` is set (below, "The nightly check"), the charity's nightly check of its sites does this
+looking, and fails when anything has waited four working days.
 
-**Statements from landlords** (the right of reply; `src/landlords/statements.py`). A landlord, or someone acting for
-it, sends a statement of up to 150 words from the form on "If you're named" (`/named/`). One that breaks a limit
-(150 words or 2,000 characters; a name of 120 characters, a role of 200, a link of 300) is refused, and the sender is
-told which limit and by how much: nothing sent is ever cut to fit, because a statement is published as written or
-declined, never edited. The same limits hold for `--update`. A statement that passes is kept as pending:
+**Statements from landlords** (the right of reply; `src/landlords/replies.py` for the rules this site sets, and
+`src/landlords/statements.py` for how a statement is shown). A landlord, or someone acting for it, sends a statement
+of up to 150 words from the form on "If you're named" (`/named/`). One that breaks a limit (150 words or 2,000
+characters; a name of 120 characters, a role of 200, a link of 300) is refused, and the sender is told which limit
+and by how much: nothing sent is ever cut to fit, because a statement is published as written or declined, never
+edited. The same limits hold for `update`. A statement that passes is kept as pending:
 
 ```bash
-uv run landlords statements                                # those waiting, with their email and word count
-uv run landlords statements --all                          # every one, whatever its state
-uv run landlords statements --publish 4 --checked "replied from the landlord's own address, 14 Nov"
-uv run landlords statements --publish 5 --checked "..." --landlord birmingham-city-council   # about an area's page
-uv run landlords statements --decline 6 --reason "it names a tenant"
-uv run landlords statements --update 4 --text-file new.txt --reason "the author's new version"   # or --name/--role/--link
-uv run landlords statements --withdraw 4 --reason "withdrawn by the author"
-uv run landlords statements --log 4                        # what was done to it, and why
+uv run landlords statements list                           # those waiting, with their email and word count
+uv run landlords statements list --all                     # every one, whatever its state (or --status published)
+uv run landlords statements show 4                         # one, and everything done to it
+uv run landlords statements publish 4 --checked "replied from the landlord's own address, 14 Nov"
+uv run landlords statements publish 5 --checked "..." --landlord birmingham-city-council   # about an area's page
+uv run landlords statements decline 6 --reason "it names a tenant"
+uv run landlords statements update 4 --text-file new.txt --reason "the author's new version"   # or --name/--role/--link
+uv run landlords statements withdraw 4 --reason "withdrawn by the author"   # its author asked
+uv run landlords statements remove 4 --reason "it names a tenant"           # we took it down: it broke the rules
+uv run landlords statements log 4                          # what was done to it, and why
 ```
 
 1. **Confirm who sent it** before publishing: write to the address given, from admin@wherelandlordsstand.com, and
    check it is the landlord's own (an address at its web address, or the council's), or check with the landlord
    through its published contact details. Say how in `--checked`: it is logged, and the log is kept for good.
    So don't put the sender's email address in the note (say "replied from the landlord's own address", not the
-   address itself): the privacy page promises that address is deleted three months after a statement is withdrawn
-   or declined, and only the statement's own email field is deleted then.
+   address itself): the privacy page promises that address is deleted three months after a statement is withdrawn,
+   declined or removed. A note that holds the sender's address is refused.
 2. **Check it against the rules** (the policy, 7.2): nothing defamatory, abusive or about a private individual, no
    one else's personal data, no appeals for votes, money or support, nothing about another person's conduct (and in an
    election period, nothing that campaigns). Then publish it as written, or decline it with `--reason` and tell the
-   sender why. Never edit it: if something must come out, agree it with the author and use `--update` with their
-   new version.
-3. Publishing, updating or withdrawing writes the live pages again at once (and every kept build, so approving or
-   undoing pages never brings back an old version or drops a new one); no rebuild or approval is needed. A statement
-   about an area's page needs `--landlord`: it is shown there and on that landlord's own page.
+   sender why. Never edit it: if something must come out, agree it with the author and use `update` with their
+   new version; the log keeps the words it replaced.
+3. Publishing, updating, withdrawing or removing writes the live pages again at once (and every kept build, so
+   approving or undoing pages never brings back an old version or drops a new one); no rebuild or approval is needed.
+   A statement about an area's page needs `--landlord`: it is shown there and on that landlord's own page.
+4. A published statement comes down in one of two ways, and the log says which: `withdraw` when its author asks,
+   `remove` when it breaks the rules (tell the author why). `decline` is only for one that was never shown.
 
-Every decision is logged in the state database (`statement_log`), for the trustees' review (the policy, 7.4). The
-email address given is never shown; it is deleted three months after a statement is withdrawn or declined, at each
-`landlords statements` command and each weekly update. There is no admin page for statements or reports: the owner
-uses these commands on the server (docs/DEPLOY.md, "Running it").
+Every decision is logged in the state database (`wts_statement_log`), for the trustees' review (the policy, 7.4). The
+email address given is never shown; it is deleted three months after a statement is withdrawn, declined or removed.
+That is checked every night, after the backup (`landlords nightly`, run by `landlords-backup.service`), and at every
+command above. Nothing waits for ever: a statement nobody has decided after three months lapses (it is declined, with
+the reason "No decision was made in time; please send it again", and its email address deleted), and a report still
+open after three months keeps its place in the list but loses its email address. There is no admin page for
+statements or reports: the owner uses these commands on the server (docs/DEPLOY.md, "Running it").
+
+## The state database
+
+`data/state.db` (on the server, in the `landlords-data` volume) is the one thing that can't be rebuilt from the
+publishers' files. `src/landlords/state.py` opens it through the shared package. It holds the package's tables, each
+named `wts_…` (reports, statements and their log), and this site's own two: `missed` (searches that found nothing)
+and `approvals` (the links in the weekly email).
+
+**The move onto the shared package, once.** Before it, reports and statements were in tables of the site's own
+(`reports`, `statements`, `statement_log`). The first time the new code opens the database (when the site restarts
+at the end of `update.sh`), it copies their rows into the `wts_` tables, in one step that either happens whole or not
+at all; it takes well under a second. Before copying, it keeps the whole file as it was beside it, as
+`state.pre-wts-core.<date>.db`, readable by the site's user only. The old tables are left exactly as they were and
+are not read again. `landlords nightly` deletes that copy once it is more than 60 days old, as long as the off-site
+backups are kept, because it holds email addresses as they stood that day.
+
+**Going back.** If the site must return to the code before the shared package, the old code finds its tables as they
+were on the day of the move. To carry across what came in since (new reports and statements, and decisions made),
+stop the site and run `deploy/undo-wts-core.sql`, which writes the old tables again from the package's; the file
+says how. To throw away everything since the move instead, stop the site and put `state.pre-wts-core.<date>.db`
+back as `state.db`.
+
+## The nightly check
+
+The charity checks its sites every night from its own repository (the family check). Once the owner has made the
+family's check token and set it as `LANDLORDS_CHECK_TOKEN` in `deploy/.env` (then `update.sh`), the site answers
+`GET /api/check` to that token alone, with counts and ages and nothing else: how many reports and statements are
+waiting and how many working days the oldest has waited, and how old the newest backup and off-site copy are. Never
+a word of a report or a statement, a name or an address. With no token set, the address does not exist, and the
+nightly check reports this site as not set up.
 
 ## The rights page
 

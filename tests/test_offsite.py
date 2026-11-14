@@ -1,4 +1,6 @@
-"""Off-site copies of the nightly backup in Backblaze B2 (a simulated B2; no real key is used)."""
+"""Off-site copies of the nightly backup in Backblaze B2 (a simulated B2; no real key is used). The copies are sent
+by the Where They Stand sites' shared package (wts-core, ``wts_core.ops`` and ``wts_core.adapters.b2``), with this
+site's names for its settings and its backups (src/landlords/state.py, BACKUPS)."""
 
 from __future__ import annotations
 
@@ -7,10 +9,28 @@ import json
 
 import httpx
 import pytest
+from wts_core import ops
+from wts_core.adapters import b2
+from wts_core.ops import OffsiteError
 
-from landlords.offsite import OffsiteError, check, configured, send
+from landlords.config import SITE
+from landlords.state import BACKUPS
 
 ENV = {"LANDLORDS_B2_BUCKET": "wts-backups", "LANDLORDS_B2_KEY_ID": "kid", "LANDLORDS_B2_APPLICATION_KEY": "secret"}
+
+
+def configured(env):
+    return b2.configured(SITE, env)
+
+
+def send(archive, *, keep=60, env=None, client=None):
+    """One backup sent off-site, as `landlords backup` sends it."""
+    return ops.send_offsite(archive, b2.configured(SITE, env, client=client), BACKUPS, keep=keep)
+
+
+def check(env=None, client=None):
+    """What `landlords offsite` prints."""
+    return ops.check_offsite(b2.configured(SITE, env, client=client), BACKUPS, how_to_set_up=b2.how_to_set_up(SITE))
 
 
 class FakeB2:
@@ -57,7 +77,8 @@ def archive(tmp_path, day):
 def test_not_set_up_does_nothing(tmp_path):
     assert configured({}) is None
     assert send(archive(tmp_path, "2026-10-12"), env={}) == {"offsite": "not set up"}
-    assert check(env={})["ok"] is False
+    assert check(env={}) == {"ok": False, "error": "not set up: add LANDLORDS_B2_BUCKET, LANDLORDS_B2_KEY_ID and "
+                                                   "LANDLORDS_B2_APPLICATION_KEY to deploy/.env"}
 
 
 def test_upload_retries_and_keeps_the_newest(tmp_path):
@@ -106,12 +127,12 @@ def test_the_backup_can_be_read_by_its_owner_only(settings, tmp_path, monkeypatc
 
     from typer.testing import CliRunner
 
-    from landlords.api import State
     from landlords.cli import app
+    from landlords.replies import open_replies
 
     for k in ENV:
         monkeypatch.delenv(k, raising=False)
-    State(settings.data_dir / "state.db").add_report("page", "a mistake", "reader@example.org")
+    open_replies(settings).report(kind="wrong", page="page", message="a mistake", contact="reader@example.org")
     result = CliRunner().invoke(app, ["backup", "--to", str(tmp_path / "backups")])
     assert result.exit_code == 0, result.output
     [copy] = (tmp_path / "backups").glob("landlords-state-*.sqlite.gz")

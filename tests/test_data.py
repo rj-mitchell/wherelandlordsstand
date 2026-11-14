@@ -166,7 +166,7 @@ def test_the_weekly_update_publishes_the_first_pages_and_asks_for_the_rest(tmp_p
     import shutil
 
     from landlords import publish
-    from landlords.api import State
+    from landlords.state import open_state
 
     data = tmp_path / "data"
     shutil.copytree(settings.raw_dir, data / "raw")
@@ -183,8 +183,8 @@ def test_the_weekly_update_publishes_the_first_pages_and_asks_for_the_rest(tmp_p
     monkeypatch.setattr(publish, "code_version", lambda: "a-new-version")
     asked = publish.update(s, fetch=False, notify=False)            # a new version of the site, before launch
     assert asked["build"] and asked["approval"] and publish.current(s) == first["build"]   # waits for approval
-    with State(data / "state.db").connect() as db:
-        [(build,)] = db.execute("select build from approvals").fetchall()
+    with open_state(s).connect() as db:
+        [(build,)] = [tuple(row) for row in db.execute("select build from approvals")]
     assert build == asked["build"]
 
     launched = dataclasses.replace(s, raw={**s.raw, "site": {**s.section("site"), "launched": True,
@@ -213,18 +213,18 @@ def test_a_published_statement_is_built_into_its_pages_and_nowhere_else(tmp_path
     import shutil
 
     from landlords import site
-    from landlords import statements as st
-    from landlords.api import State
+    from landlords.replies import beside, open_replies
 
     data = tmp_path / "data"
     shutil.copytree(settings.staging_dir, data / "staging", ignore=shutil.ignore_patterns("*.part"))
     s = dataclasses.replace(settings, data_dir=data)
-    state = State(data / "state.db")
+    site.build(s, data / "site")                # a statement can only be sent about a page that is on the site
+    replies = open_replies(s)
     phrase = "A phrase only this statement uses, about our tenant survey."
     for page, part in (("landlords/abri-group/", "bands"), ("areas/birmingham/", "")):
-        sid = state.add_statement("Jane Example", "Chief executive", page, part, phrase, "", "j@example.org",
-                                  "abri-group" if part else None)
-        st.publish(state, sid, "test", "abri-group" if part else "birmingham-city-council", lambda slug: True)
+        sid = replies.submit(name="Jane Example", role="Chief executive", item=beside(page, part), text=phrase,
+                             link="", email="j@example.org")
+        replies.publish(sid, checked="test", about=None if part else "birmingham-city-council")
     out = tmp_path / "site"
     assert site.build(s, out)["statements"] == 3
     abri = (out / "landlords" / "abri-group" / "index.html").read_text()
@@ -232,6 +232,8 @@ def test_a_published_statement_is_built_into_its_pages_and_nowhere_else(tmp_path
     assert phrase in (out / "areas" / "birmingham" / "index.html").read_text()
     assert phrase in (out / "landlords" / "birmingham-city-council" / "index.html").read_text()
     assert "<script" not in abri and len(abri.encode()) < 100 * 1024
+    # never in the page's title, description or link card, and in an element that asks search engines not to quote it
+    assert phrase not in abri.split("</head>")[0] and abri.count("data-nosnippet") == abri.count('class="statement"')
     for path in out.rglob("*"):
         if path.is_file() and path.suffix in (".json", ".csv", ".xml", ".txt"):
             assert "only this statement uses" not in path.read_text(errors="ignore"), path

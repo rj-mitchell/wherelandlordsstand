@@ -80,11 +80,13 @@ Commands are run in `/opt/wherelandlordsstand/deploy`. Any `landlords` command r
   and Undo buttons (docs/OPERATIONS.md, "The weekly update"). Nothing to run by hand. The email waits in the outbox
   until it is sent: `bash send-mail.sh` sends anything still there (after a mail failure, say), and sent ones are kept
   in the volume's `outbox/sent/` for 30 days.
-* **Readers' reports:** `landlords reports`; close one with `landlords reports --close <id> --outcome "..."`, which
-  deletes the reporter's email address. Fixes to our own mistakes go in the public log, `data_static/corrections.csv`.
-* **Statements from landlords** (the right of reply): `landlords statements` lists those waiting; publish one with
-  `landlords statements --publish <id> --checked "how you confirmed who sent it"`, or decline, update or withdraw it
-  (docs/OPERATIONS.md, "Readers' reports, statements and missed searches"). It goes on the live pages at once.
+* **Readers' reports:** `landlords reports list`; close one with `landlords reports close <id> --outcome resolved
+  --note "..."` (or `--outcome dismissed`), which deletes the reporter's email address. Fixes to our own mistakes go
+  in the public log, `data_static/corrections.csv`.
+* **Statements from landlords** (the right of reply): `landlords statements list` shows those waiting; publish one
+  with `landlords statements publish <id> --checked "how you confirmed who sent it"`, or decline, update, withdraw
+  or remove it (docs/OPERATIONS.md, "Readers' reports, statements and missed searches"). It goes on the live pages at
+  once. `landlords waiting` counts what is waiting, and for how long.
 * **Missed searches:** `landlords missed`: candidates for new aliases (docs/OPERATIONS.md, "The register and names").
 * **New code:** merge it into `main` on GitHub, then `bash /opt/wherelandlordsstand/deploy/update.sh`. The next
   update rebuilds the pages.
@@ -96,8 +98,13 @@ Commands are run in `/opt/wherelandlordsstand/deploy`. Any `landlords` command r
   `/opt/wherelandlordsstand/deploy/backups`, the last 14 kept, and to the charity's B2 bucket under this site's own
   names (each site deletes only its own old copies). Each copy is checked before it is kept (SQLite's integrity
   check, as the sister sites' backups are): if it fails, the command says `Backup failed: ...` and exits 1, so the
-  alert email is sent, and nothing is kept, deleted or sent off-site. To set up the off-site copy, once, copy the
-  bucket and key from Where MPs Stand's settings and check them:
+  alert email is sent, and nothing is kept, deleted or sent off-site. After each night's backup the same unit runs
+  `landlords nightly`, which deletes email addresses whose time is up (docs/OPERATIONS.md). A backup timer that has
+  stopped sends no failure of its own, so every day at 12:23 UTC `landlords backup-check`
+  (`landlords-backup-check.timer`) looks at the backups folder: it fails, and so sends the alert email, when the last
+  backup or off-site copy is over two days old or the last off-site copy failed. By hand:
+  `docker compose run --rm --no-deps -T app landlords backup-check --in /backups`. To set up the off-site copy, once,
+  copy the bucket and key from Where MPs Stand's settings and check them:
   ```bash
   cd /opt/wherelandlordsstand/deploy
   for k in BUCKET KEY_ID APPLICATION_KEY; do v=$(grep "^HANSARD_B2_$k=" /opt/hansardgpt/deploy/.env | cut -d= -f2-); \
@@ -109,10 +116,21 @@ Commands are run in `/opt/wherelandlordsstand/deploy`. Any `landlords` command r
   To put a backup back (one from B2 goes in `backups/` first), with the site stopped:
   ```bash
   cd /opt/wherelandlordsstand/deploy && docker compose stop app
-  docker compose run --rm -T app sh -c \
-    'rm -f /data/state.db-wal /data/state.db-shm && gunzip -c /backups/landlords-state-<time>.sqlite.gz > /data/state.db'
+  docker compose run --rm --no-deps app landlords restore /backups/landlords-state-<time>.sqlite.gz
   docker compose up -d app
   ```
+  `restore` asks first (`--yes` to skip the question). It unpacks the backup beside the database and checks it
+  (SQLite's integrity check, and that it is this site's database) before anything is replaced; the database it
+  replaces is kept as `state.db.before-restore`, which must be moved or deleted before another restore: delete it
+  once the site is known to be right, as it holds email addresses as they stood. A backup made
+  before the site moved onto the shared package can be put back too: its rows are brought across when the site
+  starts (docs/OPERATIONS.md, "The state database").
+* **The Docker build** installs the shared package (wts-core) as the wheel of its release, from GitHub's releases
+  (`github.com`, which hands the download to `objects.githubusercontent.com`): the server must
+  be able to reach both, as it reaches PyPI. No git is needed in the image. `uv.lock` holds the wheel's SHA-256, so a
+  changed file fails the build.
+* **The nightly check:** set `LANDLORDS_CHECK_TOKEN` in `.env` to the family's check token, then run `update.sh`
+  (docs/OPERATIONS.md, "The nightly check"). Until then the address `/api/check` does not exist.
 * **The privacy page** (`[privacy]` in `config/wording.toml`) names Cloudflare and says visits are not logged
   (`landlords serve` turns uvicorn's access log off, and the front door keeps none). Keep it true.
 

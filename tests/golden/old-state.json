@@ -1,0 +1,277 @@
+{
+ "approval": {
+  "build": "20261101-000000",
+  "created": "2026-11-06T10:00:00+00:00",
+  "expires": "2026-11-20T10:00:00+00:00",
+  "published_at": "2026-11-06T10:00:00+00:00",
+  "rolled_back_at": null
+ },
+ "forgotten_at_the_next_tidy": 0,
+ "logs": {
+  "1": [
+   [
+    "2026-07-01T09:00:00+00:00",
+    "received",
+    null
+   ],
+   [
+    "2026-07-02T09:00:00+00:00",
+    "published",
+    "phoned in July"
+   ],
+   [
+    "2026-07-03T09:00:00+00:00",
+    "withdrawn",
+    "withdrawn by the author"
+   ]
+  ],
+  "2": [
+   [
+    "2026-11-03T10:00:00+00:00",
+    "received",
+    null
+   ],
+   [
+    "2026-11-04T10:00:00+00:00",
+    "published",
+    "replied from the landlord's own address"
+   ],
+   [
+    "2026-11-06T10:00:00+00:00",
+    "updated",
+    "the author's new version"
+   ]
+  ],
+  "3": [
+   [
+    "2026-11-03T10:00:00+00:00",
+    "received",
+    null
+   ],
+   [
+    "2026-11-04T10:00:00+00:00",
+    "published",
+    "phoned the council"
+   ]
+  ],
+  "4": [
+   [
+    "2026-11-03T10:00:00+00:00",
+    "received",
+    null
+   ],
+   [
+    "2026-11-06T10:00:00+00:00",
+    "updated",
+    null
+   ]
+  ],
+  "5": [
+   [
+    "2026-11-03T10:00:00+00:00",
+    "received",
+    null
+   ],
+   [
+    "2026-11-04T10:00:00+00:00",
+    "declined",
+    "it is about a tenant"
+   ]
+  ],
+  "6": [
+   [
+    "2026-11-03T10:00:00+00:00",
+    "received",
+    null
+   ],
+   [
+    "2026-11-04T10:00:00+00:00",
+    "published",
+    "letter"
+   ],
+   [
+    "2026-11-06T10:00:00+00:00",
+    "withdrawn",
+    "withdrawn by the author"
+   ]
+  ]
+ },
+ "open_report_count": 4,
+ "open_reports": [
+  {
+   "at": "2026-11-03T09:00:00+00:00",
+   "email": null,
+   "id": 3,
+   "kind": "takedown",
+   "message": "Please remove my name.",
+   "page": "areas/leeds/"
+  },
+  {
+   "at": "2026-06-20T08:00:00+00:00",
+   "email": null,
+   "id": 1,
+   "kind": null,
+   "message": "From before kinds, with no page",
+   "page": null
+  },
+  {
+   "at": "2026-11-03T09:00:00+00:00",
+   "email": "reader@example.org",
+   "id": 2,
+   "kind": "wrong",
+   "message": "Wrong grade",
+   "page": "landlords/x/"
+  },
+  {
+   "at": "2026-11-03T09:00:00+00:00",
+   "email": "c@d.org",
+   "id": 4,
+   "kind": "unfair",
+   "message": "Loaded words",
+   "page": ""
+  }
+ ],
+ "pages": {
+  "areas/leeds/": "<h1>Leeds</h1><p class=\"warn\">w</p><!--statements:page--><div class=\"statement\" role=\"note\" id=\"statement-3\" aria-labelledby=\"statement-3-h\"><h2 id=\"statement-3-h\">Statement from Sam Officer, 4 November 2026</h2><p class=\"st-role\">Head of housing, Example Council</p><blockquote class=\"st-words\"><p>Our homes in Leeds are<br>listed rightly.</p><p>Thank you.</p></blockquote><p class=\"st-note\">In their own words. Not checked or endorsed by Where Landlords Stand.</p></div><!--/statements:page-->",
+  "landlords/example-council/": "<h1>Example Council</h1><section class=\"card\"><section><h3 id=\"grade\">grade</h3><p>Our words.</p><!--statements:grade--><!--/statements:grade--></section><section><h3 id=\"bands\">bands</h3><p>Our words.</p><!--statements:bands--><!--/statements:bands--></section><section><h3 id=\"ombudsman\">ombudsman</h3><p>Our words.</p><!--statements:ombudsman--><!--/statements:ombudsman--></section></section><!--statements:page--><div class=\"statement\" role=\"note\" id=\"statement-3\" aria-labelledby=\"statement-3-h\"><h2 id=\"statement-3-h\">Statement from Sam Officer, 4 November 2026</h2><p class=\"st-role\">Head of housing, Example Council</p><p class=\"st-about\">This statement is about <a href=\"../../areas/leeds/index.html\">what we say on the page for Leeds</a>.</p><blockquote class=\"st-words\"><p>Our homes in Leeds are<br>listed rightly.</p><p>Thank you.</p></blockquote><p class=\"st-note\">In their own words. Not checked or endorsed by Where Landlords Stand.</p></div><!--/statements:page--><h2>Figures</h2>",
+  "landlords/example-housing/": "<h1>Example Housing</h1><section class=\"card\"><section><h3 id=\"grade\">grade</h3><p>Our words.</p><!--statements:grade--><!--/statements:grade--></section><section><h3 id=\"bands\">bands</h3><p>Our words.</p><!--statements:bands--><div class=\"statement\" role=\"note\" id=\"statement-2\" aria-labelledby=\"statement-2-h\"><h4 id=\"statement-2-h\">Statement from Jane Example, 6 November 2026</h4><p class=\"st-role\">Chief executive, Example Housing</p><blockquote class=\"st-words\"><p>Our newer results are published every quarter.</p></blockquote><p class=\"st-link\"><a href=\"https://example.org/results\" rel=\"nofollow\">The record they point to</a></p><p class=\"st-note\">In their own words. Not checked or endorsed by Where Landlords Stand.</p></div><!--/statements:bands--></section><section><h3 id=\"ombudsman\">ombudsman</h3><p>Our words.</p><!--statements:ombudsman--><!--/statements:ombudsman--></section><section><h3 id=\"safety\">safety</h3><p>Our words.</p><!--statements:safety--><!--/statements:safety--></section></section><!--statements:page--><!--/statements:page--><h2>Figures</h2>"
+ },
+ "pending_statement_count": 1,
+ "shown": [
+  {
+   "id": 2,
+   "landlord": "example-housing",
+   "link": "https://example.org/results",
+   "name": "Jane Example",
+   "page": "landlords/example-housing/",
+   "part": "bands",
+   "published_at": "2026-11-04T10:00:00+00:00",
+   "role": "Chief executive, Example Housing",
+   "text": "Our newer results are published every quarter.",
+   "updated_at": "2026-11-06T10:00:00+00:00"
+  },
+  {
+   "id": 3,
+   "landlord": "example-council",
+   "link": null,
+   "name": "Sam Officer",
+   "page": "areas/leeds/",
+   "part": "",
+   "published_at": "2026-11-04T10:00:00+00:00",
+   "role": "Head of housing, Example Council",
+   "text": "Our homes in Leeds are\nlisted rightly.\n\nThank you.",
+   "updated_at": null
+  }
+ ],
+ "statements": [
+  {
+   "at": "2026-07-01T09:00:00+00:00",
+   "checked": "phoned in July",
+   "closed_at": "2026-07-03T09:00:00+00:00",
+   "email": null,
+   "id": 1,
+   "landlord": "example-housing",
+   "link": null,
+   "name": "Old Author",
+   "page": "landlords/example-housing/",
+   "part": "",
+   "published_at": "2026-07-02T09:00:00+00:00",
+   "reason": "withdrawn by the author",
+   "role": "Director, Example Housing",
+   "status": "withdrawn",
+   "text": "Words withdrawn long ago.",
+   "updated_at": null
+  },
+  {
+   "at": "2026-11-03T10:00:00+00:00",
+   "checked": "replied from the landlord's own address",
+   "closed_at": null,
+   "email": "jane@example-housing.org.uk",
+   "id": 2,
+   "landlord": "example-housing",
+   "link": "https://example.org/results",
+   "name": "Jane Example",
+   "page": "landlords/example-housing/",
+   "part": "bands",
+   "published_at": "2026-11-04T10:00:00+00:00",
+   "reason": null,
+   "role": "Chief executive, Example Housing",
+   "status": "published",
+   "text": "Our newer results are published every quarter.",
+   "updated_at": "2026-11-06T10:00:00+00:00"
+  },
+  {
+   "at": "2026-11-03T10:00:00+00:00",
+   "checked": "phoned the council",
+   "closed_at": null,
+   "email": "sam@example.gov.uk",
+   "id": 3,
+   "landlord": "example-council",
+   "link": null,
+   "name": "Sam Officer",
+   "page": "areas/leeds/",
+   "part": "",
+   "published_at": "2026-11-04T10:00:00+00:00",
+   "reason": null,
+   "role": "Head of housing, Example Council",
+   "status": "published",
+   "text": "Our homes in Leeds are\nlisted rightly.\n\nThank you.",
+   "updated_at": null
+  },
+  {
+   "at": "2026-11-03T10:00:00+00:00",
+   "checked": null,
+   "closed_at": null,
+   "email": "pat@example.gov.uk",
+   "id": 4,
+   "landlord": null,
+   "link": null,
+   "name": "Pat Waiting",
+   "page": "areas/leeds/",
+   "part": "",
+   "published_at": null,
+   "reason": null,
+   "role": "Housing officer, Example Council",
+   "status": "pending",
+   "text": "Still waiting for a decision.",
+   "updated_at": null
+  },
+  {
+   "at": "2026-11-03T10:00:00+00:00",
+   "checked": null,
+   "closed_at": "2026-11-04T10:00:00+00:00",
+   "email": "x@example.org",
+   "id": 5,
+   "landlord": "example-council",
+   "link": null,
+   "name": "X  Y",
+   "page": "landlords/example-council/",
+   "part": "safety",
+   "published_at": null,
+   "reason": "it is about a tenant",
+   "role": "Z",
+   "status": "declined",
+   "text": "Never shown at all.",
+   "updated_at": null
+  },
+  {
+   "at": "2026-11-03T10:00:00+00:00",
+   "checked": "letter",
+   "closed_at": "2026-11-06T10:00:00+00:00",
+   "email": "recent@example.org",
+   "id": 6,
+   "landlord": "example-council",
+   "link": "https://example.org/r?a=1&b=2",
+   "name": "Recent Author",
+   "page": "landlords/example-council/",
+   "part": "",
+   "published_at": "2026-11-04T10:00:00+00:00",
+   "reason": "withdrawn by the author",
+   "role": "Director",
+   "status": "withdrawn",
+   "text": "Shown for a day only.",
+   "updated_at": null
+  }
+ ],
+ "weekly_email": "Nothing new from the publishers this week, so the pages are unchanged.\n\nChecks: all passed.\n\nReaders' reports of mistakes waiting: 4 (landlords reports)\n\nStatements from landlords waiting for a decision: 1 (landlords statements). We reply within 5 working days, and decide within 20 working days.\n\n-- \nSent by the weekly update on the server (Where Landlords Stand, docs/OPERATIONS.md)."
+}

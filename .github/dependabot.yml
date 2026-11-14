@@ -7,7 +7,9 @@
 # the Docker section below takes newer releases of Python 3.12 only.
 version: 2
 updates:
-  # Python packages (pyproject.toml and uv.lock)
+  # Python packages (pyproject.toml and uv.lock). wts-core, the sites' shared package, is named by the address of its
+  # release's wheel, which Dependabot doesn't raise: to take a newer release, change the version in pyproject.toml (in
+  # both places in the address) and in .github/workflows/ci.yml, and run `uv lock`.
   - package-ecosystem: "uv"
     directory: "/"
     schedule:
@@ -31,6 +33,10 @@ updates:
       actions:
         patterns:
           - "*"
+    # The family's shared workflows and actions are called at the tag of the shared package this site installs
+    # (pyproject.toml), and raised by hand with it, in one change: tests/test_dependencies.py keeps the two the same.
+    ignore:
+      - dependency-name: "rj-mitchell/wts-core*"
 
   # The base image in the Dockerfile: newer releases of Python 3.12 only (see the note at the top)
   - package-ecosystem: "docker"

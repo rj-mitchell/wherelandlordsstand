@@ -5,6 +5,7 @@ import subprocess
 
 import pytest
 from fastapi.testclient import TestClient
+from wts_core.usage import RateLimiter
 
 from landlords import publish
 from landlords.api import create_app
@@ -31,13 +32,15 @@ def test_a_report_from_the_form_is_kept_and_its_email_deleted_on_closing(client,
     r = client.post("/api/corrections", content="page=landlords%2Fx%2F&message=Wrong+grade&email=a%40b.org",
                     headers={"content-type": "application/x-www-form-urlencoded"}, follow_redirects=False)
     assert r.status_code == 303 and r.headers["location"] == "/corrections/thanks.html"
-    from landlords.api import State
+    from landlords.replies import open_replies
 
-    state = State(settings.data_dir / "state.db")
-    [(rid, _, kind, page, message, email)] = state.open_reports()
-    assert (kind, page, message, email) == (None, "landlords/x/", "Wrong grade", "a@b.org")   # an older form: no kind
-    assert state.close_report(rid, "fixed")
-    assert sqlite3.connect(settings.data_dir / "state.db").execute("select email from reports").fetchone() == (None,)
+    replies = open_replies(settings)
+    [report] = replies.reports()
+    assert (report["kind"], report["page"], report["message"], report["contact"]) == (
+        None, "landlords/x/", "Wrong grade", "a@b.org")                                       # an older form: no kind
+    replies.close(report["id"], outcome="resolved", note="fixed")
+    assert sqlite3.connect(settings.data_dir / "state.db").execute(
+        "select contact, status, resolution from wts_reports").fetchone() == (None, "resolved", "fixed")
     assert client.post("/api/corrections", json={"message": ""}).status_code == 400
 
 
@@ -51,7 +54,8 @@ def test_a_missed_search_keeps_only_the_words(client, settings):
 
 @pytest.mark.parametrize("body", [b"{not json", b'["a", "list"]', b"\xff\xfe"])
 def test_a_json_body_that_cannot_be_read_is_refused_and_nothing_kept(client, settings, body):
-    from landlords.api import State
+    from landlords.replies import open_replies
+    from landlords.state import own
 
     json_body = {"content": body, "headers": {"content-type": "application/json"}}
     r = client.post("/api/corrections", **json_body)
@@ -59,8 +63,7 @@ def test_a_json_body_that_cannot_be_read_is_refused_and_nothing_kept(client, set
     assert r.json() == {"ok": False, "error": "the report couldn't be read; please send it again"}
     r = client.post("/api/missed", **json_body)
     assert r.status_code == 400 and r.json() == {"ok": False}
-    state = State(settings.data_dir / "state.db")
-    assert state.open_reports() == [] and state.top_missed() == []
+    assert open_replies(settings).reports() == [] and own(settings).top_missed() == []
     assert client.post("/api/corrections", json={"message": "Wrong grade"}).json() == {"ok": True, "id": 1}
 
 
@@ -133,57 +136,68 @@ def test_every_file_a_page_uses_is_fingerprinted_under_assets(tmp_path):
     assert 'width="52" height="52"' in site.MARK                    # stays small without the stylesheet
 
 
-# The limit on posts: ten a minute from one visitor (api.Limiter) ---------------------------------------------------
+# The limit on posts: ten a minute from one visitor (the shared package's RateLimiter, counting by api.counted_by) ----
 
 
-@pytest.fixture
-def clock(monkeypatch):
-    """The limiter's clock, moved by hand: ``clock.now = 61`` is 61 seconds on."""
-    import types
+class Recording:
+    """A limiter that also notes what it was asked to count by, for a test to look at."""
+
+    def __init__(self, limiter):
+        self.limiter, self.asked = limiter, []
+
+    def allow(self, key: str) -> bool:
+        self.asked.append(key)
+        return self.limiter.allow(key)
+
+
+def test_ten_posts_a_minute_from_one_visitor_and_no_more_until_a_minute_has_passed(client, settings, monkeypatch):
+    from wts_core.testing import FixedClock
 
     from landlords import api
 
-    c = types.SimpleNamespace(now=1000.0)
-    monkeypatch.setattr(api.time, "monotonic", lambda: c.now)
-    return c
+    made = []
+    monkeypatch.setattr(api, "RateLimiter", lambda *a, **k: made.append(Recording(RateLimiter(*a, **k))) or made[-1])
+    clock = FixedClock()
+    app = api.create_app(settings, behind_proxy=True, clock=clock)
+
+    def post(who: str) -> int:
+        return TestClient(app).post("/api/missed", json={"q": "nobody homes"},
+                                    headers={"x-forwarded-for": f"{who}, 10.0.0.1"}).status_code
+
+    assert [post("203.0.113.7") for _ in range(11)] == [200] * 10 + [429]
+    assert post("203.0.113.8") == 200                                # another visitor is counted on their own
+    clock.advance(59)
+    assert post("203.0.113.7") == 429                                # a refused try doesn't count against them
+    clock.advance(2)                                                 # the minute has passed since the first ten
+    assert [post("203.0.113.7") for _ in range(11)] == [200] * 10 + [429]
+    [limiter] = made
+    assert (limiter.limiter.per_minute, limiter.limiter.forget_over) == (10, 50_000)
+    # never the address itself: the limiter is given a short hash of it, and holds nothing else
+    assert set(limiter.asked) == {api.counted_by("203.0.113.7"), api.counted_by("203.0.113.8")}
+    assert all("203.0.113" not in key and len(key) == 16 for key in limiter.asked)
 
 
-def test_ten_posts_a_minute_from_one_visitor_and_no_more_until_a_minute_has_passed(clock):
-    from landlords.api import Limiter
+def test_the_limiter_forgets_visitors_with_nothing_in_the_last_minute():
+    """The shared limiter's own tests look inside it (wts-core, tests/test_usage_limits.py); here, that forgetting
+    the idle never changes who is let in."""
+    from wts_core.testing import FixedClock
 
-    limiter = Limiter()
-    assert [limiter.allow("203.0.113.7") for _ in range(11)] == [True] * 10 + [False]
-    assert limiter.allow("203.0.113.8")                              # another visitor is counted on their own
-    clock.now += 59
-    assert not limiter.allow("203.0.113.7")                          # a refused try doesn't count against them
-    clock.now += 2                                                   # the minute has passed since the first ten
-    assert [limiter.allow("203.0.113.7") for _ in range(11)] == [True] * 10 + [False]
-    assert all("203.0.113" not in key and len(key) == 16 for key in limiter.seen)   # never the address itself
-
-
-def test_the_limiter_forgets_visitors_with_nothing_in_the_last_minute(clock):
-    from landlords.api import Limiter
-
-    limiter = Limiter(per_minute=2, forget_over=3)
+    clock = FixedClock()
+    limiter = RateLimiter(2, forget_over=3, clock=clock)
     for who in ("a", "b", "c"):
         assert limiter.allow(who)
-    assert len(limiter.seen) == 3                                    # three remembered: not over three, so all kept
-    clock.now += 30
-    assert limiter.allow("d") and len(limiter.seen) == 4             # over three, but all were here this minute
-    clock.now += 40                                                  # a, b and c were last here 70 seconds ago
+    clock.advance(30)
+    assert limiter.allow("d")                                        # over three, but all were here this minute
+    clock.advance(40)                                                # a, b and c were last here 70 seconds ago
     assert limiter.allow("d") and not limiter.allow("d")             # d is still counted: two this minute
-    assert limiter.allow("e")
-    assert len(limiter.seen) == 2                                    # d and e; a, b and c are forgotten
-    assert not limiter.allow("d")
-    assert Limiter().forget_over == 50_000 and Limiter().per_minute == 10
+    assert limiter.allow("e") and not limiter.allow("d")
+    assert [limiter.allow("a"), limiter.allow("a"), limiter.allow("a")] == [True, True, False]   # counted afresh
 
 
 def test_the_limiter_counts_rightly_from_many_threads():
     from concurrent.futures import ThreadPoolExecutor
 
-    from landlords.api import Limiter
-
-    limiter = Limiter(per_minute=100, forget_over=50)
+    limiter = RateLimiter(100, forget_over=50)
     with ThreadPoolExecutor(8) as pool:
         mine = list(pool.map(lambda _: limiter.allow("one visitor"), range(400)))
         others = list(pool.map(lambda i: limiter.allow(f"visitor {i}"), range(400)))
@@ -201,11 +215,12 @@ def test_each_route_says_too_many_in_its_own_words(client, settings):
     assert r.status_code == 429 and r.json() == {"ok": False, "error": "too many tries; try again in a minute"}
     r = client.get("/admin/approve/not-a-token")
     assert r.status_code == 429 and "<h1>Too many tries</h1><p>Try again in a minute.</p>" in r.text
-    from landlords.api import State
+    from landlords.replies import open_replies
+    from landlords.state import own
 
-    state = State(settings.data_dir / "state.db")
-    assert state.open_reports() == [] and state.statements() == []   # nothing refused was kept
-    assert state.top_missed() == [("nobody homes", 10)]
+    replies = open_replies(settings)
+    assert replies.reports() == [] and replies.statements() == []    # nothing refused was kept
+    assert own(settings).top_missed() == [("nobody homes", 10)]
 
 
 # The state database's connections ------------------------------------------------------------------------------------
@@ -213,28 +228,33 @@ def test_each_route_says_too_many_in_its_own_words(client, settings):
 
 def test_every_connection_to_the_state_database_is_closed_after_use(settings, monkeypatch):
     from landlords import status
-    from landlords.api import State
+    from landlords.replies import open_replies
+    from landlords.state import State, open_state
 
+    (settings.data_dir / "site" / "landlords" / "x").mkdir(parents=True)
+    (settings.data_dir / "site" / "landlords" / "x" / "index.html").write_text("<h1>X</h1>")
     opened = []
     connect = sqlite3.connect
     monkeypatch.setattr(sqlite3, "connect", lambda *a, **k: opened.append(connect(*a, **k)) or opened[-1])
-    state = State(settings.data_dir / "state.db")
-    rid = state.add_report("landlords/x/", "Wrong grade", "a@b.org", "wrong")
-    sid = state.add_statement("Jane Example", "Chief executive", "landlords/x/", "", "Our own words.", "", "a@b.org",
-                              "x")
-    state.change_statement(sid, "published", "phoned", status="published")
+    db = open_state(settings)
+    state, replies = State(db), open_replies(settings, db)
+    rid = replies.report(kind="wrong", page="landlords/x/", message="Wrong grade", contact="a@b.org")
+    sid = replies.submit(name="Jane Example", role="Chief executive", item="landlords/x/", text="Our own words.",
+                         link="", email="a@b.org")
+    replies.publish(sid, checked="phoned")
     token = state.add_approval("20261101-000000", 7)
     state.mark(token, "published_at")
     state.missed("nobody homes")
-    assert state.close_report(rid, "fixed") and state.open_reports() == [] and state.open_report_count() == 0
-    assert state.statement(sid)["status"] == "published" and state.pending_statement_count() == 0
-    assert [row[1] for row in state.statement_log(sid)] == ["received", "published"]
+    replies.close(rid, outcome="resolved", note="fixed")
+    assert replies.reports() == [] and replies.waiting().reports == 0
+    assert replies.statement(sid)["status"] == "published" and replies.waiting().statements == 0
+    assert [entry["action"] for entry in replies.log(sid)] == ["received", "published"]
     assert state.approval(token)["published_at"] and state.top_missed() == [("nobody homes", 1)]
-    assert state.forget_statement_emails("2026-01-01") == 0
+    assert replies.forget_old_emails() == 0
     assert status.waiting(settings, None) is None
-    with pytest.raises(sqlite3.OperationalError), state.connect() as db:
-        db.execute("insert into missed (day, query, count) values ('2026-11-12', 'half done', 1)")
-        db.execute("insert into no_such_table values (1)")
+    with pytest.raises(sqlite3.OperationalError), db.connect() as con:
+        con.execute("insert into missed (day, query, count) values ('2026-11-12', 'half done', 1)")
+        con.execute("insert into no_such_table values (1)")
     assert state.top_missed() == [("nobody homes", 1)]              # an error undoes the work, and still closes
     assert len(opened) >= 15
     for con in opened:

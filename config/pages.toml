@@ -194,7 +194,7 @@ text = [
 id = "information"
 heading = "Your information"
 text = [
-  "A statement is published with your name and role, as you wrote them. The email address you give is used only to confirm who you are, and to let you update or withdraw your statement. It is never shown. We keep it while the statement is shown, and delete it three months after the statement is withdrawn or declined. The [privacy page](privacy/index.html) says more.",
+  "A statement is published with your name and role, as you wrote them. The email address you give is used only to confirm who you are, and to let you update or withdraw your statement. It is never shown. We keep it while the statement is waiting or shown, and delete it three months after the statement is withdrawn, declined or removed. The [privacy page](privacy/index.html) says more.",
 ]
 
 [press]

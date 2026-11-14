@@ -7,7 +7,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from landlords import notify, publish
-from landlords.api import State, create_app
+from landlords.api import create_app
+from landlords.state import own
 
 
 def _build(settings, name, failed=()):
@@ -24,7 +25,7 @@ def site(settings):
     _build(settings, "20261101-000000")
     _build(settings, "20261105-000000")
     publish.publish(settings, "20261101-000000")
-    state = State(settings.data_dir / "state.db")
+    state = own(settings)
     return settings, state, TestClient(create_app(settings))
 
 

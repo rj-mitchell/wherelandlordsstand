@@ -234,7 +234,8 @@ sections = [
   ["No cookies, no tracking", "This site sets no cookies and uses no analytics or advertising. It loads nothing from other websites."],
   ["Searches", "Searching happens in your browser. If a search finds nothing, the words you searched for are sent to us, with the date and nothing else, so we can add names people look for."],
   ["Reports of mistakes", "If you report a mistake, we keep what you wrote and, if you give it, your email address, until we have dealt with it. Then we delete your email address."],
-  ["Statements from landlords", "A landlord, or someone acting for it, can add a short statement beside what this site says about it (the charity's impartiality policy, section 7.2). The statement is published with their name and role, as they wrote it. The email address used to confirm who they are, and to let them update or withdraw it, is kept while the statement is shown and deleted three months after it is withdrawn or declined. It is never shown on the site."],
+  ["Statements from landlords", "A landlord, or someone acting for it, can add a short statement beside what this site says about it (the charity's impartiality policy, section 7.2). The statement is published with their name and role, as they wrote it. The email address used to confirm who they are, and to let them update or withdraw it, is kept while the statement is waiting or shown, and deleted three months after it is withdrawn, declined or removed. It is never shown on the site."],
+  ["Backups", "Backups of the site's database are kept for up to two months, so a deleted address can remain in a backup until then."],
   ["Visits", "Visits pass through Cloudflare, which protects the site. We do not keep logs of visits."],
 ]
 
@@ -261,7 +262,7 @@ text_hint = "Write it as you want it shown. We publish it as you wrote it, or te
 link = "A link to the record (optional)"
 link_hint = "A full web address, starting https://. For example, a statement you have published, or a report to your board."
 email = "Your email, so we can confirm it's you"
-email_hint = "It is never shown. We delete it three months after a statement is withdrawn or declined."
+email_hint = "It is never shown. We delete it three months after a statement is withdrawn, declined or removed."
 honeypot = "Leave this empty"
 send = "Send statement"
 after = "Your statement is shown with your name and role once we have confirmed it's from you."

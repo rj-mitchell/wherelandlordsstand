@@ -301,8 +301,11 @@ def statement_form(w: dict) -> str:
     page. It works without JavaScript: it posts to the site's API, then goes to a thank-you page. The browser checks
     what it can (required fields, an email address, a web address); the API checks the rest, such as the 150 words.
     The hidden field ("Leave this empty") is for robots: a statement with it filled in is thanked and dropped."""
-    from landlords.statements import LIMITS, PARTS
+    from landlords.replies import PARTS, RULES
 
+    # the form's own limits are the rules' (src/landlords/replies.py), so the browser stops where the site would
+    limits = {"name": RULES.name_max, "role": RULES.role_max, "page": RULES.page_max, "text": RULES.max_chars,
+              "link": RULES.link_max, "email": RULES.email_max}
     t = w["statement"]
     parts = {"grade": w["grade"]["heading"], "bands": w["bands"]["heading"], "ombudsman": w["ombudsman"]["heading"],
              "safety": w["safety"]["heading"]}
@@ -317,18 +320,18 @@ def statement_form(w: dict) -> str:
 
     return (f'<h3 id="send">{esc(t["form_heading"])}</h3>'
             f'<form id="statement" method="post" action="../api/statements">'
-            + field("name", t["name"], f' type="text" maxlength="{LIMITS["name"]}" autocomplete="name" required')
-            + field("role", t["role"], f' type="text" maxlength="{LIMITS["role"]}" autocomplete="organization-title" '
+            + field("name", t["name"], f' type="text" maxlength="{limits["name"]}" autocomplete="name" required')
+            + field("role", t["role"], f' type="text" maxlength="{limits["role"]}" autocomplete="organization-title" '
                     'required', t["role_hint"])
             # id="page" with an empty value, as on the report form, so ?page= can fill it in (api.prefill)
-            + field("page", t["page"], f' value="" type="text" inputmode="url" maxlength="{LIMITS["page"]}" '
+            + field("page", t["page"], f' value="" type="text" inputmode="url" maxlength="{limits["page"]}" '
                     'autocomplete="off" required', t["page_hint"], fid="page")
             + f'<label for="st-part">{esc(t["part"])}</label><select id="st-part" name="part">{options}</select>'
             + f'<label for="st-text">{esc(t["text"])}</label><textarea id="st-text" name="text" rows="8" '
-              f'maxlength="{LIMITS["text"]}" required aria-describedby="st-text-hint"></textarea>'
+              f'maxlength="{limits["text"]}" required aria-describedby="st-text-hint"></textarea>'
               f'<p class="hint" id="st-text-hint">{esc(t["text_hint"])}</p>'
-            + field("link", t["link"], f' type="url" maxlength="{LIMITS["link"]}" autocomplete="url"', t["link_hint"])
-            + field("email", t["email"], f' type="email" maxlength="{LIMITS["email"]}" autocomplete="email" required',
+            + field("link", t["link"], f' type="url" maxlength="{limits["link"]}" autocomplete="url"', t["link_hint"])
+            + field("email", t["email"], f' type="email" maxlength="{limits["email"]}" autocomplete="email" required',
                     t["email_hint"])
             + f'<div class="hp" aria-hidden="true"><label for="st-website">{esc(t["honeypot"])}</label>'
               f'<input id="st-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>'
@@ -343,7 +346,7 @@ def named_html(settings: Settings, w: dict) -> str:
     from landlords.statements import render
 
     t = load_toml("pages.toml")["named"]
-    example = render({"id": "example", "name": t["example"]["name"], "date": t["example"]["date"],
+    example = render({"id": "example", "name": t["example"]["name"], "dated": t["example"]["date"],
                       "role": t["example"]["role"], "text": t["example"]["text"], "link": ""}, w, 4)
 
     def para(x: str | list) -> str:

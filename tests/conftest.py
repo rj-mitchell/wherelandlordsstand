@@ -1,5 +1,14 @@
 from __future__ import annotations
 
+import os
+
+# Typer draws a command's --help with colour codes when it thinks a terminal is watching, and it thinks so on GitHub
+# Actions (it looks for GITHUB_ACTIONS). The codes split an option's name in two, so a test that reads --help passed
+# on a developer's machine and failed in CI. Typer reads these when it is first imported, so they are set here,
+# before anything imports it.
+os.environ["_TYPER_FORCE_DISABLE_TERMINAL"] = "1"
+os.environ["NO_COLOR"] = "1"
+
 import pytest
 
 from landlords import register

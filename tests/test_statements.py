@@ -260,6 +260,32 @@ def test_the_owner_declines_with_reasons(client, state, site):
     assert run("list")[1] == ""                                        # nothing waiting
 
 
+def test_a_statement_cannot_be_published_for_a_landlord_whose_page_has_gone(client, state, site):
+    """A landlord's page can go between a statement being sent and being decided (a merger, say). A statement is
+    shown on its landlord's own page, so it is not published for a landlord that has none: the one its page named,
+    or the one the owner names. Both shapes of the command refuse, in the words the site has always used."""
+    import shutil
+
+    post(client, page="landlords/example-council/")                 # 1: its landlord is known from the page
+    post(client, page="areas/leeds/")                               # 2: about an area's page: the owner says which
+    shutil.rmtree(site / "landlords" / "example-council")
+    gone = "Not done: no landlord's page landlords/example-council/ on the site\n"
+    for typed in (("publish", "1", "--checked", "letter"), ("--publish", "1", "--checked", "letter"),
+                  ("publish", "2", "--checked", "letter", "--landlord", "example-council"),
+                  ("--publish", "2", "--checked", "letter", "--landlord", "example-council")):
+        assert run(*typed) == (1, gone), typed
+    assert [(s["id"], s["status"], s["published_at"]) for s in state.statements()] == [
+        (2, "pending", None), (1, "pending", None)]                 # nothing was published
+    assert [entry["action"] for entry in state.log(1)] == ["received"]
+    assert "Statement from" not in (site / "areas" / "leeds" / "index.html").read_text()
+    # the page is back (or the owner names a landlord that has one): published as usual
+    (site / "landlords" / "example-council").mkdir()
+    (site / "landlords" / "example-council" / "index.html").write_text(landlord_page("example-council", "E"))
+    assert run("publish", "1", "--checked", "letter")[0] == 0
+    assert run("--publish", "2", "--checked", "letter", "--landlord", "example-housing")[0] == 0
+    assert [s["status"] for s in state.statements()] == ["published", "published"]
+
+
 def test_the_way_the_commands_were_typed_before_still_works(client, state, site, tmp_path):
     """`landlords statements --publish 1 --checked "..."`, one command with an option for each action, was the shape
     before the shared commands. It still works for now, and prints what the new commands print."""

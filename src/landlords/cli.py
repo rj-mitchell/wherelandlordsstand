@@ -205,9 +205,12 @@ CLOCK = SYSTEM_CLOCK        # the time the owner's commands record; a test stand
 
 
 def _replies() -> Replies:
-    from landlords.replies import open_replies
+    """Reports and statements for the owner's commands: the shared package's desk, behind this site's own check that
+    a statement's landlord still has a page before it is published (landlords.replies.OwnersDesk)."""
+    from landlords.replies import OwnersDesk, open_replies
 
-    return open_replies(load_settings(), clock=CLOCK)
+    settings = load_settings()
+    return OwnersDesk(open_replies(settings, clock=CLOCK), settings)
 
 
 def _report_line(r: Mapping[str, Any]) -> list[str]:

@@ -360,3 +360,38 @@ def test_the_owners_commands_print_what_they_did(scenario):
     assert subject == golden["weekly_email"]["subject"]
     assert body == golden["weekly_email"]["body"].replace("(landlords reports)", "(landlords reports list)")
     assert "(landlords reports)" in golden["weekly_email"]["body"]
+
+
+def test_a_statement_is_not_published_for_a_landlord_whose_page_has_gone(scenario):
+    """The site's own check, kept (landlords.replies.OwnersDesk): the landlord a statement would be published for,
+    the one typed or else the one its page named, must still have a page on the site. The old code's line, word for
+    word, from both shapes of the command."""
+    import shutil
+
+    from landlords.replies import open_replies
+
+    tmp, settings, root, clock, client = scenario
+    golden = shared.read("gone.json")
+    for step in shared.GONE_SENT:
+        clock.advance(61)
+        assert send(client, step)["status"] == 200, step
+    shutil.rmtree(root / shared.GONE_PAGE)
+    gone = "Not done: no landlord's page landlords/example-council/ on the site\n"
+    for was in golden["runs"]:
+        typed = " ".join(was["args"])
+        clock.advance(61)
+        code, output = command(was["args"])
+        if typed in NOT_DONE_NOW:            # no note of how the sender was confirmed: said first, as it was
+            assert (code, output) == (1, f"Not done: {NOT_DONE_NOW[typed]}\n") and was["exit_code"] == 1, typed
+        elif typed == "statements":          # both still waiting; the newest first now (AS-BUILT, cli)
+            assert code == was["exit_code"] == 0
+            assert sorted(lines(output), key=lambda row: row["id"]) == lines(was["output"])
+            assert [row["status"] for row in lines(output)] == ["pending", "pending"]
+        else:
+            assert (code, output) == (was["exit_code"], was["output"]) == (1, gone), typed
+    # and the same from the commands in their new shape
+    assert command(["statements", "publish", "1", "--checked", "letter"]) == (1, gone)
+    assert command(["statements", "publish", "2", "--checked", "letter", "--landlord", "example-council"]) == (1, gone)
+    assert command(["statements", "publish", "2", "--checked", "letter", "--about", "example-council"]) == (1, gone)
+    assert kept(open_replies(settings)) == golden["kept"]                     # nothing was published
+    assert shared.pages(root) == golden["pages"]                              # and no page was written

@@ -377,6 +377,23 @@ API_STEPS: list[dict] = [
     {"case": "too many: an approval link", "get": "/admin/approve/not-a-token"},
 ]
 
+# ---- a landlord's page that has gone since its statement was sent --------------------------------------------------
+# Two statements are sent, about a landlord's own page and about an area's page. Then the landlord's page goes (a
+# merger, say), and the owner tries to publish each: the first for the landlord its page named, the second for that
+# landlord by name. Neither may be published.
+
+GONE_SENT: list[dict] = [
+    _statement("1: about the landlord's own page", page="landlords/example-council/"),
+    _statement("2: about an area's page", page="areas/leeds/"),
+]
+GONE_PAGE = "landlords/example-council"
+GONE_COMMANDS: list[list[str]] = [
+    ["statements", "--publish", "1"],                               # no note of how the sender was confirmed: first
+    ["statements", "--publish", "1", "--checked", "letter"],
+    ["statements", "--publish", "2", "--checked", "letter", "--landlord", "example-council"],
+    ["statements"],
+]
+
 # ---- what the owner types ---------------------------------------------------------------------------------------
 # Sent first, one each minute: four statements and three reports. Then the owner's command lines, in the shape the
 # site had before wts-core (`statements --publish 1`), one each minute. "<tmp>" is the scenario's own folder.

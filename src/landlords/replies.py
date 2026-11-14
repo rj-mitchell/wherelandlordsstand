@@ -22,7 +22,7 @@ from functools import lru_cache
 from urllib.parse import urlparse
 
 from wts_core.ports import SYSTEM_CLOCK, Clock
-from wts_core.replies import Item, Refused, Replies, ReplyMessages, ReplyRules
+from wts_core.replies import Item, NotDone, Refused, Replies, ReplyMessages, ReplyRules
 from wts_core.state import StateDB
 
 from landlords.config import SITE, Settings, load_toml
@@ -136,6 +136,33 @@ def landlord(settings: Settings, slug: str) -> str:
     if not (site_dir(settings) / "landlords" / slug / "index.html").is_file():
         raise ValueError(f"no landlord's page landlords/{slug}/ on the site")
     return slug
+
+
+class OwnersDesk:
+    """The shared package's desk as the owner's commands use it, with one check of this site's own before a
+    statement is published: the landlord it would be published for (the one the owner names, else the one its page
+    names) must still have a page on the site. A statement is shown on its landlord's own page, and a landlord's page
+    can go between a statement being sent and being decided (a merger, say). Everything else is the package's,
+    untouched."""
+
+    def __init__(self, replies: Replies, settings: Settings):
+        self._replies, self._settings = replies, settings
+
+    def publish(self, sid: int, *, checked: str, about: str | None = None) -> None:
+        waiting = self._replies.statement(sid)
+        # the package's own refusals come first, in its order: no such statement, not waiting, no note of how the
+        # sender was confirmed
+        if waiting and waiting["status"] == "pending" and (checked or "").strip():
+            speaks_for = (about or "").strip() or waiting["about"]
+            if speaks_for:
+                try:
+                    landlord(self._settings, speaks_for)
+                except ValueError as exc:
+                    raise NotDone(str(exc)) from exc
+        self._replies.publish(sid, checked=checked, about=about)
+
+    def __getattr__(self, name: str):
+        return getattr(self._replies, name)
 
 
 def open_replies(settings: Settings, db: StateDB | None = None, clock: Clock = SYSTEM_CLOCK) -> Replies:

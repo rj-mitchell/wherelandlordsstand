@@ -204,6 +204,27 @@ def what_the_owner_types(tmp: Path) -> dict:
             "weekly_email": {"subject": subject, "body": body}}
 
 
+def a_page_that_has_gone(tmp: Path) -> dict:
+    import shutil
+
+    environment(tmp)
+    time = Time()
+    time.install()
+    s = load_settings()
+    root = shared.fixture_site(s.data_dir)
+    client = TestClient(api.create_app(s))
+    for step in shared.GONE_SENT:
+        time.advance(61)
+        assert send(client, step)["status"] == 200, step
+    shutil.rmtree(root / shared.GONE_PAGE)
+    runs = []
+    for args in shared.GONE_COMMANDS:
+        time.advance(61)
+        result = CliRunner().invoke(cli.app, args)
+        runs.append({"args": args, "exit_code": result.exit_code, "output": plain(result.output, tmp)})
+    return {"runs": runs, "kept": kept(api.State(s.data_dir / "state.db")), "pages": shared.pages(root)}
+
+
 # ---- a state database made by the old code, for the import ---------------------------------------------------------
 
 
@@ -299,7 +320,8 @@ def main(out: Path) -> None:
     with tempfile.TemporaryDirectory() as folder:
         tmp = Path(folder).resolve()
         for name, record in (("settings", settings), ("backups", backups), ("offsite", offsite_copies),
-                             ("api", through_the_api), ("owner", what_the_owner_types)):
+                             ("api", through_the_api), ("owner", what_the_owner_types),
+                             ("gone", a_page_that_has_gone)):
             (tmp / name).mkdir()
             shared.write(out, f"{name}.json", record(tmp / name))
         shared.write(out, "limiter.json", limiter())

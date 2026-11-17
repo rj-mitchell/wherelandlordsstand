@@ -1,0 +1,274 @@
+# Every sentence the pages generate comes from this file (or config/pages.toml and config/rights.toml).
+# {placeholders} are filled from the data. Aim for a reading age of about 9: short sentences, everyday words.
+# To be signed off by an adviser before beta (docs/BETA.md).
+
+[site]
+name = "Where Landlords Stand"
+tagline = "What social landlords in England are like, from what the regulator and the Housing Ombudsman publish."
+# The footer's short form of the family's independence line (the family glossary). The full line is on the about
+# and terms pages (config/pages.toml).
+independence = "Independent. Not affiliated with the Regulator of Social Housing, the Housing Ombudsman Service or any landlord."
+# The phase banner under the header while [site] stage = "alpha" (config/settings.toml): one sentence, then a link
+# to the report form (the family glossary). The words before the colon become its label; {report} becomes a link to
+# the corrections page, with alpha_report as its words.
+alpha = "Alpha: this site is new and still being tested, so check a figure against its source before you rely on it. {report}."
+alpha_report = "Tell us about a mistake"
+
+[footer]
+# At most six links, in the family glossary's order. Terms, Data, Press, Status, "If you're named" and the contact
+# address are linked from the About page. An address that doesn't start with https:// is a page on this site, from
+# its root. The family shelf comes before them (src/landlords/family/shelf.html).
+label = "About this site"
+links = [
+  ["About", "about/index.html"],
+  ["Methodology", "method/index.html"],
+  ["Corrections", "corrections/index.html"],
+  ["Accessibility", "accessibility/index.html"],
+  ["Privacy", "privacy/index.html"],
+  ["Source code", "https://github.com/rj-mitchell/wherelandlordsstand"],
+]
+# One short paragraph after the independence line
+notices = [
+  "Contains public sector information from the Regulator of Social Housing, licensed under the Open Government Licence v3.0. Complaints figures © Housing Ombudsman Service. Our own work is under CC BY 4.0, and the code under AGPL-3.0.",
+]
+
+[card]
+heading = "Before you bid"
+# Shown on every card (docs/DECISIONS.md, "Ground rules": never tell readers to avoid or refuse a landlord).
+refusal = "Check your council's rules before you turn down an offer. Saying no to an offer can affect your place on the housing register."
+homes = "Rents out about {homes} homes in England."
+homes_note = "This is the number of tenants in rented homes it counted for its {period} tenant survey."
+merged = "{name} joined {successor} on {date}. These figures are from before then."
+compare = "Compare with other landlords"
+
+[types]
+council = "Council"
+"housing association" = "Housing association"
+"for-profit" = "For-profit landlord"
+
+[council_link]
+# On a council's own page here, where Where Councils Stand covers the council (src/landlords/sisters.py).
+text = "See what {name}'s council and cabinet meetings have discussed and decided, on Where Councils Stand."
+
+[method]
+description = "How Where Landlords Stand groups similar landlords, works out its bands, and where its figures come from."
+# The Methodology page's note on the links between this site and Where Councils Stand. [Words](address) become a link.
+sister_heading = "Links to Where Councils Stand"
+sister = "[Where Councils Stand](https://wherecouncilsstand.com/), a sister site, shows what councils have decided and said in their meetings. Where it covers a council, the council's page here and the page for its area link to the council's page there. The council pages on Where Councils Stand link back here: to the council as a landlord, and to the landlords that own homes in its area."
+
+[grade]
+heading = "The regulator's grade"
+graded = "The Regulator of Social Housing checks how well landlords treat tenants. It gave {name} grade {grade} on {date}."
+group_graded = "The Regulator of Social Housing checks how well landlords treat tenants. It gave {group}, which {name} is part of, grade {grade} on {date}."
+not_graded = "The Regulator of Social Housing has not yet given {name} a grade for how it treats tenants."
+under_review = "The regulator is looking into {name} again (since {date})."
+enforcement = "The regulator issued an enforcement notice to {name} on {date}."
+scale = "Grades go from C1 (best) to C4 (worst)."
+# Short summaries of the regulator's own definitions of each grade.
+C1 = "C1 means the landlord is doing what the regulator expects."
+C2 = "C2 means there are some weaknesses. The landlord needs to improve."
+C3 = "C3 means there are serious failings. The landlord needs to improve a lot."
+C4 = "C4 means there are very serious failings. The landlord must make big changes."
+
+[bands]
+heading = "Compared with similar landlords"
+intro = "We compared {name} with {peers} similar landlords: {peer_label}. These are tenants' answers to the {period} survey and the landlord's own records."
+headline = "Overall satisfaction: {value} of tenants were happy with the service. That puts it in the {band} of similar landlords."
+pillar = "{label}: in the {band}."
+not_scored = "{label}: not enough figures to compare."
+up = "Up from {old_band} in {old_period}."
+down = "Down from {old_band} in {old_period}."
+explain = "Top quarter means it did better than at least three in four similar landlords. Bottom quarter means it did worse than at least three in four."
+no_results = "There are no tenant survey results for {name} for {period}."
+# When a landlord stops publishing its own results (data_static/reporting.csv says why, from the regulator's files).
+# {other} becomes a link to that landlord's page.
+in_group = "From {period}, {name}'s tenant survey results are part of those for its group, {other}."
+in_other = "From {period}, the homes that were {name}'s are counted in {other}'s tenant survey results."
+too_small = "{name} owned fewer than 1,000 rented homes in {year}, so it no longer has to publish tenant survey results."
+regulator_note = "The regulator says: {note}"
+
+[method_note]
+text = "{name} asked tenants mostly by {method}. Most similar landlords asked by {peer_method}. How tenants are asked can change the results."
+
+[ombudsman]
+heading = "Complaints to the Housing Ombudsman"
+report = "In {period}, the Housing Ombudsman looked at complaints about {published_name}. It made {findings} findings. It found the landlord at fault in {rate} of them."
+compensation = "It ordered or recommended {amount} in compensation."
+severe = "{severe} of the findings were severe failings."
+no_report = "The Housing Ombudsman did not publish figures for {name} for {period}. It does this for landlords with 5 or more findings in a year."
+change = "From October 2025 the Ombudsman looks at how complaints were handled in every case. So these figures are not comparable with earlier years."
+
+[safety]
+heading = "Safety checks"
+all_done = "All done. Every home that needed a gas, fire, asbestos, water or lift safety check had one (as at 31 March {year})."
+gaps = "Not all done (as at 31 March {year}):"
+gap_item = "{label}: done for {value} of homes that needed them"
+not_published = "{label}: no figure published"
+
+[areas]
+heading = "Homes by council area"
+intro = "Homes it owns in each council area, 31 March 2026. We added up the figures for each company in the group."
+more = "and {count} more areas"
+council = "{name} is a council. Its homes are in its own area."
+
+[sources]
+heading = "Sources"
+intro = "Each figure on this page is taken unchanged from one of these published files."
+
+[search]
+heading = "Find a landlord"
+intro = "Look up a social landlord named on a home you could bid for, and see what the Regulator of Social Housing and the Housing Ombudsman publish about it."
+label = "Landlord's name"
+placeholder = "For example, Clarion or Leeds City Council"
+hint = "You can use the name on the advert, a short name or an old name."
+noscript = "Search needs JavaScript. Without it, use the list of all landlords below."
+none = "We couldn't find that name. We cover social landlords in England with 1,000 or more homes. If the advert shows only a logo, try the list of council areas."
+small = "{name} is a registered social landlord with fewer than 1,000 homes. We don't cover landlords that small, because they don't have to publish the same figures."
+areas_link = "Find landlords by council area"
+areas_note = "Use this if the advert shows only a logo, or no landlord's name."
+# Read out by screen readers half a second after typing stops (search.js), in place of the whole list of results
+found_one = "1 landlord found"
+found = "{count} landlords found"
+found_none = "No landlord has that name"
+found_small = "That landlord is too small for this site to cover"
+all = "All landlords"
+count = "{count} social landlords in England with 1,000 or more homes."
+
+[area]
+heading = "Council areas"
+index_intro = "Pick the council area where the home is. Each page lists the landlords we cover that own homes there, with the number of homes they own there."
+intro = "{count} landlords we cover own homes in this area."
+landlord = "Landlord"
+homes = "Homes here"
+grade = "Grade"
+overall = "Satisfaction"
+notes = "Homes here: rented homes each landlord owns in this area on 31 March 2026, from the regulator's stock data. For a group, we added up the figures for its companies. Landlords with fewer than 1,000 homes are not listed. Each landlord's overall satisfaction is compared with its own group of similar landlords, which may differ from the groups of the others on this page."
+council_note = "A council's homes are counted in its own area."
+# A link to the council's page on Where Councils Stand, where that site covers it (src/landlords/sisters.py).
+council_link = "See what {council} has discussed and decided in its meetings, on Where Councils Stand."
+
+[compare]
+heading = "Compare landlords"
+intro = "Pick up to three landlords to see side by side."
+add = "Add a landlord"
+remove = "Remove"
+measure = "What is compared"
+empty = "No landlords picked yet."
+type = "Type"
+homes = "Rented homes"
+grade = "Regulator's grade"
+overall = "Overall satisfaction"
+peer = "Compared with"
+ombudsman = "Housing Ombudsman"
+at_fault = "found at fault"
+findings = "findings"
+no_report = "No report"
+not_graded = "Not graded yet"
+safety = "Safety checks"
+all_done = "All done"
+not_all_done = "Not all done"
+none = "Not enough figures"
+caveat = "Each landlord is compared with its own group of similar landlords. So a band means the same thing, but the groups can differ."
+noscript = "Comparing needs JavaScript. Without it, each landlord's page has the same figures."
+
+[downloads]
+heading = "Download the data"
+intro = "Everything on this site, as CSV files. Each row of published figures names the file it comes from and its licence."
+description = "Download the figures on Where Landlords Stand as CSV files, with each row's source and licence."
+attribution_heading = "Using this data"
+attribution = [
+  "Tenant Satisfaction Measures, regulatory judgements and stock figures: Regulator of Social Housing. Contains public sector information licensed under the Open Government Licence v3.0.",
+  "Complaints figures: © Housing Ombudsman Service. We are confirming the Ombudsman's terms for reuse.",
+  "Bands, peer groups and homes by area are worked out by Where Landlords Stand from the published figures, as set out on the Methodology page. They are licensed under CC BY 4.0: credit Where Landlords Stand and link to the site (see the terms page).",
+]
+
+[downloads.files]
+"landlords.csv" = "each landlord we cover, with the regulator's consumer grade"
+"bands.csv" = "our bands among similar landlords, by year"
+"tenant-satisfaction-measures.csv" = "every Tenant Satisfaction Measure for the landlords we cover, as published"
+"ombudsman.csv" = "the Housing Ombudsman's figures for each landlord with a report, as published"
+"regulatory-judgements.csv" = "the regulator's judgements and gradings for the landlords we cover"
+"homes-by-area.csv" = "rented and shared ownership homes by council area"
+
+[hidden]
+# A landlord's page while it is hidden because a concern about it is being decided (the charity's impartiality policy,
+# 7.3; src/landlords/hiding.py; docs/DECISIONS.md, 17): the landlord's name, this sentence, then the owner's note.
+text = "This page is hidden while a concern about it is decided."
+
+[corrections]
+# The corrections page (docs/DECISIONS.md, 15): every route of the charity's impartiality policy (section 7.1), by the
+# family glossary's names, for everything the site says about a landlord.
+heading = "Corrections"
+description = "Report a mistake or something unfair on Where Landlords Stand, and see the mistakes already fixed."
+intro = [
+  "If something on this site is wrong or unfair, tell us and we will put it right. This covers everything we say about a landlord: its figures, the grade as we show it, its bands among similar landlords, which landlords we compare it with, how we match its names and group its companies, what we say when landlords merge, and the homes we list in each council area. We keep a public list of what we fixed.",
+  "We never change a publisher's figures. If you think a figure from the regulator or the Ombudsman is wrong, tell them too: we show what they publish.",
+]
+times = "We reply within 5 working days, and decide within 20 working days."
+times_note = "We can only reply if you give your email. A fix goes on the site with the next pages, which a person checks first."
+# {named} becomes a link to the "If you're named" page, with named_link as its words (the family glossary)
+named = "If you speak for a landlord this site names, {named} explains how to put something right, or how to add a statement in your own words."
+named_link = "If you're named on this site"
+kind = "What kind of problem is it?"
+# The report form's options: [value, label, hint]. The values are kept in the reports table; ?kind= in a link to the
+# page picks one (src/landlords/api.py, KINDS). The first is chosen unless a link says otherwise.
+kinds = [
+  ["wrong", "Something is wrong", "A figure, a name, a date, a grade, a band, a group or a connection is shown wrongly. For example, a name matched to the wrong landlord, a merger we missed, or homes listed in the wrong area."],
+  ["unfair", "You've been characterised unfairly", "The facts are right, but our own words, labels or groupings are unfair."],
+  ["takedown", "Remove a person's details", "Your name or details are on this site and you don't speak for a landlord. We deal with these first."],
+  ["other", "Something else", "For example, a page that doesn't work for you."],
+]
+page = "Which page? (optional)"
+page_hint = "Copy its address from your browser, or say which landlord or area it is."
+message = "What is wrong?"
+email = "Your email (optional)"
+email_hint = "Only if you want a reply. We delete it when we close your report."
+# The label of a field people never see, for robots to fill in, as on the statement form ([statement] honeypot)
+honeypot = "Leave this empty"
+send = "Send report"
+log_heading = "Mistakes we have fixed"
+log_empty = "None yet."
+thanks_heading = "Thank you"
+thanks = "We have your report. We will look at it and put right any mistake of ours."
+
+[privacy]
+heading = "Privacy"
+description = "What Where Landlords Stand keeps about you: no cookies or tracking, searches that find nothing, reports and statements."
+sections = [
+  ["Cookies and tracking", "This site sets no cookies and uses no analytics or advertising. It loads nothing from other websites."],
+  ["Searches", "Searching happens in your browser. If a search finds nothing, the words you searched for are sent to us, with the date and nothing else, so we can add names people look for."],
+  ["Reports of mistakes", "If you report a mistake, we keep what you wrote and, if you give it, your email address, until we have dealt with it. Then we delete your email address."],
+  ["Statements from landlords", "A landlord, or someone acting for it, can add a short statement beside what this site says about it (the charity's impartiality policy, section 7.2). The statement is published with their name and role, as they wrote it. The email address used to confirm who they are, and to let them update or withdraw it, is kept while the statement is waiting or shown, and deleted three months after it is withdrawn, declined or removed. It is never shown on the site."],
+  ["Backups", "Backups of the site's database are kept for up to two months, so a deleted address can remain in a backup until then."],
+  ["Visits", "Visits pass through Cloudflare, which protects the site. We do not keep logs of visits."],
+]
+
+[statement]
+# A statement in a landlord's own words, beside what the site says about it (src/landlords/statements.py;
+# docs/DECISIONS.md, 15). The heading and the line under it are the family glossary's words, and must stay as they are.
+heading = "Statement from {name}, {date}"
+endorsed = "In their own words. Not checked or endorsed by {site}."
+record = "The record they point to"
+# Shown when a statement is on the landlord's own page but is about another page; {page} becomes a link
+about = "This statement is about {page}."
+about_page = "what we say on the page for {page}"
+# The form on the "If you're named" page (config/pages.toml, [named])
+form_heading = "Send a statement"
+name = "Your name, as it should appear"
+role = "Your role, and the landlord you speak for"
+role_hint = "Your job title, then the landlord's name as this site shows it."
+page = "The address of the page it's about"
+page_hint = "Your landlord's page on this site, or a council area's page that lists it. Copy it from your browser."
+part = "Which part of the page? (for a landlord's page)"
+part_whole = "The whole page"
+text = "Your statement (up to 150 words)"
+text_hint = "Write it as you want it shown. We publish it as you wrote it, or tell you why not. We can't edit it."
+link = "A link to the record (optional)"
+link_hint = "A full web address, starting https://. For example, a statement you have published, or a report to your board."
+email = "Your email, so we can confirm it's you"
+email_hint = "It is never shown. We delete it three months after a statement is withdrawn, declined or removed."
+honeypot = "Leave this empty"
+send = "Send statement"
+after = "Your statement is shown with your name and role once we have confirmed it's from you."
+thanks_heading = "Thank you"
+thanks = "We have your statement. We will write to you to confirm it's from you before it is shown."

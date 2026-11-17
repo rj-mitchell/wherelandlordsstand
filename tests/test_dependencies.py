@@ -1,0 +1,114 @@
+"""This site has no AI (docs/DECISIONS.md, 6), so it takes the shared package (wts-core) without its "ai" extra, and
+none of the libraries that extra brings is ever installed here."""
+
+import re
+import tomllib
+from importlib import metadata
+from pathlib import Path
+
+ROOT = Path(__file__).parents[1]
+# what wts-core's "ai" extra installs, and the two heaviest libraries those bring with them
+AI_LIBRARIES = {"anthropic", "fastembed", "lancedb", "onnxruntime", "tokenizers"}
+
+
+def canonical(name: str) -> str:
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+
+def requirement() -> str:
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]
+    [wts_core] = [d for d in project["dependencies"] if canonical(d.split("[")[0].split("@")[0].strip()) == "wts-core"]
+    return wts_core
+
+
+def test_the_shared_package_is_taken_without_its_ai_extra():
+    name, address = (part.strip() for part in requirement().split("@", 1))
+    assert name == "wts-core[cli,offsite]"            # Typer for the shared commands, httpx for off-site copies
+    # the wheel of a tagged release, by its address: the Docker image has no git (wts-core docs/adr/0006)
+    assert re.fullmatch(r"https://github\.com/rj-mitchell/wts-core/releases/download/v(\d+\.\d+\.\d+)/"
+                        r"wts_core-\1-py3-none-any\.whl", address)
+
+
+def test_no_ai_library_is_locked():
+    """uv.lock is what `uv sync --frozen` installs, on the server and in CI."""
+    lock = tomllib.loads((ROOT / "uv.lock").read_text())
+    locked = {canonical(p["name"]): p for p in lock["package"]}
+    assert not AI_LIBRARIES & set(locked)
+    assert set(locked["wts-core"]["optional-dependencies"]) == {"cli", "offsite"}
+    [ours] = [d for d in locked["landlords"]["dependencies"] if d["name"] == "wts-core"]
+    assert sorted(ours["extra"]) == ["cli", "offsite"]
+    assert locked["wts-core"]["source"]["url"] == requirement().split("@", 1)[1].strip()
+
+
+def test_no_ai_library_is_installed():
+    """After `uv sync --frozen`, which is how CI and the Docker image install the site."""
+    installed = {canonical(d.metadata["Name"]) for d in metadata.distributions()}
+    assert "wts-core" in installed and "typer" in installed and "httpx" in installed
+    assert not AI_LIBRARIES & installed
+
+
+def test_the_site_runs_without_them():
+    """Every module of the site and every command loads with none of them in reach."""
+    import subprocess
+    import sys
+
+    code = ("import sys, pkgutil, importlib, landlords\n"
+            "for m in pkgutil.walk_packages(landlords.__path__, 'landlords.'): importlib.import_module(m.name)\n"
+            "import typer.main; from landlords.cli import app; typer.main.get_command(app)\n"
+            "print(sorted({m.split('.')[0] for m in sys.modules}))")
+    loaded = set(eval(subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True).stdout))
+    assert "wts_core" in loaded
+    assert not AI_LIBRARIES & loaded
+
+
+def test_ci_calls_the_shared_workflows_at_the_tag_of_the_package_installed():
+    """One number to raise: the release of wts-core in pyproject.toml is the tag every shared workflow and action is
+    called at in .github/workflows/ci.yml (wts-core docs/adr/0010)."""
+    version = re.search(r"/download/(v[\d.]+)/", requirement())[1]
+    called = re.findall(r"uses: rj-mitchell/wts-core/\S+@(\S+)", (ROOT / ".github" / "workflows" / "ci.yml").read_text())
+    assert len(called) == 4 and set(called) == {version}
+
+
+def test_the_site_uses_only_what_the_shared_package_makes_public():
+    """Everything the site (and its tests) takes from wts-core is in the ``__all__`` of the module it comes from: the
+    package may change anything else without notice (wts-core docs/adr/0007)."""
+    import ast
+    import importlib
+
+    def public(module: str, name: str) -> bool:
+        try:
+            importlib.import_module(f"{module}.{name}")          # a module of the package
+            return True
+        except ImportError:
+            return name in importlib.import_module(module).__all__
+
+    checked = 0
+    for path in (*sorted((ROOT / "src").rglob("*.py")), *sorted((ROOT / "tests").rglob("*.py"))):
+        tree = ast.parse(path.read_text())
+        modules: dict[str, str] = {}                                 # a name in this file -> the module it stands for
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and (node.module or "").split(".")[0] == "wts_core":
+                for alias in node.names:
+                    assert public(node.module, alias.name), f"{path.name}: {node.module}.{alias.name} is private"
+                    checked += 1
+                    try:
+                        importlib.import_module(f"{node.module}.{alias.name}")
+                        modules[alias.asname or alias.name] = f"{node.module}.{alias.name}"
+                    except ImportError:
+                        pass
+            elif isinstance(node, ast.Import):
+                assert not any(a.name.split(".")[0] == "wts_core" for a in node.names), f"{path.name}: import wts_core"
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id in modules \
+                    and not _shadowed(tree, node.value.id):
+                assert public(modules[node.value.id], node.attr), f"{path.name}: {modules[node.value.id]}.{node.attr}"
+                checked += 1
+    assert checked > 60
+
+
+def _shadowed(tree, name: str) -> bool:
+    """Whether a file also gives the name to something of its own (a variable called ``replies``, say)."""
+    import ast
+
+    return any(isinstance(n, ast.Name) and n.id == name and isinstance(n.ctx, ast.Store) for n in ast.walk(tree)) \
+        or any(isinstance(n, ast.arg) and n.arg == name for n in ast.walk(tree))

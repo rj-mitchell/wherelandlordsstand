@@ -1,0 +1,475 @@
+{
+ "kept": {
+  "reports": [
+   {
+    "closed": 1,
+    "email": null,
+    "id": 1,
+    "kind": "wrong",
+    "message": "Wrong grade",
+    "outcome": "fixed alias",
+    "page": "landlords/x/"
+   },
+   {
+    "closed": 0,
+    "email": null,
+    "id": 2,
+    "kind": "takedown",
+    "message": "My name is on a page",
+    "outcome": null,
+    "page": ""
+   },
+   {
+    "closed": 0,
+    "email": null,
+    "id": 3,
+    "kind": null,
+    "message": "From an older form",
+    "outcome": null,
+    "page": ""
+   }
+  ],
+  "statements": [
+   {
+    "email": "jane@example-housing.org.uk",
+    "id": 1,
+    "landlord": "example-housing",
+    "link": null,
+    "name": "Jane Example",
+    "page": "landlords/example-housing/",
+    "part": "",
+    "reason": null,
+    "role": "Chief executive, Example Housing",
+    "status": "published",
+    "text": "Our newer results are published every quarter on our website."
+   },
+   {
+    "email": "jane@example-housing.org.uk",
+    "id": 2,
+    "landlord": "example-council",
+    "link": null,
+    "name": "Sam Officer",
+    "page": "areas/leeds/",
+    "part": "",
+    "reason": null,
+    "role": "Head of housing, Example Council",
+    "status": "published",
+    "text": "Our survey was carried out after a big change to our repairs service, and we have published newer results."
+   },
+   {
+    "email": "jane@example-housing.org.uk",
+    "id": 3,
+    "landlord": "example-housing",
+    "link": null,
+    "name": "Jane Example",
+    "page": "landlords/example-housing/",
+    "part": "bands",
+    "reason": "withdrawn by the author",
+    "role": "Chief executive, Example Housing",
+    "status": "withdrawn",
+    "text": "Our survey was carried out after a big change to our repairs service, and we have published newer results."
+   },
+   {
+    "email": "jane@example-housing.org.uk",
+    "id": 4,
+    "landlord": "example-council",
+    "link": "https://example.org/results",
+    "name": "Jane Example",
+    "page": "landlords/example-council/",
+    "part": "safety",
+    "reason": "it names a tenant",
+    "role": "Chief executive, Example Housing",
+    "status": "declined",
+    "text": "Our survey was carried out after a big change to our repairs service, and we have published newer results."
+   }
+  ]
+ },
+ "runs": [
+  {
+   "args": [
+    "statements"
+   ],
+   "exit_code": 0,
+   "output": "{\"id\": 1, \"at\": \"2026-11-13T09:01:01+00:00\", \"name\": \"Jane Example\", \"role\": \"Chief executive, Example Housing\", \"page\": \"landlords/example-housing/\", \"part\": \"\", \"text\": \"Our survey was carried out after a big change to our repairs service, and we have published newer results.\", \"link\": \"https://example.org/results\", \"email\": \"jane@example-housing.org.uk\", \"status\": \"pending\", \"landlord\": \"example-housing\", \"checked\": null, \"reason\": null, \"published_at\": null, \"updated_at\": null, \"closed_at\": null, \"words\": 19}\n{\"id\": 2, \"at\": \"2026-11-13T09:02:02+00:00\", \"name\": \"Sam Officer\", \"role\": \"Head of housing, Example Council\", \"page\": \"areas/leeds/\", \"part\": \"\", \"text\": \"Our survey was carried out after a big change to our repairs service, and we have published newer results.\", \"link\": null, \"email\": \"jane@example-housing.org.uk\", \"status\": \"pending\", \"landlord\": null, \"checked\": null, \"reason\": null, \"published_at\": null, \"updated_at\": null, \"closed_at\": null, \"words\": 19}\n{\"id\": 3, \"at\": \"2026-11-13T09:03:03+00:00\", \"name\": \"Jane Example\", \"role\": \"Chief executive, Example Housing\", \"page\": \"landlords/example-housing/\", \"part\": \"bands\", \"text\": \"Our survey was carried out after a big change to our repairs service, and we have published newer results.\", \"link\": null, \"email\": \"jane@example-housing.org.uk\", \"status\": \"pending\", \"landlord\": \"example-housing\", \"checked\": null, \"reason\": null, \"published_at\": null, \"updated_at\": null, \"closed_at\": null, \"words\": 19}\n{\"id\": 4, \"at\": \"2026-11-13T09:04:04+00:00\", \"name\": \"Jane Example\", \"role\": \"Chief executive, Example Housing\", \"page\": \"landlords/example-council/\", \"part\": \"safety\", \"text\": \"Our survey was carried out after a big change to our repairs service, and we have published newer results.\", \"link\": \"https://example.org/results\", \"email\": \"jane@example-housing.org.uk\", \"status\": \"pending\", \"landlord\": \"example-council\", \"checked\": null, \"reason\": null, \"published_at\": null, \"updated_at\": null, \"closed_at\": null, \"words\": 19}\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "statements",
+    "--publish",
+    "1"
+   ],
+   "exit_code": 1,
+   "output": "Not done: say how you confirmed who sent it (--checked), for the log\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "statements",
+    "--publish",
+    "1",
+    "--checked",
+    "replied from the landlord's own address, 14 Nov"
+   ],
+   "exit_code": 0,
+   "output": "{\"id\": 1, \"status\": \"published\", \"name\": \"Jane Example\", \"page\": \"landlords/example-housing/\", \"part\": \"\", \"landlord\": \"example-housing\", \"email\": \"jane@example-housing.org.uk\", \"pages_changed\": 1, \"shown\": 1}\n",
+   "pages_written": {
+    "landlords/example-housing/": "<h1>Example Housing</h1><section class=\"card\"><section><h3 id=\"grade\">grade</h3><p>Our words.</p><!--statements:grade--><!--/statements:grade--></section><section><h3 id=\"bands\">bands</h3><p>Our words.</p><!--statements:bands--><!--/statements:bands--></section><section><h3 id=\"ombudsman\">ombudsman</h3><p>Our words.</p><!--statements:ombudsman--><!--/statements:ombudsman--></section><section><h3 id=\"safety\">safety</h3><p>Our words.</p><!--statements:safety--><!--/statements:safety--></section></section><!--statements:page--><div class=\"statement\" role=\"note\" id=\"statement-1\" aria-labelledby=\"statement-1-h\"><h2 id=\"statement-1-h\">Statement from Jane Example, 13 November 2026</h2><p class=\"st-role\">Chief executive, Example Housing</p><blockquote class=\"st-words\"><p>Our survey was carried out after a big change to our repairs service, and we have published newer results.</p></blockquote><p class=\"st-link\"><a href=\"https://example.org/results\" rel=\"nofollow\">The record they point to</a></p><p class=\"st-note\">In their own words. Not checked or endorsed by Where Landlords Stand.</p></div><!--/statements:page--><h2>Figures</h2>"
+   }
+  },
+  {
+   "args": [
+    "statements",
+    "--publish",
+    "2",
+    "--checked",
+    "phoned the council"
+   ],
+   "exit_code": 1,
+   "output": "Not done: statement 2 is about areas/leeds/: say which landlord it speaks for (--landlord)\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "statements",
+    "--publish",
+    "2",
+    "--checked",
+    "phoned",
+    "--landlord",
+    "nobody"
+   ],
+   "exit_code": 1,
+   "output": "Not done: no landlord's page landlords/nobody/ on the site\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "statements",
+    "--publish",
+    "2",
+    "--checked",
+    "phoned the council",
+    "--landlord",
+    "example-council"
+   ],
+   "exit_code": 0,
+   "output": "{\"id\": 2, \"status\": \"published\", \"name\": \"Sam Officer\", \"page\": \"areas/leeds/\", \"part\": \"\", \"landlord\": \"example-council\", \"email\": \"jane@example-housing.org.uk\", \"pages_changed\": 2, \"shown\": 2}\n",
+   "pages_written": {
+    "areas/leeds/": "<h1>Leeds</h1><p class=\"warn\">w</p><!--statements:page--><div class=\"statement\" role=\"note\" id=\"statement-2\" aria-labelledby=\"statement-2-h\"><h2 id=\"statement-2-h\">Statement from Sam Officer, 13 November 2026</h2><p class=\"st-role\">Head of housing, Example Council</p><blockquote class=\"st-words\"><p>Our survey was carried out after a big change to our repairs service, and we have published newer results.</p></blockquote><p class=\"st-note\">In their own words. Not checked or endorsed by Where Landlords Stand.</p></div><!--/statements:page-->",
+    "landlords/example-council/": "<h1>Example Council</h1><section class=\"card\"><section><h3 id=\"grade\">grade</h3><p>Our words.</p><!--statements:grade--><!--/statements:grade--></section><section><h3 id=\"bands\">bands</h3><p>Our words.</p><!--statements:bands--><!--/statements:bands--></section><section><h3 id=\"ombudsman\">ombudsman</h3><p>Our words.</p><!--statements:ombudsman--><!--/statements:ombudsman--></section></section><!--statements:page--><div class=\"statement\" role=\"note\" id=\"statement-2\" aria-labelledby=\"statement-2-h\"><h2 id=\"statement-2-h\">Statement from Sam Officer, 13 November 2026</h2><p class=\"st-role\">Head of housing, Example Council</p><p class=\"st-about\">This statement is about <a href=\"../../areas/leeds/index.html\">what we say on the page for Leeds</a>.</p><blockquote class=\"st-words\"><p>Our survey was carried out after a big change to our repairs service, and we have published newer results.</p></blockquote><p class=\"st-note\">In their own words. Not checked or endorsed by Where Landlords Stand.</p></div><!--/statements:page--><h2>Figures</h2>"
+   }
+  },
+  {
+   "args": [
+    "statements",
+    "--update",
+    "1",
+    "--text-file",
+    "<tmp>/new.txt",
+    "--reason",
+    "the author's new version"
+   ],
+   "exit_code": 0,
+   "output": "{\"id\": 1, \"status\": \"published\", \"name\": \"Jane Example\", \"page\": \"landlords/example-housing/\", \"part\": \"\", \"landlord\": \"example-housing\", \"email\": \"jane@example-housing.org.uk\", \"pages_changed\": 1, \"shown\": 2}\n",
+   "pages_written": {
+    "landlords/example-housing/": "<h1>Example Housing</h1><section class=\"card\"><section><h3 id=\"grade\">grade</h3><p>Our words.</p><!--statements:grade--><!--/statements:grade--></section><section><h3 id=\"bands\">bands</h3><p>Our words.</p><!--statements:bands--><!--/statements:bands--></section><section><h3 id=\"ombudsman\">ombudsman</h3><p>Our words.</p><!--statements:ombudsman--><!--/statements:ombudsman--></section><section><h3 id=\"safety\">safety</h3><p>Our words.</p><!--statements:safety--><!--/statements:safety--></section></section><!--statements:page--><div class=\"statement\" role=\"note\" id=\"statement-1\" aria-labelledby=\"statement-1-h\"><h2 id=\"statement-1-h\">Statement from Jane Example, 13 November 2026</h2><p class=\"st-role\">Chief executive, Example Housing</p><blockquote class=\"st-words\"><p>Our newer results are published every quarter on our website.</p></blockquote><p class=\"st-link\"><a href=\"https://example.org/results\" rel=\"nofollow\">The record they point to</a></p><p class=\"st-note\">In their own words. Not checked or endorsed by Where Landlords Stand.</p></div><!--/statements:page--><h2>Figures</h2>"
+   }
+  },
+  {
+   "args": [
+    "statements",
+    "--update",
+    "1",
+    "--text-file",
+    "<tmp>/long.txt"
+   ],
+   "exit_code": 1,
+   "output": "Not done: A statement can be up to 150 words. This one is 151.\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "statements",
+    "--update",
+    "1",
+    "--text-file",
+    "<tmp>/wide.txt"
+   ],
+   "exit_code": 1,
+   "output": "Not done: A statement can be up to 2,000 characters. This one is 2,239.\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "statements",
+    "--update",
+    "1",
+    "--name",
+    "NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN"
+   ],
+   "exit_code": 1,
+   "output": "Not done: Your name can be up to 120 characters. This one is 121.\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "statements",
+    "--update",
+    "1",
+    "--role",
+    "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR"
+   ],
+   "exit_code": 1,
+   "output": "Not done: Your role can be up to 200 characters. This one is 201.\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "statements",
+    "--update",
+    "1",
+    "--link",
+    "https://example.org/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+   ],
+   "exit_code": 1,
+   "output": "Not done: The link to the record can be up to 300 characters. This one is 301.\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "statements",
+    "--update",
+    "1"
+   ],
+   "exit_code": 1,
+   "output": "Not done: nothing to change: give --text-file, --name, --role or --link\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "statements",
+    "--update",
+    "1",
+    "--link",
+    "",
+    "--reason",
+    "the link has gone"
+   ],
+   "exit_code": 0,
+   "output": "{\"id\": 1, \"status\": \"published\", \"name\": \"Jane Example\", \"page\": \"landlords/example-housing/\", \"part\": \"\", \"landlord\": \"example-housing\", \"email\": \"jane@example-housing.org.uk\", \"pages_changed\": 1, \"shown\": 2}\n",
+   "pages_written": {
+    "landlords/example-housing/": "<h1>Example Housing</h1><section class=\"card\"><section><h3 id=\"grade\">grade</h3><p>Our words.</p><!--statements:grade--><!--/statements:grade--></section><section><h3 id=\"bands\">bands</h3><p>Our words.</p><!--statements:bands--><!--/statements:bands--></section><section><h3 id=\"ombudsman\">ombudsman</h3><p>Our words.</p><!--statements:ombudsman--><!--/statements:ombudsman--></section><section><h3 id=\"safety\">safety</h3><p>Our words.</p><!--statements:safety--><!--/statements:safety--></section></section><!--statements:page--><div class=\"statement\" role=\"note\" id=\"statement-1\" aria-labelledby=\"statement-1-h\"><h2 id=\"statement-1-h\">Statement from Jane Example, 13 November 2026</h2><p class=\"st-role\">Chief executive, Example Housing</p><blockquote class=\"st-words\"><p>Our newer results are published every quarter on our website.</p></blockquote><p class=\"st-note\">In their own words. Not checked or endorsed by Where Landlords Stand.</p></div><!--/statements:page--><h2>Figures</h2>"
+   }
+  },
+  {
+   "args": [
+    "statements",
+    "--publish",
+    "3",
+    "--checked",
+    "letter"
+   ],
+   "exit_code": 0,
+   "output": "{\"id\": 3, \"status\": \"published\", \"name\": \"Jane Example\", \"page\": \"landlords/example-housing/\", \"part\": \"bands\", \"landlord\": \"example-housing\", \"email\": \"jane@example-housing.org.uk\", \"pages_changed\": 1, \"shown\": 3}\n",
+   "pages_written": {
+    "landlords/example-housing/": "<h1>Example Housing</h1><section class=\"card\"><section><h3 id=\"grade\">grade</h3><p>Our words.</p><!--statements:grade--><!--/statements:grade--></section><section><h3 id=\"bands\">bands</h3><p>Our words.</p><!--statements:bands--><div class=\"statement\" role=\"note\" id=\"statement-3\" aria-labelledby=\"statement-3-h\"><h4 id=\"statement-3-h\">Statement from Jane Example, 13 November 2026</h4><p class=\"st-role\">Chief executive, Example Housing</p><blockquote class=\"st-words\"><p>Our survey was carried out after a big change to our repairs service, and we have published newer results.</p></blockquote><p class=\"st-note\">In their own words. Not checked or endorsed by Where Landlords Stand.</p></div><!--/statements:bands--></section><section><h3 id=\"ombudsman\">ombudsman</h3><p>Our words.</p><!--statements:ombudsman--><!--/statements:ombudsman--></section><section><h3 id=\"safety\">safety</h3><p>Our words.</p><!--statements:safety--><!--/statements:safety--></section></section><!--statements:page--><div class=\"statement\" role=\"note\" id=\"statement-1\" aria-labelledby=\"statement-1-h\"><h2 id=\"statement-1-h\">Statement from Jane Example, 13 November 2026</h2><p class=\"st-role\">Chief executive, Example Housing</p><blockquote class=\"st-words\"><p>Our newer results are published every quarter on our website.</p></blockquote><p class=\"st-note\">In their own words. Not checked or endorsed by Where Landlords Stand.</p></div><!--/statements:page--><h2>Figures</h2>"
+   }
+  },
+  {
+   "args": [
+    "statements",
+    "--withdraw",
+    "3"
+   ],
+   "exit_code": 1,
+   "output": "Not done: say why (--reason): \"withdrawn by the author\", or the rule it broke\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "statements",
+    "--withdraw",
+    "3",
+    "--reason",
+    "withdrawn by the author"
+   ],
+   "exit_code": 0,
+   "output": "{\"id\": 3, \"status\": \"withdrawn\", \"name\": \"Jane Example\", \"page\": \"landlords/example-housing/\", \"part\": \"bands\", \"landlord\": \"example-housing\", \"email\": \"jane@example-housing.org.uk\", \"pages_changed\": 1, \"shown\": 2}\n",
+   "pages_written": {
+    "landlords/example-housing/": "<h1>Example Housing</h1><section class=\"card\"><section><h3 id=\"grade\">grade</h3><p>Our words.</p><!--statements:grade--><!--/statements:grade--></section><section><h3 id=\"bands\">bands</h3><p>Our words.</p><!--statements:bands--><!--/statements:bands--></section><section><h3 id=\"ombudsman\">ombudsman</h3><p>Our words.</p><!--statements:ombudsman--><!--/statements:ombudsman--></section><section><h3 id=\"safety\">safety</h3><p>Our words.</p><!--statements:safety--><!--/statements:safety--></section></section><!--statements:page--><div class=\"statement\" role=\"note\" id=\"statement-1\" aria-labelledby=\"statement-1-h\"><h2 id=\"statement-1-h\">Statement from Jane Example, 13 November 2026</h2><p class=\"st-role\">Chief executive, Example Housing</p><blockquote class=\"st-words\"><p>Our newer results are published every quarter on our website.</p></blockquote><p class=\"st-note\">In their own words. Not checked or endorsed by Where Landlords Stand.</p></div><!--/statements:page--><h2>Figures</h2>"
+   }
+  },
+  {
+   "args": [
+    "statements",
+    "--publish",
+    "3",
+    "--checked",
+    "again"
+   ],
+   "exit_code": 1,
+   "output": "Not done: statement 3 is withdrawn, not pending\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "statements",
+    "--decline",
+    "4"
+   ],
+   "exit_code": 1,
+   "output": "Not done: give the reasons (--reason): the sender is told why\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "statements",
+    "--decline",
+    "4",
+    "--reason",
+    "it names a tenant"
+   ],
+   "exit_code": 0,
+   "output": "{\"id\": 4, \"status\": \"declined\", \"name\": \"Jane Example\", \"page\": \"landlords/example-council/\", \"part\": \"safety\", \"landlord\": \"example-council\", \"email\": \"jane@example-housing.org.uk\", \"pages_changed\": 0, \"shown\": 2}\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "statements",
+    "--decline",
+    "9",
+    "--reason",
+    "no such statement"
+   ],
+   "exit_code": 1,
+   "output": "Not done: no statement 9\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "statements",
+    "--log",
+    "1"
+   ],
+   "exit_code": 0,
+   "output": "{\"at\": \"2026-11-13T09:01:01+00:00\", \"action\": \"received\", \"note\": null}\n{\"at\": \"2026-11-13T09:10:10+00:00\", \"action\": \"published\", \"note\": \"replied from the landlord's own address, 14 Nov\"}\n{\"at\": \"2026-11-13T09:14:14+00:00\", \"action\": \"updated\", \"note\": \"the author's new version\"}\n{\"at\": \"2026-11-13T09:21:21+00:00\", \"action\": \"updated\", \"note\": \"the link has gone\"}\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "statements",
+    "--log",
+    "3"
+   ],
+   "exit_code": 0,
+   "output": "{\"at\": \"2026-11-13T09:03:03+00:00\", \"action\": \"received\", \"note\": null}\n{\"at\": \"2026-11-13T09:22:22+00:00\", \"action\": \"published\", \"note\": \"letter\"}\n{\"at\": \"2026-11-13T09:24:24+00:00\", \"action\": \"withdrawn\", \"note\": \"withdrawn by the author\"}\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "statements",
+    "--all"
+   ],
+   "exit_code": 0,
+   "output": "{\"id\": 1, \"at\": \"2026-11-13T09:01:01+00:00\", \"name\": \"Jane Example\", \"role\": \"Chief executive, Example Housing\", \"page\": \"landlords/example-housing/\", \"part\": \"\", \"text\": \"Our newer results are published every quarter on our website.\", \"link\": null, \"email\": \"jane@example-housing.org.uk\", \"status\": \"published\", \"landlord\": \"example-housing\", \"checked\": \"replied from the landlord's own address, 14 Nov\", \"reason\": null, \"published_at\": \"2026-11-13T09:10:10+00:00\", \"updated_at\": \"2026-11-13T09:21:21+00:00\", \"closed_at\": null, \"words\": 10}\n{\"id\": 2, \"at\": \"2026-11-13T09:02:02+00:00\", \"name\": \"Sam Officer\", \"role\": \"Head of housing, Example Council\", \"page\": \"areas/leeds/\", \"part\": \"\", \"text\": \"Our survey was carried out after a big change to our repairs service, and we have published newer results.\", \"link\": null, \"email\": \"jane@example-housing.org.uk\", \"status\": \"published\", \"landlord\": \"example-council\", \"checked\": \"phoned the council\", \"reason\": null, \"published_at\": \"2026-11-13T09:13:13+00:00\", \"updated_at\": null, \"closed_at\": null, \"words\": 19}\n{\"id\": 3, \"at\": \"2026-11-13T09:03:03+00:00\", \"name\": \"Jane Example\", \"role\": \"Chief executive, Example Housing\", \"page\": \"landlords/example-housing/\", \"part\": \"bands\", \"text\": \"Our survey was carried out after a big change to our repairs service, and we have published newer results.\", \"link\": null, \"email\": \"jane@example-housing.org.uk\", \"status\": \"withdrawn\", \"landlord\": \"example-housing\", \"checked\": \"letter\", \"reason\": \"withdrawn by the author\", \"published_at\": \"2026-11-13T09:22:22+00:00\", \"updated_at\": null, \"closed_at\": \"2026-11-13T09:24:24+00:00\", \"words\": 19}\n{\"id\": 4, \"at\": \"2026-11-13T09:04:04+00:00\", \"name\": \"Jane Example\", \"role\": \"Chief executive, Example Housing\", \"page\": \"landlords/example-council/\", \"part\": \"safety\", \"text\": \"Our survey was carried out after a big change to our repairs service, and we have published newer results.\", \"link\": \"https://example.org/results\", \"email\": \"jane@example-housing.org.uk\", \"status\": \"declined\", \"landlord\": \"example-council\", \"checked\": null, \"reason\": \"it names a tenant\", \"published_at\": null, \"updated_at\": null, \"closed_at\": \"2026-11-13T09:27:27+00:00\", \"words\": 19}\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "statements"
+   ],
+   "exit_code": 0,
+   "output": "",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "reports"
+   ],
+   "exit_code": 0,
+   "output": "{\"id\": 2, \"at\": \"2026-11-13T09:06:06+00:00\", \"kind\": \"takedown\", \"page\": \"\", \"message\": \"My name is on a page\", \"email\": null}\n{\"id\": 1, \"at\": \"2026-11-13T09:05:05+00:00\", \"kind\": \"wrong\", \"page\": \"landlords/x/\", \"message\": \"Wrong grade\", \"email\": \"reader@example.org\"}\n{\"id\": 3, \"at\": \"2026-11-13T09:07:07+00:00\", \"kind\": null, \"page\": \"\", \"message\": \"From an older form\", \"email\": null}\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "reports",
+    "--close",
+    "1",
+    "--outcome",
+    "fixed alias"
+   ],
+   "exit_code": 0,
+   "output": "{\"closed\": true}\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "reports",
+    "--close",
+    "1",
+    "--outcome",
+    "again"
+   ],
+   "exit_code": 0,
+   "output": "{\"closed\": false}\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "reports",
+    "--close",
+    "9"
+   ],
+   "exit_code": 0,
+   "output": "{\"closed\": false}\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "reports"
+   ],
+   "exit_code": 0,
+   "output": "{\"id\": 2, \"at\": \"2026-11-13T09:06:06+00:00\", \"kind\": \"takedown\", \"page\": \"\", \"message\": \"My name is on a page\", \"email\": null}\n{\"id\": 3, \"at\": \"2026-11-13T09:07:07+00:00\", \"kind\": null, \"page\": \"\", \"message\": \"From an older form\", \"email\": null}\n",
+   "pages_written": {}
+  },
+  {
+   "args": [
+    "missed"
+   ],
+   "exit_code": 0,
+   "output": "",
+   "pages_written": {}
+  }
+ ],
+ "shown": [
+  {
+   "id": 1,
+   "landlord": "example-housing",
+   "link": null,
+   "name": "Jane Example",
+   "page": "landlords/example-housing/",
+   "part": "",
+   "published_at": "2026-11-13T09:10:10+00:00",
+   "role": "Chief executive, Example Housing",
+   "text": "Our newer results are published every quarter on our website.",
+   "updated_at": "2026-11-13T09:21:21+00:00"
+  },
+  {
+   "id": 2,
+   "landlord": "example-council",
+   "link": null,
+   "name": "Sam Officer",
+   "page": "areas/leeds/",
+   "part": "",
+   "published_at": "2026-11-13T09:13:13+00:00",
+   "role": "Head of housing, Example Council",
+   "text": "Our survey was carried out after a big change to our repairs service, and we have published newer results.",
+   "updated_at": null
+  }
+ ],
+ "weekly_email": {
+  "body": "Nothing new from the publishers this week, so the pages are unchanged.\n\nChecks: all passed.\n\nReaders' reports of mistakes waiting: 2 (landlords reports)\n\n-- \nSent by the weekly update on the server (Where Landlords Stand, docs/OPERATIONS.md).",
+  "subject": "Where Landlords Stand: weekly update"
+ }
+}

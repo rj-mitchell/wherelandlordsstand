@@ -1,0 +1,79 @@
+{
+ "kept": {
+  "reports": [],
+  "statements": [
+   {
+    "email": "jane@example-housing.org.uk",
+    "id": 1,
+    "landlord": "example-council",
+    "link": "https://example.org/results",
+    "name": "Jane Example",
+    "page": "landlords/example-council/",
+    "part": "",
+    "reason": null,
+    "role": "Chief executive, Example Housing",
+    "status": "pending",
+    "text": "Our survey was carried out after a big change to our repairs service, and we have published newer results."
+   },
+   {
+    "email": "jane@example-housing.org.uk",
+    "id": 2,
+    "landlord": null,
+    "link": "https://example.org/results",
+    "name": "Jane Example",
+    "page": "areas/leeds/",
+    "part": "",
+    "reason": null,
+    "role": "Chief executive, Example Housing",
+    "status": "pending",
+    "text": "Our survey was carried out after a big change to our repairs service, and we have published newer results."
+   }
+  ]
+ },
+ "pages": {
+  "areas/leeds/": "<h1>Leeds</h1><p class=\"warn\">w</p><!--statements:page--><!--/statements:page-->",
+  "landlords/example-housing/": "<h1>Example Housing</h1><section class=\"card\"><section><h3 id=\"grade\">grade</h3><p>Our words.</p><!--statements:grade--><!--/statements:grade--></section><section><h3 id=\"bands\">bands</h3><p>Our words.</p><!--statements:bands--><!--/statements:bands--></section><section><h3 id=\"ombudsman\">ombudsman</h3><p>Our words.</p><!--statements:ombudsman--><!--/statements:ombudsman--></section><section><h3 id=\"safety\">safety</h3><p>Our words.</p><!--statements:safety--><!--/statements:safety--></section></section><!--statements:page--><!--/statements:page--><h2>Figures</h2>"
+ },
+ "runs": [
+  {
+   "args": [
+    "statements",
+    "--publish",
+    "1"
+   ],
+   "exit_code": 1,
+   "output": "Not done: say how you confirmed who sent it (--checked), for the log\n"
+  },
+  {
+   "args": [
+    "statements",
+    "--publish",
+    "1",
+    "--checked",
+    "letter"
+   ],
+   "exit_code": 1,
+   "output": "Not done: no landlord's page landlords/example-council/ on the site\n"
+  },
+  {
+   "args": [
+    "statements",
+    "--publish",
+    "2",
+    "--checked",
+    "letter",
+    "--landlord",
+    "example-council"
+   ],
+   "exit_code": 1,
+   "output": "Not done: no landlord's page landlords/example-council/ on the site\n"
+  },
+  {
+   "args": [
+    "statements"
+   ],
+   "exit_code": 0,
+   "output": "{\"id\": 1, \"at\": \"2026-11-13T09:01:01+00:00\", \"name\": \"Jane Example\", \"role\": \"Chief executive, Example Housing\", \"page\": \"landlords/example-council/\", \"part\": \"\", \"text\": \"Our survey was carried out after a big change to our repairs service, and we have published newer results.\", \"link\": \"https://example.org/results\", \"email\": \"jane@example-housing.org.uk\", \"status\": \"pending\", \"landlord\": \"example-council\", \"checked\": null, \"reason\": null, \"published_at\": null, \"updated_at\": null, \"closed_at\": null, \"words\": 19}\n{\"id\": 2, \"at\": \"2026-11-13T09:02:02+00:00\", \"name\": \"Jane Example\", \"role\": \"Chief executive, Example Housing\", \"page\": \"areas/leeds/\", \"part\": \"\", \"text\": \"Our survey was carried out after a big change to our repairs service, and we have published newer results.\", \"link\": \"https://example.org/results\", \"email\": \"jane@example-housing.org.uk\", \"status\": \"pending\", \"landlord\": null, \"checked\": null, \"reason\": null, \"published_at\": null, \"updated_at\": null, \"closed_at\": null, \"words\": 19}\n"
+  }
+ ]
+}

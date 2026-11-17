@@ -1,0 +1,13 @@
+[Unit]
+Description=Where Landlords Stand: weekly update
+
+[Timer]
+# Thursday late morning, UK time: the regulator and the Ombudsman publish on weekday mornings (TSM 2025/26 came out on
+# a Thursday), and the charity's other sites update at other times (Where MPs Stand at 7.15 and 19.15 UK time, Where
+# Countries Stand at 5.41 and 17.41 UTC, Where Councils Stand at 3.17 UTC).
+OnCalendar=Thu *-*-* 11:40:00 Europe/London
+RandomizedDelaySec=10min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,10 @@
+[Unit]
+Description=Where Landlords Stand: check the backups every day
+
+[Timer]
+# UTC, in the working day, well after the 04:52 backup (Where Councils Stand checks its own at 11:47)
+OnCalendar=*-*-* 12:23:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

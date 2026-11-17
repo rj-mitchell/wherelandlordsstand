@@ -1,0 +1,19 @@
+# Nightly copy of the one thing that can't be rebuilt: the state database (readers' reports of mistakes, statements
+# from landlords, missed searches). Copies land in /opt/wherelandlordsstand/deploy/backups. Then the nightly
+# housekeeping (landlords nightly): email addresses are deleted when their time is up, as the privacy page says, so
+# that never waits for the owner to type a command. Installed by deploy/update.sh.
+[Unit]
+Description=Where Landlords Stand: back up the state database
+After=docker.service
+Requires=docker.service
+# Emails the alerts address if this fails (deploy/alert@.service in Where MPs Stand, docs/HOSTING.md there)
+OnFailure=alert@%n.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/wherelandlordsstand/deploy
+ExecStart=/usr/bin/docker compose run --rm -T app landlords backup --to /backups --keep 14
+# After the backup, so the backup never waits on it; if it fails, this unit fails and the alert says so
+ExecStartPost=/usr/bin/docker compose run --rm -T app landlords nightly
+Nice=10
+TimeoutStartSec=10min

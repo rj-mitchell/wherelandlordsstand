@@ -1,0 +1,1032 @@
+[
+ {
+  "config": "real",
+  "env": {},
+  "gives": {
+   "config_path": "<root>/config/settings.toml",
+   "data_dir": "<root>/data",
+   "fetch": {
+    "min_interval_seconds": 1.0,
+    "retries": 3,
+    "timeout_seconds": 60,
+    "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+   },
+   "no_such_section": {},
+   "raw": {
+    "coverage": {
+     "min_homes": 1000
+    },
+    "fetch": {
+     "min_interval_seconds": 1.0,
+     "retries": 3,
+     "timeout_seconds": 60,
+     "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+    },
+    "paths": {
+     "data_dir": "data"
+    },
+    "publish": {
+     "approval_days": 14,
+     "keep_builds": 6,
+     "mode": "approve",
+     "notify_to": "wheretheystanduk@gmail.com"
+    },
+    "sister_sites": {
+     "where_councils_stand": "https://wherecouncilsstand.com/councils/{gss}",
+     "where_councils_stand_list": "https://wherecouncilsstand.com/api/councils"
+    },
+    "site": {
+     "contact": "admin@wherelandlordsstand.com",
+     "feedback_email": "admin@wherelandlordsstand.com",
+     "launched": false,
+     "name": "Where Landlords Stand",
+     "operator": "Rob Mitchell",
+     "parent_name": "Where They Stand",
+     "stage": "alpha",
+     "url": "https://wherelandlordsstand.com"
+    }
+   },
+   "raw_dir": "<root>/data/raw",
+   "site": {
+    "contact": "admin@wherelandlordsstand.com",
+    "feedback_email": "admin@wherelandlordsstand.com",
+    "launched": false,
+    "name": "Where Landlords Stand",
+    "operator": "Rob Mitchell",
+    "parent_name": "Where They Stand",
+    "stage": "alpha",
+    "url": "https://wherelandlordsstand.com"
+   },
+   "staging_dir": "<root>/data/staging"
+  },
+  "name": "the real settings file"
+ },
+ {
+  "config": "real",
+  "env": {
+   "LANDLORDS_DATA_DIR": "<tmp>/elsewhere"
+  },
+  "gives": {
+   "config_path": "<root>/config/settings.toml",
+   "data_dir": "<tmp>/elsewhere",
+   "fetch": {
+    "min_interval_seconds": 1.0,
+    "retries": 3,
+    "timeout_seconds": 60,
+    "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+   },
+   "no_such_section": {},
+   "raw": {
+    "coverage": {
+     "min_homes": 1000
+    },
+    "fetch": {
+     "min_interval_seconds": 1.0,
+     "retries": 3,
+     "timeout_seconds": 60,
+     "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+    },
+    "paths": {
+     "data_dir": "data"
+    },
+    "publish": {
+     "approval_days": 14,
+     "keep_builds": 6,
+     "mode": "approve",
+     "notify_to": "wheretheystanduk@gmail.com"
+    },
+    "sister_sites": {
+     "where_councils_stand": "https://wherecouncilsstand.com/councils/{gss}",
+     "where_councils_stand_list": "https://wherecouncilsstand.com/api/councils"
+    },
+    "site": {
+     "contact": "admin@wherelandlordsstand.com",
+     "feedback_email": "admin@wherelandlordsstand.com",
+     "launched": false,
+     "name": "Where Landlords Stand",
+     "operator": "Rob Mitchell",
+     "parent_name": "Where They Stand",
+     "stage": "alpha",
+     "url": "https://wherelandlordsstand.com"
+    }
+   },
+   "raw_dir": "<tmp>/elsewhere/raw",
+   "site": {
+    "contact": "admin@wherelandlordsstand.com",
+    "feedback_email": "admin@wherelandlordsstand.com",
+    "launched": false,
+    "name": "Where Landlords Stand",
+    "operator": "Rob Mitchell",
+    "parent_name": "Where They Stand",
+    "stage": "alpha",
+    "url": "https://wherelandlordsstand.com"
+   },
+   "staging_dir": "<tmp>/elsewhere/staging"
+  },
+  "name": "the real file, the data folder from the environment (absolute)"
+ },
+ {
+  "config": "real",
+  "env": {
+   "LANDLORDS_DATA_DIR": "other/data"
+  },
+  "gives": {
+   "config_path": "<root>/config/settings.toml",
+   "data_dir": "<root>/other/data",
+   "fetch": {
+    "min_interval_seconds": 1.0,
+    "retries": 3,
+    "timeout_seconds": 60,
+    "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+   },
+   "no_such_section": {},
+   "raw": {
+    "coverage": {
+     "min_homes": 1000
+    },
+    "fetch": {
+     "min_interval_seconds": 1.0,
+     "retries": 3,
+     "timeout_seconds": 60,
+     "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+    },
+    "paths": {
+     "data_dir": "data"
+    },
+    "publish": {
+     "approval_days": 14,
+     "keep_builds": 6,
+     "mode": "approve",
+     "notify_to": "wheretheystanduk@gmail.com"
+    },
+    "sister_sites": {
+     "where_councils_stand": "https://wherecouncilsstand.com/councils/{gss}",
+     "where_councils_stand_list": "https://wherecouncilsstand.com/api/councils"
+    },
+    "site": {
+     "contact": "admin@wherelandlordsstand.com",
+     "feedback_email": "admin@wherelandlordsstand.com",
+     "launched": false,
+     "name": "Where Landlords Stand",
+     "operator": "Rob Mitchell",
+     "parent_name": "Where They Stand",
+     "stage": "alpha",
+     "url": "https://wherelandlordsstand.com"
+    }
+   },
+   "raw_dir": "<root>/other/data/raw",
+   "site": {
+    "contact": "admin@wherelandlordsstand.com",
+    "feedback_email": "admin@wherelandlordsstand.com",
+    "launched": false,
+    "name": "Where Landlords Stand",
+    "operator": "Rob Mitchell",
+    "parent_name": "Where They Stand",
+    "stage": "alpha",
+    "url": "https://wherelandlordsstand.com"
+   },
+   "staging_dir": "<root>/other/data/staging"
+  },
+  "name": "the real file, the data folder from the environment (relative)"
+ },
+ {
+  "config": "real",
+  "env": {
+   "LANDLORDS_LAUNCHED": "1"
+  },
+  "gives": {
+   "config_path": "<root>/config/settings.toml",
+   "data_dir": "<root>/data",
+   "fetch": {
+    "min_interval_seconds": 1.0,
+    "retries": 3,
+    "timeout_seconds": 60,
+    "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+   },
+   "no_such_section": {},
+   "raw": {
+    "coverage": {
+     "min_homes": 1000
+    },
+    "fetch": {
+     "min_interval_seconds": 1.0,
+     "retries": 3,
+     "timeout_seconds": 60,
+     "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+    },
+    "paths": {
+     "data_dir": "data"
+    },
+    "publish": {
+     "approval_days": 14,
+     "keep_builds": 6,
+     "mode": "approve",
+     "notify_to": "wheretheystanduk@gmail.com"
+    },
+    "sister_sites": {
+     "where_councils_stand": "https://wherecouncilsstand.com/councils/{gss}",
+     "where_councils_stand_list": "https://wherecouncilsstand.com/api/councils"
+    },
+    "site": {
+     "contact": "admin@wherelandlordsstand.com",
+     "feedback_email": "admin@wherelandlordsstand.com",
+     "launched": true,
+     "name": "Where Landlords Stand",
+     "operator": "Rob Mitchell",
+     "parent_name": "Where They Stand",
+     "stage": "alpha",
+     "url": "https://wherelandlordsstand.com"
+    }
+   },
+   "raw_dir": "<root>/data/raw",
+   "site": {
+    "contact": "admin@wherelandlordsstand.com",
+    "feedback_email": "admin@wherelandlordsstand.com",
+    "launched": true,
+    "name": "Where Landlords Stand",
+    "operator": "Rob Mitchell",
+    "parent_name": "Where They Stand",
+    "stage": "alpha",
+    "url": "https://wherelandlordsstand.com"
+   },
+   "staging_dir": "<root>/data/staging"
+  },
+  "name": "the real file, LANDLORDS_LAUNCHED='1'"
+ },
+ {
+  "config": "real",
+  "env": {
+   "LANDLORDS_LAUNCHED": "true"
+  },
+  "gives": {
+   "config_path": "<root>/config/settings.toml",
+   "data_dir": "<root>/data",
+   "fetch": {
+    "min_interval_seconds": 1.0,
+    "retries": 3,
+    "timeout_seconds": 60,
+    "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+   },
+   "no_such_section": {},
+   "raw": {
+    "coverage": {
+     "min_homes": 1000
+    },
+    "fetch": {
+     "min_interval_seconds": 1.0,
+     "retries": 3,
+     "timeout_seconds": 60,
+     "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+    },
+    "paths": {
+     "data_dir": "data"
+    },
+    "publish": {
+     "approval_days": 14,
+     "keep_builds": 6,
+     "mode": "approve",
+     "notify_to": "wheretheystanduk@gmail.com"
+    },
+    "sister_sites": {
+     "where_councils_stand": "https://wherecouncilsstand.com/councils/{gss}",
+     "where_councils_stand_list": "https://wherecouncilsstand.com/api/councils"
+    },
+    "site": {
+     "contact": "admin@wherelandlordsstand.com",
+     "feedback_email": "admin@wherelandlordsstand.com",
+     "launched": true,
+     "name": "Where Landlords Stand",
+     "operator": "Rob Mitchell",
+     "parent_name": "Where They Stand",
+     "stage": "alpha",
+     "url": "https://wherelandlordsstand.com"
+    }
+   },
+   "raw_dir": "<root>/data/raw",
+   "site": {
+    "contact": "admin@wherelandlordsstand.com",
+    "feedback_email": "admin@wherelandlordsstand.com",
+    "launched": true,
+    "name": "Where Landlords Stand",
+    "operator": "Rob Mitchell",
+    "parent_name": "Where They Stand",
+    "stage": "alpha",
+    "url": "https://wherelandlordsstand.com"
+   },
+   "staging_dir": "<root>/data/staging"
+  },
+  "name": "the real file, LANDLORDS_LAUNCHED='true'"
+ },
+ {
+  "config": "real",
+  "env": {
+   "LANDLORDS_LAUNCHED": "YES"
+  },
+  "gives": {
+   "config_path": "<root>/config/settings.toml",
+   "data_dir": "<root>/data",
+   "fetch": {
+    "min_interval_seconds": 1.0,
+    "retries": 3,
+    "timeout_seconds": 60,
+    "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+   },
+   "no_such_section": {},
+   "raw": {
+    "coverage": {
+     "min_homes": 1000
+    },
+    "fetch": {
+     "min_interval_seconds": 1.0,
+     "retries": 3,
+     "timeout_seconds": 60,
+     "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+    },
+    "paths": {
+     "data_dir": "data"
+    },
+    "publish": {
+     "approval_days": 14,
+     "keep_builds": 6,
+     "mode": "approve",
+     "notify_to": "wheretheystanduk@gmail.com"
+    },
+    "sister_sites": {
+     "where_councils_stand": "https://wherecouncilsstand.com/councils/{gss}",
+     "where_councils_stand_list": "https://wherecouncilsstand.com/api/councils"
+    },
+    "site": {
+     "contact": "admin@wherelandlordsstand.com",
+     "feedback_email": "admin@wherelandlordsstand.com",
+     "launched": true,
+     "name": "Where Landlords Stand",
+     "operator": "Rob Mitchell",
+     "parent_name": "Where They Stand",
+     "stage": "alpha",
+     "url": "https://wherelandlordsstand.com"
+    }
+   },
+   "raw_dir": "<root>/data/raw",
+   "site": {
+    "contact": "admin@wherelandlordsstand.com",
+    "feedback_email": "admin@wherelandlordsstand.com",
+    "launched": true,
+    "name": "Where Landlords Stand",
+    "operator": "Rob Mitchell",
+    "parent_name": "Where They Stand",
+    "stage": "alpha",
+    "url": "https://wherelandlordsstand.com"
+   },
+   "staging_dir": "<root>/data/staging"
+  },
+  "name": "the real file, LANDLORDS_LAUNCHED='YES'"
+ },
+ {
+  "config": "real",
+  "env": {
+   "LANDLORDS_LAUNCHED": " True "
+  },
+  "gives": {
+   "config_path": "<root>/config/settings.toml",
+   "data_dir": "<root>/data",
+   "fetch": {
+    "min_interval_seconds": 1.0,
+    "retries": 3,
+    "timeout_seconds": 60,
+    "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+   },
+   "no_such_section": {},
+   "raw": {
+    "coverage": {
+     "min_homes": 1000
+    },
+    "fetch": {
+     "min_interval_seconds": 1.0,
+     "retries": 3,
+     "timeout_seconds": 60,
+     "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+    },
+    "paths": {
+     "data_dir": "data"
+    },
+    "publish": {
+     "approval_days": 14,
+     "keep_builds": 6,
+     "mode": "approve",
+     "notify_to": "wheretheystanduk@gmail.com"
+    },
+    "sister_sites": {
+     "where_councils_stand": "https://wherecouncilsstand.com/councils/{gss}",
+     "where_councils_stand_list": "https://wherecouncilsstand.com/api/councils"
+    },
+    "site": {
+     "contact": "admin@wherelandlordsstand.com",
+     "feedback_email": "admin@wherelandlordsstand.com",
+     "launched": true,
+     "name": "Where Landlords Stand",
+     "operator": "Rob Mitchell",
+     "parent_name": "Where They Stand",
+     "stage": "alpha",
+     "url": "https://wherelandlordsstand.com"
+    }
+   },
+   "raw_dir": "<root>/data/raw",
+   "site": {
+    "contact": "admin@wherelandlordsstand.com",
+    "feedback_email": "admin@wherelandlordsstand.com",
+    "launched": true,
+    "name": "Where Landlords Stand",
+    "operator": "Rob Mitchell",
+    "parent_name": "Where They Stand",
+    "stage": "alpha",
+    "url": "https://wherelandlordsstand.com"
+   },
+   "staging_dir": "<root>/data/staging"
+  },
+  "name": "the real file, LANDLORDS_LAUNCHED=' True '"
+ },
+ {
+  "config": "real",
+  "env": {
+   "LANDLORDS_LAUNCHED": "no"
+  },
+  "gives": {
+   "config_path": "<root>/config/settings.toml",
+   "data_dir": "<root>/data",
+   "fetch": {
+    "min_interval_seconds": 1.0,
+    "retries": 3,
+    "timeout_seconds": 60,
+    "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+   },
+   "no_such_section": {},
+   "raw": {
+    "coverage": {
+     "min_homes": 1000
+    },
+    "fetch": {
+     "min_interval_seconds": 1.0,
+     "retries": 3,
+     "timeout_seconds": 60,
+     "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+    },
+    "paths": {
+     "data_dir": "data"
+    },
+    "publish": {
+     "approval_days": 14,
+     "keep_builds": 6,
+     "mode": "approve",
+     "notify_to": "wheretheystanduk@gmail.com"
+    },
+    "sister_sites": {
+     "where_councils_stand": "https://wherecouncilsstand.com/councils/{gss}",
+     "where_councils_stand_list": "https://wherecouncilsstand.com/api/councils"
+    },
+    "site": {
+     "contact": "admin@wherelandlordsstand.com",
+     "feedback_email": "admin@wherelandlordsstand.com",
+     "launched": false,
+     "name": "Where Landlords Stand",
+     "operator": "Rob Mitchell",
+     "parent_name": "Where They Stand",
+     "stage": "alpha",
+     "url": "https://wherelandlordsstand.com"
+    }
+   },
+   "raw_dir": "<root>/data/raw",
+   "site": {
+    "contact": "admin@wherelandlordsstand.com",
+    "feedback_email": "admin@wherelandlordsstand.com",
+    "launched": false,
+    "name": "Where Landlords Stand",
+    "operator": "Rob Mitchell",
+    "parent_name": "Where They Stand",
+    "stage": "alpha",
+    "url": "https://wherelandlordsstand.com"
+   },
+   "staging_dir": "<root>/data/staging"
+  },
+  "name": "the real file, LANDLORDS_LAUNCHED='no'"
+ },
+ {
+  "config": "real",
+  "env": {
+   "LANDLORDS_LAUNCHED": "0"
+  },
+  "gives": {
+   "config_path": "<root>/config/settings.toml",
+   "data_dir": "<root>/data",
+   "fetch": {
+    "min_interval_seconds": 1.0,
+    "retries": 3,
+    "timeout_seconds": 60,
+    "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+   },
+   "no_such_section": {},
+   "raw": {
+    "coverage": {
+     "min_homes": 1000
+    },
+    "fetch": {
+     "min_interval_seconds": 1.0,
+     "retries": 3,
+     "timeout_seconds": 60,
+     "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+    },
+    "paths": {
+     "data_dir": "data"
+    },
+    "publish": {
+     "approval_days": 14,
+     "keep_builds": 6,
+     "mode": "approve",
+     "notify_to": "wheretheystanduk@gmail.com"
+    },
+    "sister_sites": {
+     "where_councils_stand": "https://wherecouncilsstand.com/councils/{gss}",
+     "where_councils_stand_list": "https://wherecouncilsstand.com/api/councils"
+    },
+    "site": {
+     "contact": "admin@wherelandlordsstand.com",
+     "feedback_email": "admin@wherelandlordsstand.com",
+     "launched": false,
+     "name": "Where Landlords Stand",
+     "operator": "Rob Mitchell",
+     "parent_name": "Where They Stand",
+     "stage": "alpha",
+     "url": "https://wherelandlordsstand.com"
+    }
+   },
+   "raw_dir": "<root>/data/raw",
+   "site": {
+    "contact": "admin@wherelandlordsstand.com",
+    "feedback_email": "admin@wherelandlordsstand.com",
+    "launched": false,
+    "name": "Where Landlords Stand",
+    "operator": "Rob Mitchell",
+    "parent_name": "Where They Stand",
+    "stage": "alpha",
+    "url": "https://wherelandlordsstand.com"
+   },
+   "staging_dir": "<root>/data/staging"
+  },
+  "name": "the real file, LANDLORDS_LAUNCHED='0'"
+ },
+ {
+  "config": "real",
+  "env": {
+   "LANDLORDS_LAUNCHED": "false"
+  },
+  "gives": {
+   "config_path": "<root>/config/settings.toml",
+   "data_dir": "<root>/data",
+   "fetch": {
+    "min_interval_seconds": 1.0,
+    "retries": 3,
+    "timeout_seconds": 60,
+    "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+   },
+   "no_such_section": {},
+   "raw": {
+    "coverage": {
+     "min_homes": 1000
+    },
+    "fetch": {
+     "min_interval_seconds": 1.0,
+     "retries": 3,
+     "timeout_seconds": 60,
+     "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+    },
+    "paths": {
+     "data_dir": "data"
+    },
+    "publish": {
+     "approval_days": 14,
+     "keep_builds": 6,
+     "mode": "approve",
+     "notify_to": "wheretheystanduk@gmail.com"
+    },
+    "sister_sites": {
+     "where_councils_stand": "https://wherecouncilsstand.com/councils/{gss}",
+     "where_councils_stand_list": "https://wherecouncilsstand.com/api/councils"
+    },
+    "site": {
+     "contact": "admin@wherelandlordsstand.com",
+     "feedback_email": "admin@wherelandlordsstand.com",
+     "launched": false,
+     "name": "Where Landlords Stand",
+     "operator": "Rob Mitchell",
+     "parent_name": "Where They Stand",
+     "stage": "alpha",
+     "url": "https://wherelandlordsstand.com"
+    }
+   },
+   "raw_dir": "<root>/data/raw",
+   "site": {
+    "contact": "admin@wherelandlordsstand.com",
+    "feedback_email": "admin@wherelandlordsstand.com",
+    "launched": false,
+    "name": "Where Landlords Stand",
+    "operator": "Rob Mitchell",
+    "parent_name": "Where They Stand",
+    "stage": "alpha",
+    "url": "https://wherelandlordsstand.com"
+   },
+   "staging_dir": "<root>/data/staging"
+  },
+  "name": "the real file, LANDLORDS_LAUNCHED='false'"
+ },
+ {
+  "config": "real",
+  "env": {
+   "LANDLORDS_LAUNCHED": "launched"
+  },
+  "gives": {
+   "config_path": "<root>/config/settings.toml",
+   "data_dir": "<root>/data",
+   "fetch": {
+    "min_interval_seconds": 1.0,
+    "retries": 3,
+    "timeout_seconds": 60,
+    "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+   },
+   "no_such_section": {},
+   "raw": {
+    "coverage": {
+     "min_homes": 1000
+    },
+    "fetch": {
+     "min_interval_seconds": 1.0,
+     "retries": 3,
+     "timeout_seconds": 60,
+     "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+    },
+    "paths": {
+     "data_dir": "data"
+    },
+    "publish": {
+     "approval_days": 14,
+     "keep_builds": 6,
+     "mode": "approve",
+     "notify_to": "wheretheystanduk@gmail.com"
+    },
+    "sister_sites": {
+     "where_councils_stand": "https://wherecouncilsstand.com/councils/{gss}",
+     "where_councils_stand_list": "https://wherecouncilsstand.com/api/councils"
+    },
+    "site": {
+     "contact": "admin@wherelandlordsstand.com",
+     "feedback_email": "admin@wherelandlordsstand.com",
+     "launched": false,
+     "name": "Where Landlords Stand",
+     "operator": "Rob Mitchell",
+     "parent_name": "Where They Stand",
+     "stage": "alpha",
+     "url": "https://wherelandlordsstand.com"
+    }
+   },
+   "raw_dir": "<root>/data/raw",
+   "site": {
+    "contact": "admin@wherelandlordsstand.com",
+    "feedback_email": "admin@wherelandlordsstand.com",
+    "launched": false,
+    "name": "Where Landlords Stand",
+    "operator": "Rob Mitchell",
+    "parent_name": "Where They Stand",
+    "stage": "alpha",
+    "url": "https://wherelandlordsstand.com"
+   },
+   "staging_dir": "<root>/data/staging"
+  },
+  "name": "the real file, LANDLORDS_LAUNCHED='launched'"
+ },
+ {
+  "config": "real",
+  "env": {
+   "LANDLORDS_LAUNCHED": " "
+  },
+  "gives": {
+   "config_path": "<root>/config/settings.toml",
+   "data_dir": "<root>/data",
+   "fetch": {
+    "min_interval_seconds": 1.0,
+    "retries": 3,
+    "timeout_seconds": 60,
+    "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+   },
+   "no_such_section": {},
+   "raw": {
+    "coverage": {
+     "min_homes": 1000
+    },
+    "fetch": {
+     "min_interval_seconds": 1.0,
+     "retries": 3,
+     "timeout_seconds": 60,
+     "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+    },
+    "paths": {
+     "data_dir": "data"
+    },
+    "publish": {
+     "approval_days": 14,
+     "keep_builds": 6,
+     "mode": "approve",
+     "notify_to": "wheretheystanduk@gmail.com"
+    },
+    "sister_sites": {
+     "where_councils_stand": "https://wherecouncilsstand.com/councils/{gss}",
+     "where_councils_stand_list": "https://wherecouncilsstand.com/api/councils"
+    },
+    "site": {
+     "contact": "admin@wherelandlordsstand.com",
+     "feedback_email": "admin@wherelandlordsstand.com",
+     "launched": false,
+     "name": "Where Landlords Stand",
+     "operator": "Rob Mitchell",
+     "parent_name": "Where They Stand",
+     "stage": "alpha",
+     "url": "https://wherelandlordsstand.com"
+    }
+   },
+   "raw_dir": "<root>/data/raw",
+   "site": {
+    "contact": "admin@wherelandlordsstand.com",
+    "feedback_email": "admin@wherelandlordsstand.com",
+    "launched": false,
+    "name": "Where Landlords Stand",
+    "operator": "Rob Mitchell",
+    "parent_name": "Where They Stand",
+    "stage": "alpha",
+    "url": "https://wherelandlordsstand.com"
+   },
+   "staging_dir": "<root>/data/staging"
+  },
+  "name": "the real file, LANDLORDS_LAUNCHED=' '"
+ },
+ {
+  "config": "real",
+  "env": {
+   "LANDLORDS_LAUNCHED": "true",
+   "LANDLORDS_SITE_URL": " https://example.test/ "
+  },
+  "gives": {
+   "config_path": "<root>/config/settings.toml",
+   "data_dir": "<root>/data",
+   "fetch": {
+    "min_interval_seconds": 1.0,
+    "retries": 3,
+    "timeout_seconds": 60,
+    "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+   },
+   "no_such_section": {},
+   "raw": {
+    "coverage": {
+     "min_homes": 1000
+    },
+    "fetch": {
+     "min_interval_seconds": 1.0,
+     "retries": 3,
+     "timeout_seconds": 60,
+     "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+    },
+    "paths": {
+     "data_dir": "data"
+    },
+    "publish": {
+     "approval_days": 14,
+     "keep_builds": 6,
+     "mode": "approve",
+     "notify_to": "wheretheystanduk@gmail.com"
+    },
+    "sister_sites": {
+     "where_councils_stand": "https://wherecouncilsstand.com/councils/{gss}",
+     "where_councils_stand_list": "https://wherecouncilsstand.com/api/councils"
+    },
+    "site": {
+     "contact": "admin@wherelandlordsstand.com",
+     "feedback_email": "admin@wherelandlordsstand.com",
+     "launched": true,
+     "name": "Where Landlords Stand",
+     "operator": "Rob Mitchell",
+     "parent_name": "Where They Stand",
+     "stage": "alpha",
+     "url": "https://example.test/"
+    }
+   },
+   "raw_dir": "<root>/data/raw",
+   "site": {
+    "contact": "admin@wherelandlordsstand.com",
+    "feedback_email": "admin@wherelandlordsstand.com",
+    "launched": true,
+    "name": "Where Landlords Stand",
+    "operator": "Rob Mitchell",
+    "parent_name": "Where They Stand",
+    "stage": "alpha",
+    "url": "https://example.test/"
+   },
+   "staging_dir": "<root>/data/staging"
+  },
+  "name": "the real file, the address from the environment"
+ },
+ {
+  "config": "real",
+  "env": {
+   "LANDLORDS_SITE_URL": ""
+  },
+  "gives": {
+   "config_path": "<root>/config/settings.toml",
+   "data_dir": "<root>/data",
+   "fetch": {
+    "min_interval_seconds": 1.0,
+    "retries": 3,
+    "timeout_seconds": 60,
+    "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+   },
+   "no_such_section": {},
+   "raw": {
+    "coverage": {
+     "min_homes": 1000
+    },
+    "fetch": {
+     "min_interval_seconds": 1.0,
+     "retries": 3,
+     "timeout_seconds": 60,
+     "user_agent": "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+    },
+    "paths": {
+     "data_dir": "data"
+    },
+    "publish": {
+     "approval_days": 14,
+     "keep_builds": 6,
+     "mode": "approve",
+     "notify_to": "wheretheystanduk@gmail.com"
+    },
+    "sister_sites": {
+     "where_councils_stand": "https://wherecouncilsstand.com/councils/{gss}",
+     "where_councils_stand_list": "https://wherecouncilsstand.com/api/councils"
+    },
+    "site": {
+     "contact": "admin@wherelandlordsstand.com",
+     "feedback_email": "admin@wherelandlordsstand.com",
+     "launched": false,
+     "name": "Where Landlords Stand",
+     "operator": "Rob Mitchell",
+     "parent_name": "Where They Stand",
+     "stage": "alpha",
+     "url": "https://wherelandlordsstand.com"
+    }
+   },
+   "raw_dir": "<root>/data/raw",
+   "site": {
+    "contact": "admin@wherelandlordsstand.com",
+    "feedback_email": "admin@wherelandlordsstand.com",
+    "launched": false,
+    "name": "Where Landlords Stand",
+    "operator": "Rob Mitchell",
+    "parent_name": "Where They Stand",
+    "stage": "alpha",
+    "url": "https://wherelandlordsstand.com"
+   },
+   "staging_dir": "<root>/data/staging"
+  },
+  "name": "the real file, an empty address in the environment"
+ },
+ {
+  "config": "[paths]\ndata_dir = \"{data_dir}\"\n\n[fetch]\nuser_agent = \"Sample/1.0\"\nretries = 2\n\n[coverage]\nmin_homes = 500\n",
+  "data_dir": "<tmp>/sample-data",
+  "env": {},
+  "gives": {
+   "config_path": "<tmp>/sample.toml",
+   "data_dir": "<tmp>/sample-data",
+   "fetch": {
+    "retries": 2,
+    "user_agent": "Sample/1.0"
+   },
+   "no_such_section": {},
+   "raw": {
+    "coverage": {
+     "min_homes": 500
+    },
+    "fetch": {
+     "retries": 2,
+     "user_agent": "Sample/1.0"
+    },
+    "paths": {
+     "data_dir": "<tmp>/sample-data"
+    },
+    "site": {}
+   },
+   "raw_dir": "<tmp>/sample-data/raw",
+   "site": {},
+   "staging_dir": "<tmp>/sample-data/staging"
+  },
+  "name": "a sample file with no [site], named by LANDLORDS_CONFIG"
+ },
+ {
+  "config": "[paths]\ndata_dir = \"{data_dir}\"\n\n[fetch]\nuser_agent = \"Sample/1.0\"\nretries = 2\n\n[coverage]\nmin_homes = 500\n",
+  "data_dir": "var/data",
+  "env": {},
+  "gives": {
+   "config_path": "<tmp>/sample.toml",
+   "data_dir": "<root>/var/data",
+   "fetch": {
+    "retries": 2,
+    "user_agent": "Sample/1.0"
+   },
+   "no_such_section": {},
+   "raw": {
+    "coverage": {
+     "min_homes": 500
+    },
+    "fetch": {
+     "retries": 2,
+     "user_agent": "Sample/1.0"
+    },
+    "paths": {
+     "data_dir": "var/data"
+    },
+    "site": {}
+   },
+   "raw_dir": "<root>/var/data/raw",
+   "site": {},
+   "staging_dir": "<root>/var/data/staging"
+  },
+  "name": "a sample file with a relative data folder"
+ },
+ {
+  "config": "[paths]\ndata_dir = \"{data_dir}\"\n\n[fetch]\nuser_agent = \"Sample/1.0\"\nretries = 2\n\n[coverage]\nmin_homes = 500\n",
+  "data_dir": "var/data",
+  "env": {
+   "LANDLORDS_DATA_DIR": "<tmp>/from-env",
+   "LANDLORDS_LAUNCHED": "1",
+   "LANDLORDS_SITE_URL": "https://example.test"
+  },
+  "gives": {
+   "config_path": "<tmp>/sample.toml",
+   "data_dir": "<tmp>/from-env",
+   "fetch": {
+    "retries": 2,
+    "user_agent": "Sample/1.0"
+   },
+   "no_such_section": {},
+   "raw": {
+    "coverage": {
+     "min_homes": 500
+    },
+    "fetch": {
+     "retries": 2,
+     "user_agent": "Sample/1.0"
+    },
+    "paths": {
+     "data_dir": "var/data"
+    },
+    "site": {
+     "launched": true,
+     "url": "https://example.test"
+    }
+   },
+   "raw_dir": "<tmp>/from-env/raw",
+   "site": {
+    "launched": true,
+    "url": "https://example.test"
+   },
+   "staging_dir": "<tmp>/from-env/staging"
+  },
+  "name": "a sample file with no [site], and both settings in the environment"
+ },
+ {
+  "as_argument": true,
+  "config": "[paths]\ndata_dir = \"{data_dir}\"\n\n[fetch]\nuser_agent = \"Sample/1.0\"\nretries = 2\n\n[coverage]\nmin_homes = 500\n",
+  "data_dir": "var/data",
+  "env": {},
+  "gives": {
+   "config_path": "<tmp>/sample.toml",
+   "data_dir": "<root>/var/data",
+   "fetch": {
+    "retries": 2,
+    "user_agent": "Sample/1.0"
+   },
+   "no_such_section": {},
+   "raw": {
+    "coverage": {
+     "min_homes": 500
+    },
+    "fetch": {
+     "retries": 2,
+     "user_agent": "Sample/1.0"
+    },
+    "paths": {
+     "data_dir": "var/data"
+    },
+    "site": {}
+   },
+   "raw_dir": "<root>/var/data/raw",
+   "site": {},
+   "staging_dir": "<root>/var/data/staging"
+  },
+  "name": "a sample file given as an argument"
+ }
+]

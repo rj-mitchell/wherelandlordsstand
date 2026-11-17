@@ -1,0 +1,54 @@
+# Where Landlords Stand settings. Paths are relative to the repository root unless absolute.
+# Environment overrides: LANDLORDS_DATA_DIR, LANDLORDS_CONFIG.
+
+[paths]
+data_dir = "data"
+
+[fetch]
+# Identifies the fetcher to publishers' servers (docs/DECISIONS.md: being a good citizen).
+user_agent = "Mozilla/5.0 (compatible; WhereLandlordsStand/0.1; +https://github.com/rj-mitchell/wherelandlordsstand)"
+# One request at a time, at least this many seconds apart, to any server.
+min_interval_seconds = 1.0
+timeout_seconds = 60
+retries = 3
+
+[coverage]
+# Landlords with at least this many homes get a profile (docs/DECISIONS.md, 3).
+min_homes = 1000
+
+[site]
+name = "Where Landlords Stand"
+# The launch switch (docs/DEPLOY.md, "The launch switch"); on the live site LANDLORDS_LAUNCHED=true in deploy/.env
+# turns it on. While false, every page asks search engines not to index it (noindex) and robots.txt asks crawlers to
+# stay away. It doesn't change publishing: new pages always wait for approval by email ([publish]; docs/DECISIONS.md,
+# 12). The sitemap and the approval links need `url`.
+launched = false
+url = "https://wherelandlordsstand.com"
+operator = "Rob Mitchell"
+contact = "admin@wherelandlordsstand.com"
+# The alpha banner on every page, with where to send feedback. Remove `stage` (or set it to "") to take it down.
+stage = "alpha"
+feedback_email = "admin@wherelandlordsstand.com"
+# The charity, for {parent} in config/pages.toml. Its link, the endorsement under the site's name and the footer shelf
+# come from the Where They Stand family kit (src/landlords/family/; docs/DESIGN.md).
+parent_name = "Where They Stand"
+
+[sister_sites]
+# Council landlords, and each council area's page, link to the council's page on Where Councils Stand where it covers
+# the council (docs/DECISIONS.md, 4): the councils in data_static/councils_covered.csv, made from that site's own list
+# of councils by `landlords sister-councils` (src/landlords/sisters.py).
+where_councils_stand = "https://wherecouncilsstand.com/councils/{gss}"
+where_councils_stand_list = "https://wherecouncilsstand.com/api/councils"
+
+[publish]
+# What the weekly update (`landlords update`) does with new pages (docs/OPERATIONS.md):
+#   "approve": email a link to approve them; nothing new goes live until the owner presses Publish (the site is
+#              public, in alpha: docs/DECISIONS.md, 12). Only the very first pages, when none are live, go live at once.
+#   "auto":    publish them whenever their checks pass, and email what changed
+mode = "approve"
+# Who gets the weekly email. The server sends it from the charity's account, with the shared mail.sh
+# (src/landlords/notify.py, deploy/send-mail.sh).
+notify_to = "wheretheystanduk@gmail.com"
+# How long an approval link works, and how many builds are kept.
+approval_days = 14
+keep_builds = 6

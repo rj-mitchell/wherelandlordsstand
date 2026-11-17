@@ -1,0 +1,2 @@
+# Slugs that have been published. A slug listed here must always exist in landlords.csv (landlords check).
+# Nothing is published yet.

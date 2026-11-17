@@ -1,0 +1,14 @@
+.git
+.venv
+data
+**/__pycache__
+.pytest_cache
+.ruff_cache
+docs
+deploy/.env
+deploy/backups
+*.png
+# the family kit's icons and link card, which the pages use
+!src/landlords/family/*.png
+.github
+tests

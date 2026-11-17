@@ -1,0 +1,204 @@
+/* Where Landlords Stand. Fonts, colours, the endorsement and the footer shelf come from the family kit
+   (fonts.css, family.css), loaded before this file (docs/DESIGN.md). */
+:root{color-scheme:light dark;--ink:var(--wts-ink);--muted:var(--wts-ink-muted);--page:var(--wts-paper-light);
+--panel:var(--wts-paper);--rule:var(--wts-rule);--rule-faint:var(--wts-rule-faint);--cloth:var(--wts-cloth-landlords);
+--on-cloth:var(--wts-on-cloth);--link:#2f4a5e;--band-off:#dde2e3;--band-on:#40484d;--mark-tile:#5b666d;
+--serif:var(--wts-serif);--sans:var(--wts-sans);--wrap:72rem;--measure:48rem;--gutter:clamp(16px,4vw,48px);
+--wts-focus:currentColor;--wts-gutter:var(--gutter);--wts-shelf-width:calc(var(--wrap) - 2 * var(--gutter))}
+@media (prefers-color-scheme:dark){:root{--link:#a9c6dc;--band-off:#2a3236;--band-on:#b3bec5;--mark-tile:#40484d}}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scrollbar-gutter:stable;overflow-wrap:break-word}
+body{margin:0;min-height:100vh;min-height:100svh;display:flex;flex-direction:column;background:var(--page);
+color:var(--ink);font:400 1.0625rem/1.55 var(--sans);text-wrap:pretty}
+body>footer{margin-block-start:auto}
+h1,h2,h3,h4{font-family:var(--serif);font-weight:600;line-height:1.2;text-wrap:balance}
+h1{font-size:clamp(2rem,1.5rem + 2vw,2.75rem);margin:0 0 .5rem}
+h2{font-size:clamp(1.375rem,1.2rem + .6vw,1.625rem);margin:2.25rem 0 .6rem}
+h3{font-size:1.2rem;margin:1.5rem 0 .4rem}
+a{color:var(--link);text-decoration-thickness:1px;text-underline-offset:.15em}
+a,button{touch-action:manipulation}
+a:active{text-decoration-thickness:2px}
+@media (hover:hover) and (pointer:fine){a:hover{text-decoration-thickness:2px}}
+:focus-visible{outline:var(--wts-focus-width,3px) solid currentColor;outline-offset:var(--wts-focus-offset,3px)}
+code{font-size:.95em}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip-path:inset(50%);
+white-space:nowrap}
+.skip{position:absolute;inset-inline-start:8px;inset-block-start:8px;z-index:10;padding:8px 12px;background:var(--page);
+color:var(--ink);border:2px solid var(--ink);transform:translateY(calc(-100% - 16px))}
+.skip:focus{transform:none}
+.wrap{width:100%;max-width:var(--wrap);margin-inline:auto;padding-inline:var(--gutter)}
+
+/* Header: the site's cloth as a band, then the phase banner */
+.cloth{background:var(--cloth);color:var(--on-cloth)}
+.mast-in{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.5rem 2rem;padding-block:1rem}
+.brand{display:flex;align-items:center;gap:.8rem}
+.brand-words{display:flex;flex-direction:column;align-items:flex-start;gap:.1rem}
+.mark{width:52px;height:52px;flex:none}
+.mk-tile{fill:var(--mark-tile)}.mk-door,.mk-line,.mk-knob{stroke:var(--mark-tile)}
+.name{color:inherit;text-decoration:none;font:600 clamp(1.4rem,1.1rem + 1.2vw,1.75rem)/1.1 var(--serif);
+text-underline-offset:.15em}
+.name:active{text-decoration:underline}
+@media (hover:hover) and (pointer:fine){.name:hover{text-decoration:underline;text-decoration-thickness:2px}}
+.cloth .wts-endorse{color:inherit}.cloth .wts-spine__cloth{fill:var(--mark-tile)}
+nav.tabs{display:flex;flex-wrap:wrap;gap:0 1.5rem}
+nav.tabs a{display:inline-flex;align-items:center;min-block-size:44px;color:inherit;font-size:1.0625rem;
+text-underline-offset:.25em}
+nav.tabs a[aria-current=page]{font-weight:600;text-decoration-thickness:3px}
+.phase{background:var(--panel);border-block-end:1px solid var(--rule-faint);font-size:.9375rem;line-height:1.45}
+.phase p{margin-block:0;padding-block:.5rem}
+.phase-tag{display:inline-block;padding:.05em .45em .1em;border-radius:3px;background:var(--ink);color:var(--page);
+font-size:.875rem;font-weight:600}
+
+/* Text */
+main{padding-block:clamp(1.5rem,4vw,2.5rem) 1rem}
+main p,main li,main dl{max-width:var(--measure)}
+.lede{font-size:clamp(1.15rem,1.05rem + .4vw,1.3rem);line-height:1.45}
+.sub{color:var(--muted);margin:0 0 1rem}
+.hint,.src{color:var(--muted);font-size:.9rem}
+.src{margin:.3rem 0 0}.src a{color:var(--muted)}
+@media (pointer:coarse){.src a{padding-block:.55em;padding-inline:.2em;margin-inline:-.2em}}
+.panel,.note,.warn,.times{background:var(--panel);padding:1rem 1.25rem}
+.panel>:first-child{margin-block-start:0}.panel>:last-child{margin-block-end:0}
+.note,.warn,.times{margin:1rem 0}main .note,main .warn,main .times{max-width:none}
+ul.list{padding-inline-start:1.2rem}
+ul.list.cols{columns:3 14rem;column-gap:2rem;max-width:none}ul.list.cols li{break-inside:avoid}
+ul.links{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:.25rem 2rem}
+ul.links a{display:inline-flex;align-items:center;min-block-size:var(--wts-target-min,24px)}
+dl.src{display:grid;grid-template-columns:auto minmax(0,1fr);gap:.15rem 1rem;margin:1rem 0 0}
+dl.src dt{grid-column:1;font-weight:600;color:var(--ink)}dl.src dd{grid-column:2;margin:0}
+dl.src dd a{display:inline-block;min-block-size:var(--wts-target-min,24px);padding-block:.1rem}
+@media (max-width:30rem){dl.src{display:block}dl.src dt:not(:first-child){margin-block-start:.4rem}}
+
+/* Home page: the search beside a panel, then every landlord */
+.lead{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:1.5rem 3rem;align-items:start}
+@media (max-width:56rem){.lead{grid-template-columns:minmax(0,1fr)}}
+.lead-side{margin-block-start:.5rem}
+ul.az{list-style:none;padding:0;columns:4 13rem;column-gap:2rem;max-width:none}
+ul.az li{padding-block:.15rem;break-inside:avoid}
+main>h3{font-size:1.2rem;margin:1.5rem 0 .4rem;max-width:none}
+
+/* Forms */
+label{display:block;font-weight:600;margin:1rem 0 .35rem}
+input,textarea,select,button{font:inherit;color:inherit}
+input[type=search],input[type=text],input[type=email],input[type=url],textarea,select{width:100%;max-width:var(--measure);
+padding:.65rem .75rem;border:1px solid var(--muted);border-radius:3px;background:var(--page);font-size:max(16px,1.0625rem)}
+.lead input[type=search],#compare input[type=search]{max-width:none}
+input::placeholder{color:var(--muted);opacity:1}input[type=search]{text-overflow:ellipsis}
+textarea{resize:vertical}
+fieldset{border:0;margin:1rem 0 0;padding:0;min-inline-size:0}
+legend{font-weight:600;padding:0;margin-block-end:.2rem}
+.choice{display:grid;grid-template-columns:auto 1fr;column-gap:.6rem;align-items:start;max-width:var(--measure);margin:.55rem 0}
+.choice input{inline-size:1.25rem;block-size:1.25rem;margin:.15rem 0 0;accent-color:var(--cloth)}
+.choice label{margin:0}.choice .hint{grid-column:2;margin:.1rem 0 0}
+.hp{position:absolute;inset-inline-start:-9999px;inline-size:1px;block-size:1px;overflow:hidden}
+.go a{font-weight:600}
+ul.contents{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:.2rem 1.5rem;max-width:none}
+ul.contents a{display:inline-flex;align-items:center;min-block-size:var(--wts-target-min,24px)}
+button{font-weight:600;padding:.65rem 1.2rem;min-block-size:var(--wts-target-min,24px);border:1px solid transparent;
+border-radius:3px;background:var(--cloth);color:var(--on-cloth);cursor:pointer;user-select:none}
+button:focus-visible{outline-color:var(--ink)}
+button:active{background:var(--ink);color:var(--page)}
+@media (hover:hover) and (pointer:fine){button:hover{background:var(--ink);color:var(--page)}}
+ul.results{list-style:none;padding:0;max-width:none}
+ul.results li{padding:.6rem 0;border-block-end:1px solid var(--rule-faint)}
+#picks li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.5rem 1rem;max-width:none}
+#suggest:empty{display:none}#suggest li{padding:0;max-width:none}
+#suggest button{inline-size:100%;text-align:start;background:none;color:var(--link);font:inherit;padding:.6rem .25rem;
+min-block-size:var(--wts-target,44px);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.15em}
+#suggest button:active{background:var(--panel);text-decoration-thickness:2px}
+@media (hover:hover) and (pointer:fine){#suggest button:hover{background:var(--panel);color:var(--ink)}}
+
+/* A statement in a landlord's own words (src/landlords/statements.py): set apart by a dashed rule */
+.statement{border:1px dashed var(--muted);background:var(--page);padding:.6rem 1rem;margin:1rem 0;max-width:var(--measure)}
+.wts-headings .statement :is(h2,h4){font:600 1.05rem/1.35 var(--sans);color:var(--ink);margin:.1rem 0}
+.statement p{margin:.35rem 0}.st-role,.st-about{color:var(--muted)}
+.st-words{margin:.5rem 0 .5rem 1rem}.st-words p{margin:.4rem 0}
+.st-note{font-size:.9rem;color:var(--muted)}
+
+/* A landlord's card: one panel, its parts side by side on a wide screen */
+.card{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 3rem;background:var(--panel);
+padding:clamp(1rem,3vw,1.75rem);margin:1.5rem 0 2rem}
+.card>h2,.card>.warn,.card>.homes{grid-column:1 / -1}
+.card>h2{margin-block-start:0}
+.card .warn,.card .note{background:none;padding:0;margin:.75rem 0}
+.card .warn{font-size:1.0625rem;font-weight:600}
+.card section h3{margin-block-start:1.25rem}
+.card p,.card li{max-width:none}.card>.homes p{max-width:var(--measure)}
+@media (max-width:48rem){.card{grid-template-columns:minmax(0,1fr)}}
+.grade{display:inline-block;font:700 2rem/1 var(--serif);font-variant-numeric:lining-nums;border:2px solid var(--ink);
+background:var(--page);padding:.35rem .6rem;margin:.2rem 0 .4rem}
+.band{display:flex;align-items:center;gap:.75rem;margin:.4rem 0}
+.meter{display:inline-flex;gap:3px;flex:none}
+.meter i{width:15px;height:15px;display:block;background:var(--band-off)}
+.meter i.on{background:var(--band-on)}
+.trend{color:var(--muted);font-size:.95rem}
+
+/* Tables and sources */
+table{border-collapse:collapse;width:100%;font-size:.975rem;margin:.4rem 0}
+th,td{text-align:start;padding:.5rem .6rem;border-block-end:1px solid var(--rule-faint);vertical-align:top}
+thead th{font-weight:600;border-block-end:1px solid var(--ink)}
+th[scope=colgroup]{font-family:var(--serif);font-size:1.05rem;padding-block-start:1rem}
+td.n,th.n{text-align:end;white-space:nowrap;font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto;overscroll-behavior-x:contain}.scroll:focus-visible{outline-offset:4px}.cmp th{min-width:8rem}
+ol.sources{font-size:.95rem;padding-inline-start:1.3rem}ol.sources li{margin:.45rem 0;overflow-wrap:anywhere}
+.sister a{display:inline-flex;align-items:center;gap:.6rem}.sister .wts-spine{height:1.9em;width:auto}
+
+/* Footer: the family shelf, then the site's own links and notices */
+footer{margin-block-start:3rem}
+footer .wts-shelf{margin-block-start:0}
+.foot{background:var(--panel);color:var(--muted);font-size:.9375rem}
+.foot .wrap{padding-block:0 1.75rem}
+.foot-links{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:0 1.25rem}
+.foot-links a{display:inline-flex;align-items:center;min-block-size:var(--wts-target-min,24px);color:inherit}
+.foot p{margin:.5rem 0 0;max-width:var(--measure)}
+
+/* Phones: the tabs on one line that scrolls sideways (tabs.js brings the current one into view), tables that fit */
+@media (max-width:40rem){
+.mast-in{padding-block:.75rem 0;gap:.25rem}
+.brand{gap:.6rem}.mark{width:44px;height:44px}
+.name{font-size:1.35rem}
+nav.tabs{flex:1 1 100%;gap:0 1.1rem;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;
+scroll-snap-type:x proximity;scroll-padding-inline:var(--tabs-fade-max);padding-block:6px;margin-block:-6px 0;
+--tabs-fade-max:2.5rem;--tabs-fade-s:0px;--tabs-fade-e:2.5rem;
+-webkit-mask-image:linear-gradient(to right,transparent,#000 var(--tabs-fade-s),#000 calc(100% - var(--tabs-fade-e)),transparent);
+mask-image:linear-gradient(to right,transparent,#000 var(--tabs-fade-s),#000 calc(100% - var(--tabs-fade-e)),transparent)}
+nav.tabs a{flex:none;white-space:nowrap;scroll-snap-align:start;font-size:1rem}
+nav.tabs:has(:focus-visible){-webkit-mask-image:none;mask-image:none}
+.phase{font-size:.875rem}.phase p{padding-block:.4rem}
+th,td{padding:.45rem .35rem}
+thead th.n{white-space:normal}
+}
+@media (max-width:22rem){table:not(.stack) td{overflow-wrap:anywhere;-webkit-hyphens:auto;hyphens:auto}}
+/* Stacked tables (site.stack_table): on a narrow phone each row is a block, each cell under its column's name */
+@media (max-width:30rem){
+.stack{position:relative}
+.stack,.stack tbody,.stack tr,.stack td,.stack tbody th{display:block}
+.stack thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.stack tbody{border-block-start:1px solid var(--ink)}
+.stack tr{display:grid;grid-template-columns:var(--stack-cols,auto auto 1fr);gap:.2rem 1.25rem;padding-block:.55rem .6rem;
+border-block-end:1px solid var(--rule-faint)}
+.stack-2{--stack-cols:auto 1fr}
+.stack td,.stack tbody th{padding:0;border:0;text-align:start}
+.stack tr>:first-child,.stack .wide,.stack td[colspan]{grid-column:1 / -1}
+.stack td[data-label]::before{content:attr(data-label);content:attr(data-label) / "";display:block;
+font-size:.85rem;font-weight:600;color:var(--muted)}
+}
+@property --tabs-fade-s{syntax:"<length>";inherits:false;initial-value:0px}
+@property --tabs-fade-e{syntax:"<length>";inherits:false;initial-value:0px}
+@keyframes tabs-fade{0%{--tabs-fade-s:0px;--tabs-fade-e:var(--tabs-fade-max)}15%{--tabs-fade-s:var(--tabs-fade-max)}
+85%{--tabs-fade-e:var(--tabs-fade-max)}100%{--tabs-fade-s:var(--tabs-fade-max);--tabs-fade-e:0px}}
+@media (max-width:40rem){@supports (animation-timeline:scroll()){
+nav.tabs{animation:tabs-fade linear both;animation-timeline:scroll(self inline)}}
+@media (pointer:coarse){nav.tabs{scrollbar-width:none}nav.tabs::-webkit-scrollbar{display:none}}}
+@media (prefers-reduced-motion:no-preference){
+a{transition:color .12s var(--wts-ease-out,ease-out),text-decoration-color .12s var(--wts-ease-out,ease-out)}
+button{transition:background-color .12s var(--wts-ease-out,ease-out)}}
+@media (forced-colors:active){
+.cloth{border-block-end:1px solid CanvasText}
+.meter i{border:1px solid CanvasText}.meter i.on{background:CanvasText}
+.phase-tag{border:1px solid CanvasText}
+.panel,.note,.warn,.times,.card{border:1px solid CanvasText}
+.mark{forced-color-adjust:none}.mk-tile,.mk-hall{fill:Canvas}.mk-edge{stroke:CanvasText}.mk-fall{fill:none}
+.mk-frame{fill:CanvasText}.mk-door{fill:CanvasText;stroke:Canvas}.mk-line{stroke:Canvas}
+.mk-knob{fill:Canvas;stroke:Canvas}}
+@media print{.skip,nav.tabs{display:none}.cloth{background:none;color:inherit}}

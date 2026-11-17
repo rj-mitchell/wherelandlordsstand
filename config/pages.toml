@@ -1,0 +1,286 @@
+# The about, terms, accessibility, press, status, "If you're named" and "not found" pages. Like config/wording.toml,
+# every sentence lives here.
+# {contact}, {operator}, {parent}, {site} and {url} are filled from config/settings.toml ([site]).
+# [Words](address) in a sentence become a link: an address that doesn't start with https:// or mailto: is a page on this
+# site, from its root ("corrections/index.html"). A paragraph that is a list of sentences is shown as a bulleted list.
+
+[about]
+heading = "About"
+description = "Where Landlords Stand shows what social landlords in England are like. Who runs it, its limits, its sister sites and how to get in touch."
+sections = [
+  ["Purpose", [
+    "Where Landlords Stand helps people decide about a social home. If you see a landlord named on a home you could bid for, or you are offered a home, you can look the landlord up and see what the regulator and the Ombudsman have published about it.",
+    "It covers every council and housing association in England with 1,000 or more homes. It uses only what the Regulator of Social Housing and the Housing Ombudsman publish: tenants' answers to the regulator's survey, the landlord's own records, the regulator's grades, and the Ombudsman's findings on complaints.",
+  ]],
+  ["Limits", [
+    "It gives information to help you decide, and never tells anyone to turn down an offer: saying no to an offer can affect your place on the housing register.",
+    "It never changes the publishers' figures. Where we work something out, such as how a landlord compares with similar landlords, we say so and explain how on the [Methodology](method/index.html) page.",
+  ]],
+  ["Running the site", [
+    "Where They Stand is applying to register as a charity in England and Wales. Until it is registered, the site is run by its founder, {operator}.",
+    "Where Landlords Stand is independent. It is not affiliated with or endorsed by the Regulator of Social Housing, the Housing Ombudsman Service or any landlord. No landlord pays to be on it. It names landlords and shows no logos.",
+    "The code is open source, under the GNU Affero General Public License (AGPL-3.0). You can [read the source code](https://github.com/rj-mitchell/wherelandlordsstand).",
+  ]],
+  ["In the family", [
+    "{site} is a Where They Stand project. Its sister sites are [Where MPs Stand](https://wherempsstand.com/), [Where Councils Stand](https://wherecouncilsstand.com/), [Where Countries Stand](https://wherecountriesstand.com/) and [Where Lives Stand](https://wherelivesstand.com/); the charity's own site is [wheretheystand.uk](https://wheretheystand.uk/).",
+    [
+      "Where MPs Stand shows what MPs and peers have said and done in Parliament.",
+      "Where Councils Stand shows what councils have decided and said in their meetings.",
+      "Where Countries Stand shows what countries have said and how they have voted at the United Nations.",
+      "Where Lives Stand shows how life compares from one country to another, using published figures.",
+    ],
+    "Each council's page here, and each council area's page, links to that council's page on Where Councils Stand, where that site covers the council. Where Councils Stand links back here.",
+  ]],
+  ["Contact", [
+    "Email [{contact}](mailto:{contact}). To report a mistake, use the form on the [Corrections](corrections/index.html) page.",
+    "Landlords this site names, and people acting for them, can read [If you're named on this site](named/index.html).",
+  ]],
+  ["More about the site", [
+    [
+      "[Terms of use](terms/index.html) set out how you may use and reuse the site's work.",
+      "[Download the data](data/index.html) as CSV files, with each row's source and licence.",
+      "The [Press](press/index.html) page has facts in brief, how to cite a page, and logo files.",
+      "[Site status](status/index.html) says when the pages were last made and when the site last looked for new files.",
+    ],
+  ]],
+]
+
+[terms]
+heading = "Terms of use"
+description = "The terms for using Where Landlords Stand and reusing its work."
+short = "You may use the site and reuse its work, as long as you credit it. Check a figure against its source before you rely on it."
+updated = "2026-11-06"
+sections = [
+  ["About these terms", [
+    "{site} is a Where They Stand project. Where They Stand is applying to register as a charity in England and Wales. Until it is registered, the site is run by its founder, {operator}. By using the site you agree to these terms. Contact: [{contact}](mailto:{contact}).",
+  ]],
+  ["The service", [
+    "The site shows figures published by the Regulator of Social Housing and the Housing Ombudsman, and where each landlord comes among similar landlords. Every figure links to the file it comes from. Always check the source before relying on a figure.",
+    "It is general information only. It does not give legal or housing advice, or recommend bidding for, accepting or refusing any home.",
+    "Where Landlords Stand is independent. It is not affiliated with or endorsed by the Regulator of Social Housing, the Housing Ombudsman Service or any landlord.",
+    "The service is free and provided \"as is\". It may change, be paused or stop.",
+  ]],
+  ["Reusing our work", [
+    "Our own work on the site is licensed under the Creative Commons Attribution 4.0 International licence (CC BY 4.0): the text we write, the bands, the peer groups, the homes by council area, and the method. You may copy, share and adapt it for any purpose, including commercially, as long as you credit {site}, link to the page, and say if you changed it. For example: \"Bands from {site} ({url}), CC BY 4.0.\"",
+    "Other material is under its own terms. The regulator's figures are used under the Open Government Licence v3.0. The Housing Ombudsman's figures are © Housing Ombudsman Service, and we are confirming its terms for reuse. The name {site} and its mark are not covered by the CC licence: please don't use them in a way that suggests the site endorses you or your work.",
+  ]],
+  ["Fair use of the service", [
+    "Please don't send automated requests in bulk: everything is in the data downloads. Please don't try to break, overload or gain unauthorised access to the site, or present its figures as saying something they do not. Access may be limited or blocked to protect the service.",
+  ]],
+  ["Responsibility", [
+    "We check the site against its sources, and correct our mistakes when we find them; each correction is listed on the [Corrections](corrections/index.html) page. To the extent the law allows, {parent} is not liable for any loss arising from use of, or reliance on, the site. Nothing in these terms limits liability that cannot be limited by law.",
+  ]],
+  ["Changes and law", [
+    "These terms may be updated; the date above shows when. They are governed by the law of England and Wales, and the courts of England and Wales have jurisdiction, without affecting any rights you have where you live.",
+  ]],
+]
+
+[accessibility]
+heading = "Accessibility"
+description = "How Where Landlords Stand meets WCAG 2.2 AA, how it was tested, and how to report a problem."
+# Filled in from the latest accessibility test (scripts/a11y.mjs; docs/DESIGN.md, "Interaction and accessibility").
+tested = "2026-11-12"
+tested_how = "Every kind of page (a landlord, a council, a merged landlord, one with no survey results, an area, the lists, compare with three landlords, search with and without results, rights, method, downloads, corrections, \"If you're named\" with its form, a landlord's page and an area's page with a statement from the landlord, privacy, about, terms, this page and \"not found\") was checked with the axe-core automated checker against WCAG 2.2 AA, at phone and desktop sizes, in light and dark modes, with no failures. Keyboard use was checked by script."
+sections = [
+  ["Using the site", [
+    "{site} should be usable by everyone, including people who use a screen reader, a keyboard, voice control or magnification.",
+    "Text can be enlarged to 200% or more without loss of content, and the layout fits small screens without scrolling sideways. Every part of the site can be used with a keyboard alone; a \"Skip to main content\" link is the first stop. Pages follow your device's light or dark setting. Bands are shown in words as well as with shaded boxes, so colour is never the only way to tell them apart.",
+    "Landlords' pages, area pages and the rights page work without JavaScript. Search and compare need it; without it, the list of all landlords and each landlord's page give the same information.",
+    "The site uses no cookies and needs no account. Its sentences aim for a reading age of about 9.",
+  ]],
+  ["Standard and testing", [
+    "The site aims to meet the Web Content Accessibility Guidelines (WCAG) 2.2 at level AA. It was last tested on {tested}. {tested_how}",
+    "Automated checks find only some problems, so testing with people who use assistive technology is still to do. If something does not work for you, please tell us.",
+  ]],
+  ["Known limitations", [
+    "Links to the regulator's and the Ombudsman's files go to sites we do not run; some are spreadsheets, which can be hard to use with a screen reader.",
+  ]],
+  ["Reporting a problem", [
+    "If you find something hard to use, or need information in a different format, email {contact} or use the form on the [Corrections](corrections/index.html) page. We aim to reply within 10 working days.",
+  ]],
+]
+
+[named]
+# "If you're named" (src/landlords/site_pages.py, named_html; docs/DECISIONS.md, 15): the charity's impartiality policy,
+# section 7, in plain words for the landlords this site names. Its heading, the three routes, the statement's heading
+# and the response times are the family glossary's words ("Corrections and the right of reply"). Each section has an
+# id (its address on the page) and paragraphs; "@example" is a statement drawn as the site shows one, and "@form" the
+# statement form. A route is [heading, text, the link's words, its address].
+heading = "If you're named"
+description = "For landlords this site names: how to put something right, or add a statement in your own words."
+contents = "On this page"
+intro = [
+  "This page is for councils, housing associations and for-profit landlords that this site names, and for people acting for them. It explains how to put something right, or how to add a statement in your own words beside what we say.",
+]
+[named.example]
+name = "[your name]"
+date = "[the date it is published]"
+role = "[Your role, and the landlord you speak for]"
+text = "[Your words, up to 150 words, exactly as you send them.]"
+
+[[named.section]]
+id = "who"
+heading = "Landlords and people acting for them"
+text = [
+  "Every landlord this site covers: councils, housing associations and for-profit landlords in England with 1,000 or more homes, and the companies in their groups. Someone acting for a landlord can use it too: a member of its staff or board, or a council officer or councillor speaking for a council as a landlord.",
+  "Everyone else, including tenants and people looking for a home, is welcome to tell us about a mistake on the [Corrections](corrections/index.html) page.",
+  "If your own name or details are on this site and you don't speak for a landlord, [ask us to remove them](corrections/index.html?kind=takedown). We deal with these first. The [privacy page](privacy/index.html) says more.",
+]
+
+[[named.section]]
+id = "routes"
+heading = "Raising a concern"
+routes = [
+  ["Errors", "A figure, a name, a date, a label or a connection is wrong. For example, a grade shown for the wrong landlord, a name matched to the wrong landlord, a company counted in the wrong group, a merger we missed, or homes listed in the wrong council area. We put it right as soon as we can, and say what changed and when in the [list of fixes](corrections/index.html#log).", "Tell us what is wrong", "corrections/index.html?kind=wrong"],
+  ["Unfair descriptions", "The figures are right, but our own words, labels or groupings aren't fair. For example, a sentence in our own voice that takes sides, or a group of similar landlords that suggests something the figures don't show. We check it against the charity's [impartiality policy](https://wheretheystand.uk/right-of-reply) and, if it breaks it, put it right in the same way.", "Report unfair treatment", "corrections/index.html?kind=unfair"],
+  ["Statements in your own words", "The figures are right and we have followed the policy, but you see it differently. You can add a short statement beside what we say about you. It is shown as you wrote it, marked as yours.", "Write a statement", "named/index.html#send"],
+]
+
+[[named.section]]
+id = "covered"
+heading = "Scope"
+text = [
+  "Everything this site says about a landlord is covered, as well as its figures.",
+  [
+    "The regulator's grade as we show it, including a grade we show for a landlord because it was given to its group.",
+    "The bands we work out (top quarter, upper middle, lower middle and bottom quarter), and the arrows that show a change since last year.",
+    "Which similar landlords each landlord is compared with, and what we say about how its tenants were asked.",
+    "The way we show the Housing Ombudsman's findings and the safety checks (\"all done\", or each check that isn't).",
+    "The way we match a landlord's names (short, trading, former and advert names), which companies we count as part of a group, and what we say when landlords merge or one reports for another.",
+    "The homes we list for each landlord in each council area, and the area pages.",
+    "The type we give each landlord (council, housing association or for-profit landlord), and the compare page.",
+  ],
+  "The figures themselves are not ours. They belong to the Regulator of Social Housing and the Housing Ombudsman, and only they can change them. We can still fix how we read or show them.",
+]
+
+[[named.section]]
+id = "statements"
+heading = "Statements"
+parts = [
+  ["Length and subject", [
+    "Up to 150 words, in your own name, about the thing it sits beside: your landlord's page, a part of it (the grade, the bands, the Ombudsman's figures or the safety checks), or a council area's page that lists your landlord. Where you can, point to the record with a link: a statement you have published, a report to your board, or the regulator's or the Ombudsman's own page.",
+  ]],
+  ["Content that isn't allowed", [
+    [
+      "Anything defamatory or abusive, or about a private individual.",
+      "Personal information about anyone else, including tenants.",
+      "Appeals for votes, money or support.",
+      "Anything about another person's conduct.",
+    ],
+    "During an election, statements are still accepted, but not ones that campaign.",
+  ]],
+  ["Presentation", [
+    "Beside the thing it is about, and on your landlord's own page, set apart from our own words, like this:",
+    "@example",
+    "We publish a statement as you wrote it, or decline it and say why. We never edit it, except to take out something these rules don't allow, and only with your agreement.",
+    "A statement is never treated as part of the published figures. It doesn't change a grade or a band, and it isn't in the search, the compare page or the data downloads.",
+  ]],
+  ["Identity checks", [
+    "Before a statement is shown, we write to the email address you give and check that it belongs to your landlord: usually an address at your landlord's own web address, or your council's. If you write from another address, we check with your landlord through the contact details it publishes.",
+  ]],
+  ["Changing or withdrawing it", [
+    "You can update or withdraw your statement at any time: email [{contact}](mailto:{contact}) from the address you gave. We can remove a statement that breaks these rules, and will tell you why.",
+    "@form",
+  ]],
+]
+
+[[named.section]]
+id = "times"
+heading = "Timescales"
+text = [
+  "We reply within 5 working days, and decide within 20 working days.",
+  "Anything that may be unlawful or harmful is dealt with sooner, and requests to remove a person's details come first. Where a concern looks right but will take time to decide, we can hide the item meanwhile, with a note saying so.",
+  "Once we decide to publish a statement, it is on the site within a few minutes. A correction goes on the site with the next pages we make, which a person checks before they go live: usually within a week.",
+]
+
+[[named.section]]
+id = "decides"
+heading = "Decisions and appeals"
+text = [
+  "The charity's founder decides, until the trustees appoint someone else. Every decision and its reasons are logged, and the trustees review the log at each of their meetings.",
+  "If you are unhappy with a decision, you can ask for a review (by the trustees, once they are appointed): email [admin@wheretheystand.uk](mailto:admin@wheretheystand.uk). Once the charity is registered, if you are still unhappy, you can also raise your concerns about it with the [Charity Commission](https://www.gov.uk/complain-about-charity).",
+  "Letters claiming legal liability, such as defamation, go straight to the trustees. Disputed material may be taken down while they take advice.",
+]
+
+[[named.section]]
+id = "information"
+heading = "Your information"
+text = [
+  "A statement is published with your name and role, as you wrote them. The email address you give is used only to confirm who you are, and to let you update or withdraw your statement. It is never shown. We keep it while the statement is waiting or shown, and delete it three months after the statement is withdrawn, declined or removed. The [privacy page](privacy/index.html) says more.",
+]
+
+[press]
+heading = "Press"
+description = "For journalists: facts about Where Landlords Stand, how to cite a landlord's page, and logo files."
+# {profiles}, {areas}, {today} and the example landlord ({example_name}, {example_url}) are filled in by the build.
+sections = [
+  ["Contact", [
+    "If you are writing about {site}, email [{contact}](mailto:{contact}). We will reply as soon as we can.",
+    "To tell us about a mistake on a page, use the form on the [Corrections](corrections/index.html) page.",
+  ]],
+  ["Facts in brief", [
+    [
+      "{site} shows what social landlords in England are like, from what the Regulator of Social Housing and the Housing Ombudsman publish.",
+      "It has a page for each of {profiles} councils, housing associations and for-profit landlords with 1,000 or more homes, and a page for each of {areas} council areas.",
+      "A landlord's page shows the regulator's grade, how its tenants' answers compare with similar landlords, what the Ombudsman found about complaints, and safety checks.",
+      "Every figure links to the published file it comes from. We never change a published figure.",
+      "It is free, has no adverts, sets no cookies and needs no account.",
+      "It is in alpha: it is new and still being tested.",
+      "It is a Where They Stand project. Where They Stand is applying to register as a charity in England and Wales.",
+      "Its code is open source (AGPL-3.0), and our own work on it is under the CC BY 4.0 licence.",
+    ],
+  ]],
+  ["Citing a landlord's page", [
+    "Give the landlord's name, the site's name, the page's address and the day you looked at it. For example:",
+    "{example_name}. {site}. {example_url} (seen on {today}).",
+    "The figures belong to the publishers: the regulator's are under the Open Government Licence v3.0. The bands and the groups of similar landlords are our own work, under CC BY 4.0: credit {site} and link to the page. The [terms](terms/index.html) say more.",
+    "Pages change when new figures come out. The [Site status](status/index.html) page says when they were last made.",
+  ]],
+  ["Logo files", [
+    "You can use these to show the site in a story about it. Please don't change them, or use them in a way that suggests the site supports you or your work.",
+    [
+      "[The site's mark, a front door open on a lit hall (SVG)](press/mark.svg), and [for dark backgrounds](press/mark-dark.svg)",
+      "[The mark simplified for 16 to 32 pixels (SVG)](press/mark-small.svg), and [for dark backgrounds](press/mark-small-dark.svg)",
+      "[Its icon, the mark as a browser tab shows it (SVG)](press/where-landlords-stand-icon.svg), and [as a picture, 512 by 512 pixels (PNG)](press/where-landlords-stand-icon-512.png)",
+      "[Its link card, 1200 by 630 pixels (PNG)](press/where-landlords-stand-card.png)",
+    ],
+  ]],
+  ["Independence", [
+    "Where Landlords Stand is independent. It is not affiliated with or endorsed by the Regulator of Social Housing, the Housing Ombudsman Service or any landlord.",
+  ]],
+]
+
+[status]
+heading = "Site status"
+description = "When the pages of Where Landlords Stand were last made, and when the site last looked for new files."
+intro = [
+  "This page shows how up to date the site is. Every Thursday the site looks for new files from the regulator and the Housing Ombudsman. This page is made again each time.",
+]
+now_heading = "The pages"
+# {date} is filled in as "6 November 2026".
+built = "These pages were made on {date}."
+checked = "The site last looked for new files on {date}."
+not_checked = "The site has not looked for new files yet."
+check_failed = "Last time, the site could not look for new files from: {sources}. We are looking into it."
+waiting = "New pages, made on {date}, are waiting to be checked by a person before they go live."
+not_waiting = "No new pages are waiting to be checked."
+sources_heading = "Data sources"
+sources_intro = "For each set of files: the newest file in these pages, when we downloaded it, and when we read it into the site."
+columns = ["Files", "Newest file", "Downloaded", "Read in"]
+never = "not yet"
+notes = [
+  "New pages never go live on their own: a person checks them first. Until then, the site keeps the pages it has.",
+]
+
+# The sets of files, in the order shown, by their folder in config/sources.toml.
+[status.sources]
+tsm = "Tenant Satisfaction Measures"
+judgements = "Grades and other judgements"
+providers = "List of social landlords"
+stock = "Homes each landlord owns"
+ombudsman = "Housing Ombudsman's figures"
+
+[not_found]
+heading = "Page not found"
+text = "There is no page at this address. Every landlord's page is listed on the home page, where you can also search by name."
+link = "Find a landlord"

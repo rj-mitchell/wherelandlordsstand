@@ -64,20 +64,20 @@ heading = "Complaints"
 text = [
   "Complain to your landlord first. Your landlord must tell you it has your complaint within 5 working days. It must reply within 10 working days after that.",
   "If you are not happy with the reply, ask for your complaint to go to the second stage. The landlord must tell you it has it within 5 working days, and reply within 20 working days after that.",
-  "The landlord can take longer only for a good reason, and must tell you how to contact the Housing Ombudsman if it does.",
+  "If the landlord needs longer, it must tell you why and how to contact the Housing Ombudsman. It should not take more than 10 extra working days at the first stage, or 20 at the second, without a good reason.",
   "After the landlord's final reply, you can take your complaint to the Housing Ombudsman. It is free. You have 12 months from the final reply. If your landlord is not replying, the Ombudsman can step in sooner.",
-  "Contact the Housing Ombudsman on 0300 111 3000 or at info@housing-ombudsman.org.uk. Because of a problem with its computer systems in October 2026, it asks people to raise new complaints by phone or email for now.",
+  "Contact the Housing Ombudsman on 0300 111 3000 or at info@housing-ombudsman.org.uk. Because of a security problem with its computer systems in October 2026, it asks people to raise new complaints by phone or email for now.",
 ]
 sources = [
   ["The Housing Ombudsman's Complaint Handling Code", "https://www.housing-ombudsman.org.uk/landlords-info/complaint-handling-code/the-code-2024/"],
   ["When to get help from the Housing Ombudsman", "https://www.housing-ombudsman.org.uk/residents/when-to-get-help-from-the-housing-ombudsman/"],
-  ["The Ombudsman's update on its IT security incident, 3 November 2026", "https://www.housing-ombudsman.org.uk/2026/11/03/it-security-incident-latest/"],
+  ["The Ombudsman's update on its IT security incident, 11 November 2026", "https://www.housing-ombudsman.org.uk/2026/11/11/security-incident-update/"],
 ]
-# 5 November 2026: no newer update; the notice on every page of its site still asks for new complaints by email or
-# phone.
-checked = "2026-11-05"
-# The Ombudsman's IT incident is changing fast: check how to complain every week until it is over.
-recheck = "2026-11-12"
+# 18 November 2026: the newest update is 11 November; the notice on every page of its site still asks for new
+# complaints by email or phone.
+checked = "2026-11-18"
+# The Ombudsman's IT incident may change how to complain: the owner checks this section by the end of 2026.
+recheck = "2026-12-31"
 
 [[section]]
 heading = "If a landlord is not meeting the standards"

@@ -388,7 +388,7 @@ named in a loaded file (112, almost all from the archived judgements), 1,689 in 
 | `registration_date` | From the register |
 | `status` | active, merged or deregistered; `successor_id` and `successor_date` for a merger. Octavia Housing (L0717) is marked merged into Abri (L4172) on 16 February 2026, in the regulator's words; nothing else has been marked by hand yet. |
 | `profiled` | yes for the 363 landlords in the TSM data (194 housing associations, 160 councils, 9 for-profit providers) |
-| `slug` | Profiled landlords only. Never changes once published (`data_static/published_slugs.txt`, empty for now). |
+| `slug` | Profiled landlords only. Never changes once published (`data_static/published_slugs.txt`). |
 
 `landlords register` adds new rows and refreshes the facts that come from the regulator. It never removes a row, and
 never changes a display name, slug, status or successor that is already there: those are edited by hand.

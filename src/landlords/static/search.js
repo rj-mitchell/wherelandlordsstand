@@ -1,5 +1,5 @@
 // Search for a landlord by any name it goes by. Reads names.json (built by `landlords build`); nothing leaves the
-// browser except, when a search finds nothing, the words searched (no address or identifier) so we can add names.
+// browser except, when a search finds no landlord with a page, the words searched (no address or identifier) so we can add names.
 "use strict";
 (function () {
   const DROP = /\b(limited|ltd|plc|cic|the|group|housing association)\b/g;
@@ -18,10 +18,12 @@
     if (words.every((w) => kw.some((k) => k.startsWith(w)))) return 30;
     return 0;
   }
-  // Best matches first: covered landlords, then landlords too small to be covered.
+  // Best matches first. covered: landlords with a page; part: companies in the group of one (they link to its page);
+  // small: landlords the regulator's figures show to have fewer than 1,000 homes; unlisted: any other registered
+  // landlord, about whose size nothing is said.
   function search(names, text) {
     const q = norm(text);
-    if (q.length < 2) return { covered: [], small: [] };
+    if (q.length < 2) return { covered: [], part: [], small: [], unlisted: [] };
     const words = q.split(" ");
     const hits = [];
     for (const e of names) {
@@ -30,8 +32,9 @@
       if (best) hits.push([best, e]);
     }
     hits.sort((a, b) => b[0] - a[0] || a[1].n.localeCompare(b[1].n));
-    return { covered: hits.filter((h) => h[1].s).map((h) => h[1]).slice(0, 8),
-             small: hits.filter((h) => !h[1].s).map((h) => h[1]).slice(0, 3) };
+    const pick = (keep, n) => hits.filter((h) => keep(h[1])).map((h) => h[1]).slice(0, n);
+    return { covered: pick((e) => e.s && !e.g, 8), part: pick((e) => e.s && e.g, 3),
+             small: pick((e) => !e.s && e.z, 3), unlisted: pick((e) => !e.s && !e.z, 3) };
   }
   let cache = null;
   function load(root) {
@@ -55,9 +58,11 @@
     let timer = 0;
     function tell(r, now) {
       clearTimeout(timer);
-      const n = r.covered.length;
+      // landlords with a page, each counted once, whether found by its own name or a company's in its group
+      const n = new Set([...r.covered, ...r.part].map((e) => e.s)).size;
       const words = !WLS.norm(input.value) ? ""
-        : n === 1 ? text.found_one : n ? text.found.replace("{count}", n) : r.small.length ? text.found_small : text.found_none;
+        : n === 1 ? text.found_one : n ? text.found.replace("{count}", n)
+        : r.unlisted.length ? text.found_unlisted : r.small.length ? text.found_small : text.found_none;
       timer = setTimeout(() => { if (status.textContent !== words) status.textContent = words; }, now ? 0 : 500);
     }
     async function show(submitted) {
@@ -70,11 +75,18 @@
         const also = e.a.length ? ` <span class="hint">(${esc(e.a.slice(0, 3).join(", "))})</span>` : "";
         out.append(li(`<a href="${root}landlords/${e.s}/index.html">${esc(e.n)}</a> <span class="hint">${esc(e.t)}</span>${also}`));
       }
-      if (!r.covered.length) {
-        for (const e of r.small) out.append(li(esc(text.small.replace("{name}", e.n))));
-        out.append(li(text.none + ` <a href="${root}areas/index.html">${esc(text.areas)}</a>`));
-        if (submitted && !r.small.length) {
-          // Count the miss. Fails quietly where there is no server (the pages opened from disk).
+      for (const e of r.part) {
+        const link = `<a href="${root}landlords/${e.s}/index.html">${esc(e.g)}</a>`;
+        out.append(li(esc(e.r === "group" ? text.group : text.part).replace("{name}", () => esc(e.n)).replace("{group}", () => link)));
+      }
+      if (!r.covered.length && !r.part.length) {
+        for (const e of r.small) out.append(li(esc(text.small.replace("{name}", () => e.n))));
+        for (const e of r.unlisted) out.append(li(esc(text.unlisted.replace("{name}", () => e.n))));
+        const some = r.small.length || r.unlisted.length;
+        out.append(li(esc(some ? text.unlisted_areas : text.none) + ` <a href="${root}areas/index.html">${esc(text.areas)}</a>`));
+        if (submitted) {
+          // Count the miss, even when it named a landlord we have no page for, so the name can be looked at. Fails
+          // quietly where there is no server (the pages opened from disk).
           fetch(root + "api/missed", { method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ q: input.value.slice(0, 80) }) }).catch(() => {});
         }

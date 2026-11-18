@@ -169,7 +169,7 @@ uv run landlords reports show 3                            # one report
 uv run landlords reports close 3 --outcome resolved --note "fixed alias"   # and deletes the reporter's email address
 uv run landlords reports close 4 --outcome dismissed --note "the regulator's figure, not ours"
 uv run landlords reports list --all                        # closed ones too, with how each ended and the note
-uv run landlords missed                                    # searches that found nothing, most frequent first
+uv run landlords missed                                    # searches that found no landlord with a page, most frequent first
 uv run landlords backup --to backups                       # copy the state database
 ```
 

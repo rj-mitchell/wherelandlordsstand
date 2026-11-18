@@ -66,6 +66,35 @@ def test_landlords_that_stopped_reporting_say_who_reports_now():
             assert reg[r["reported_by"]]["slug"] and r["reported_by"] in reported, r
 
 
+@pytest.mark.skipif(not (SITE / "index.html").exists(), reason="pages not built (`landlords build`)")
+def test_search_never_calls_a_large_landlord_or_a_covered_groups_company_small():
+    """18 November 2026: search said 48 companies the regulator lists as Large (Clarion Housing Association, Aster
+    Communities, Jigsaw Homes North …) had fewer than 1,000 homes, and ALMOs' names found nothing or only that."""
+    import json
+
+    from landlords.load.common import read_table
+    from landlords.register import landlords, normalise
+
+    names = json.loads((SITE / "names.json").read_text())
+    by_name = {e["n"]: e for e in names if e.get("g") or not e.get("s")}     # the landlords without a page
+    size = {g["landlord_id"]: g["size"] for g in read_table(settings, "groups")}
+    owner = {o["landlord_id"]: o["profile_id"] for o in read_table(settings, "owners")}
+    reg = {lid: r for lid, r in landlords().items() if r["status"] == "active" and r["profiled"] != "yes"}
+    for lid, r in reg.items():
+        e = by_name[r["legal_name"]]
+        if owner.get(lid):
+            assert "z" not in e and e["r"] == "part" and e["s"], (lid, e)
+        if size.get(lid) == "Large":
+            assert "z" not in e, (lid, e)
+    assert by_name["Clarion Housing Association Limited"]["s"] == "clarion-housing-group"
+    almos = {"St Leger Homes": "city-of-doncaster-council", "Berneslai Homes": "barnsley-metropolitan-borough-council",
+             "Derby Homes": "derby-city-council", "Stockport Homes": "stockport-metropolitan-borough-council",
+             "Nottingham City Homes": "nottingham-city-council", "Solihull Community Housing":
+             "solihull-metropolitan-borough-council", "Wolverhampton Homes": "city-of-wolverhampton-council"}
+    for alias, slug in almos.items():
+        assert any(e.get("s") == slug and not e.get("g") and normalise(alias) in e["k"] for e in names), alias
+
+
 def test_pages_are_small_self_contained_and_carry_the_warning():
     from landlords.config import load_toml
 
@@ -236,7 +265,7 @@ def test_a_hidden_landlord_is_hidden_in_the_real_pages_and_put_back_exactly(tmp_
     assert f"<h1>Abri Group</h1><p>This page is hidden while a concern about it is decided.</p><p>{note}</p></main>" in own
     assert "<!--statements:" not in own and "Before you bid" not in own and "%" not in own.split("<main")[1].split(
         "</main>")[0]                           # no figure of its own is left on it
-    [abri] = [e for e in json.loads(before["names.json"]) if e.get("s") == "abri-group"]
+    [abri] = [e for e in json.loads(before["names.json"]) if e.get("s") == "abri-group" and not e.get("g")]
     assert "abri-group" not in hidden["names.json"].decode() and "data/landlords/abri-group.json" not in hidden
     lid = next(line.split(",")[0] for line in before["data/landlords.csv"].decode().splitlines()
                if "landlords/abri-group/" in line)
@@ -245,7 +274,9 @@ def test_a_hidden_landlord_is_hidden_in_the_real_pages_and_put_back_exactly(tmp_
             assert b"abri-group" not in text and b"Abri Group" not in text, name
         if name.endswith(".csv"):
             assert not [line for line in text.decode().splitlines() if line.split(",")[0] == lid], name
-    assert f"{len(json.loads(before['names.json'])) - len(json.loads(hidden['names.json']))}" == "1" and abri["n"]
+    # its own entry and those of the companies in its group, which link to its page
+    gone = sum(e.get("s") == "abri-group" for e in json.loads(before["names.json"]))
+    assert len(json.loads(before["names.json"])) - len(json.loads(hidden["names.json"])) == gone and abri["n"]
     assert b"362 social landlords" in hidden["index.html"] and b"363 social landlords" in before["index.html"]
     # what an edit cannot reach, and docs/OPERATIONS.md says so: another landlord's page that names it (a merger), and
     # the press page, which counts it and gives it as the example

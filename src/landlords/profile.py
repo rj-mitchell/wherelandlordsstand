@@ -238,7 +238,8 @@ def build_profile(data: Data, lid: str) -> dict:
         "slug": reg["slug"], "type": reg["type"], "status": reg["status"],
         "successor": {"name": successor.get("display_name") or successor.get("legal_name"),
                       "slug": successor.get("slug"), "date": reg.get("successor_date")} if successor else None,
-        "also_known_as": sorted({a["alias"] for a in al if a["kind"] in ALSO_KNOWN}),
+        # not a name with a `valid_to`, such as a body that no longer manages the council's homes: search still finds it
+        "also_known_as": sorted({a["alias"] for a in al if a["kind"] in ALSO_KNOWN and not a.get("valid_to")}),
         "formerly": sorted({a["alias"] for a in al if a["kind"] == "former"})[:6],
         "homes": homes_for(data, lid), "grade": grade_for(data, lid), "bands": bands_for(data, lid),
         "survey_note": survey_note(data, lid), "safety": safety_for(data, lid),

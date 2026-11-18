@@ -21,23 +21,62 @@ from landlords.statements import slot
 # Search
 
 
-def names_json(profiles: list[dict], reg: dict, aliases: list[dict], w: dict) -> list[dict]:
-    """Every name a reader might search for. Profiled landlords carry their slug; active landlords below 1,000 homes
-    are listed without one, so a search can say they exist but aren't covered."""
+def names_json(profiles: list[dict], reg: dict, aliases: list[dict], w: dict, parents: dict[str, str] | None = None,
+               small: set[str] | frozenset[str] = frozenset()) -> list[dict]:
+    """Every name a reader might search for. Profiled landlords carry their slug (``s``). Every other active landlord
+    is listed too, so a search can say what we know of it:
+
+    * in the group of a profiled landlord (``parents``, the SDR's group structure): that landlord's slug and name
+      (``g``), with ``r`` "part" if it is the company's nearest profiled parent, or "group" if it is the one profiled
+      company in the same group;
+    * known from the regulator's figures to have fewer than 1,000 homes (``small``): ``z``;
+    * otherwise nothing more, and search claims nothing about its size.
+    """
+    from landlords.area import owner_map
+
     by_id: dict[str, set[str]] = defaultdict(set)
     for a in aliases:
         by_id[a["landlord_id"]].add(a["alias"])
     out = []
-    profiled = {p["id"] for p in profiles}
+    profiled = {p["id"]: p for p in profiles}
     for p in profiles:
         names = {p["name"], p["legal_name"], *by_id[p["id"]]}
         out.append({"n": p["name"], "s": p["slug"], "t": w["types"].get(p["type"], p["type"]),
                     "a": p["also_known_as"][:4], "k": sorted({normalise(n) for n in names} - {""})})
-    for lid, r in reg.items():
-        if lid not in profiled and r["status"] == "active":
-            keys = sorted({normalise(n) for n in (r["legal_name"], *by_id[lid])} - {""})
-            out.append({"n": r["legal_name"], "k": keys})
+    rest = [lid for lid, r in reg.items() if lid not in profiled and r["status"] == "active"]
+    owners = owner_map(parents or {}, set(profiled), set(rest))
+    in_group: dict[str, set[str]] = defaultdict(set)     # a group's top parent -> its profiled companies
+    for lid in profiled:
+        if reg.get(lid, {}).get("group_id"):
+            in_group[reg[lid]["group_id"]].add(lid)
+    for lid in rest:
+        r = reg[lid]
+        e = {"n": r["legal_name"], "k": sorted({normalise(n) for n in (r["legal_name"], *by_id[lid])} - {""})}
+        pid, how = owners[lid][0], "part"
+        mates = in_group.get(r.get("group_id") or lid, set())      # a group's top parent has no group_id of its own
+        if not pid and len(mates) == 1:
+            pid, how = next(iter(mates)), "group"
+        if pid:
+            e |= {"s": profiled[pid]["slug"], "g": profiled[pid]["name"], "r": how}
+        elif lid in small:
+            e["z"] = 1
+        out.append(e)
     return out
+
+
+def search_facts(settings: Settings) -> tuple[dict[str, str], set[str]]:
+    """For search: each company's registered parent (the SDR's group structure), and the landlords the regulator's
+    figures show to have fewer than 1,000 homes: those the SDR calls "Small", and councils whose own return (LADR)
+    counts fewer homes than that in all."""
+    from landlords.load.common import read_table
+
+    groups = read_table(settings, "groups")
+    parents = {g["landlord_id"]: g["parent_id"] for g in groups if g["parent_id"]}
+    small = {g["landlord_id"] for g in groups if g["size"].lower() == "small"}
+    least = settings.section("coverage").get("min_homes", 1000)
+    small |= {r["landlord_id"] for r in read_table(settings, "stock_area")
+              if r["basis"] == "council total" and r["measure"] == "all_owned" and r["value"] < least}
+    return parents, small
 
 
 def index_html(profiles: list[dict], w: dict) -> str:
@@ -46,8 +85,9 @@ def index_html(profiles: list[dict], w: dict) -> str:
     for p in sorted(profiles, key=lambda p: p["name"].lower().removeprefix("the ")):
         letter = p["name"].lower().removeprefix("the ")[:1].upper()
         by_letter.setdefault(letter if letter.isalpha() else "#", []).append(p)
-    text = json.dumps({"none": s["none"], "small": s["small"], "areas": s["areas_link"],
-                       **{k: s[k] for k in ("found_one", "found", "found_none", "found_small")}})
+    text = json.dumps({"areas": s["areas_link"],
+                       **{k: s[k] for k in ("none", "small", "unlisted", "unlisted_areas", "part", "group", "found_one",
+                                            "found", "found_none", "found_small", "found_unlisted")}})
     parts = [f'<div class="lead"><div class="lead-main"><h1>{esc(s["heading"])}</h1><p class="lede">{esc(s["intro"])}</p>',
              f'<form id="search" role="search" data-root=""><label for="q">{esc(s["label"])}</label>'
              f'<input id="q" name="q" type="search" autocomplete="off" placeholder="{esc(s["placeholder"])}" '
@@ -516,7 +556,8 @@ def build_extra(settings: Settings, profiles: list[dict], out: Path, w: dict) ->
     written by ``site.write_assets``)."""
     from landlords.register import aliases, landlords
 
-    (out / "names.json").write_text(json.dumps(names_json(profiles, landlords(), aliases(), w),
+    parents, small = search_facts(settings)
+    (out / "names.json").write_text(json.dumps(names_json(profiles, landlords(), aliases(), w, parents, small),
                                                separators=(",", ":")))
     (out / "index.html").write_text(index_html(profiles, w))
 

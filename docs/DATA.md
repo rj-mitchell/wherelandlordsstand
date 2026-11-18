@@ -404,7 +404,31 @@ the 86 below, and 21 for the Ombudsman's 2024-25 names ("A second year").
 | trading | 2 | "Metropolitan Thames Valley Housing (MTV)" (Ombudsman), "Bournemouth Housing Landlord Services" (BCP) |
 | logo label | 2 | "Orbit", "Moat" (Kent Homechoice logo alt text) |
 | managing body | 1 | "Poole Housing Partnership", BCP Council's ALMO |
+| managing body (added 18 November 2026) | 7 | ALMOs, each pointing to its council: "St Leger Homes" (Doncaster), "Berneslai Homes" (Barnsley), "Derby Homes" (Derby), "Stockport Homes" (Stockport), "Solihull Community Housing" (Solihull), "Wolverhampton Homes" (Wolverhampton), each checked by hand against the council's or the ALMO's own 2025 or 2026 papers or the regulator's group structure; and "Nottingham City Homes" (Nottingham), with `valid_to` 2023, the year the council took its homes' management back |
 | group | 1 | "MHS Homes Ltd", the unregistered parent of Heart of Medway Housing Association |
+
+`valid_to`, where set, is when a name stopped applying (a year or a date). Search still finds the landlord by it,
+but its page doesn't list it under "also known as".
+
+Some ALMOs are registered companies of their own (Derby Homes Limited, Stockport Homes Limited, Cornwall Housing
+Limited), with their council as parent in the group structure, so search finds them through their council (below).
+
+### What search says about a landlord without a page
+
+`names.json` lists every active landlord on the register (`site_pages.names_json`). One with no page of its own gets,
+in this order:
+
+1. its nearest registered parent with a page, from the SDR's group structure (the same link as `owners`): "… is part
+   of …", linking to that page. Failing that, if exactly one company in its group has a page, "… is in the same group
+   of companies as …". On 18 November 2026, 86 companies were linked this way (none by the second rule), among them
+   the 45 the SDR calls Large, such as Clarion Housing Association, Aster Communities and Jigsaw Homes North.
+2. "fewer than 1,000 homes", only where the regulator's figures say so: the SDR's "Size of organisation" is Small, or
+   a council's own return (LADR, "All - Total - All") counts fewer homes than `[coverage] min_homes`. 1,064 on
+   18 November 2026.
+3. otherwise a neutral line that the site has no page for it, with no claim about its size (64, among them 3 the SDR
+   calls Large but that published no TSMs, and landlords registered too recently to be in the SDR).
+
+A search that finds only landlords without a page is counted as a missed search, as is one that finds nothing.
 
 Names on adverts that weren't given an alias: names that already match a legal name (Golding Homes, Town & Country
 Housing, Southern Housing, West Kent Housing Association, Places for People, Park Properties Housing Association,

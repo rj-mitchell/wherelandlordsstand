@@ -7,8 +7,9 @@
 * ``POST /api/statements``: a landlord, or someone acting for it, sends a statement in its own words to show beside
   what the site says about it (the right of reply). It is kept as pending until the owner publishes or declines it
   (`landlords statements`).
-* ``POST /api/missed``: a search that found nothing. Only the words searched (normalised, at most 80 characters) and
-  the day are kept, as a count, so names people look for can be added. No address or identifier is stored.
+* ``POST /api/missed``: a search that found no landlord with a page (search.js). Only the words searched
+  (normalised, at most 80 characters) and the day are kept, as a count, so names people look for can be added. No
+  address or identifier is stored.
 
 Reports and statements are kept, and their rules applied, by the Where They Stand sites' shared package (wts-core,
 ``wts_core.replies``); what this site passes to it is in src/landlords/replies.py, and how a statement is shown on the

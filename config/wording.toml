@@ -123,7 +123,15 @@ placeholder = "For example, Clarion or Leeds City Council"
 hint = "You can use the name on the advert, a short name or an old name."
 noscript = "Search needs JavaScript. Without it, use the list of all landlords below."
 none = "We couldn't find that name. We cover social landlords in England with 1,000 or more homes. If the advert shows only a logo, try the list of council areas."
+# Only for a landlord the regulator's figures show to have fewer than 1,000 homes (site_pages.search_facts)
 small = "{name} is a registered social landlord with fewer than 1,000 homes. We don't cover landlords that small, because they don't have to publish the same figures."
+# A registered landlord with no page, no group we cover and no figure that shows its size: nothing is said about its size
+unlisted = "{name} is a registered social landlord, but this site doesn't have a page for it."
+# After those, in place of "none", with the link to the council areas
+unlisted_areas = "You can still see the landlords we cover in the council area where the home is."
+# A company in the group of a landlord we cover, from the regulator's group structure; {group} links to its page
+part = "{name} is part of {group}."
+group = "{name} is in the same group of companies as {group}."
 areas_link = "Find landlords by council area"
 areas_note = "Use this if the advert shows only a logo, or no landlord's name."
 # Read out by screen readers half a second after typing stops (search.js), in place of the whole list of results
@@ -131,6 +139,7 @@ found_one = "1 landlord found"
 found = "{count} landlords found"
 found_none = "No landlord has that name"
 found_small = "That landlord is too small for this site to cover"
+found_unlisted = "This site doesn't have a page for that landlord"
 all = "All landlords"
 count = "{count} social landlords in England with 1,000 or more homes."
 

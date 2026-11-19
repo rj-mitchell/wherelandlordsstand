@@ -276,7 +276,9 @@ rebuild or approval is needed, and pages built while it is hidden hide it too. W
 - its own page shows its name, then "This page is hidden while a concern about it is decided." and the note, in
   place of its figures and of any statement;
 - it is left out of the list of all landlords, of search and the compare page, of the table on each council area's
-  page (and the counts beside them), of the sitemap, and of the downloads (its rows go from each CSV file);
+  page (and the counts beside them, and that page's description in search results, whose title also stops naming a
+  council if it was the only one), of other landlords' lists of similar landlords, of the sitemap, and of the
+  downloads (its rows go from each CSV file);
 - statements beside its page are not shown, nor one on an area's page that speaks for it; none can be sent about
   its page, and none is published for it until it is shown again.
 

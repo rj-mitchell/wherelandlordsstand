@@ -289,3 +289,95 @@ def test_the_search_page_counts_a_miss_when_it_finds_only_landlords_without_a_pa
     assert r["items"] == [s["none"] + areas] and r["status"] == s["found_none"] and r["posts"] == [{"q": "Nobody At All"}]
     r = _run_search_page(_search_names(), "Example Council")
     assert r["posts"] == [] and r["items"][0].startswith('<a href="landlords/example-council/">')
+
+
+# Titles and descriptions in search results (19 November 2026: people search for a landlord's "reviews" and
+# "complaints", and for "housing associations in" a place)
+
+def _profile(**over):
+    from datetime import date
+
+    p = {"id": "L1", "slug": "example-housing", "name": "Example Housing", "type": "housing association",
+         "status": "active", "successor": None,
+         "grade": {"grade": "C1", "date": date(2026, 3, 4), "by": "L1", "by_name": "Example Housing"},
+         "bands": {"period": "2025/26", "peer": {"peers": 72, "period": "2025/26", "peer_group": "ha|1", "homes": 5000,
+                                                 "peer_group_label": "housing associations, 2,500 to 9,999 homes"},
+                   "headline": {"band": 1, "value": 65.5, "label": "Overall satisfaction"},
+                   "pillars": []},
+         "ombudsman": {"period": "2025-26", "reports": [{"period": "2025-26", "name": "Example", "findings_in_jurisdiction": 316,
+                                                          "maladministration_rate": 0.59}]}}
+    return {**p, **over}
+
+
+def test_a_landlords_description_is_made_from_the_figures_its_page_shows():
+    from landlords.config import load_toml
+    from landlords.site import profile_description
+
+    w = load_toml("wording.toml")
+    assert profile_description(_profile(), w) == (
+        "Grade C1 (March 2026). Tenant survey 2025/26: 65.5% satisfied, bottom quarter of similar landlords. "
+        "Ombudsman found fault in 59% of 316 findings (2025-26).")
+    group = _profile(grade={"grade": "C2", "date": "2025-07-01", "by": "G1", "by_name": "Example Group"},
+                     bands={"period": "2025/26", "peer": None, "headline": {"band": None}, "pillars": []},
+                     ombudsman={"period": "2025-26", "reports": []})
+    assert profile_description(group, w) == ("Its group's grade: C2 (July 2025). No tenant survey results for 2025/26. "
+                                             "No Ombudsman report for 2025-26.")
+    nothing = _profile(grade={}, bands={}, ombudsman={"period": "", "reports": []})
+    assert profile_description(nothing, w).startswith("Example Housing: grade, tenant satisfaction")
+    merged = _profile(status="merged", successor={"name": "A Much Longer Named Housing Group", "date": "2025-04-01"})
+    text = profile_description(merged, w)
+    assert text.startswith("Joined A Much Longer Named Housing Group in April 2025. Grade C1") and len(text) <= 160
+    assert "Ombudsman" not in text                                         # what doesn't fit is left out whole
+    for p in (_profile(), group, nothing, merged):
+        assert len(profile_description(p, w)) <= 160 and "review" not in profile_description(p, w).lower()
+
+
+def test_titles_say_what_the_page_is_and_keep_the_sites_name_where_it_fits():
+    from landlords.config import load_toml
+    from landlords.site import profile_html, titled
+    from landlords.site_pages import area_title, index_html
+
+    w = load_toml("wording.toml")
+    assert "<title>Where Landlords Stand: social landlords in England compared</title>" in index_html([], w)
+    assert area_title("Adur", False, w) == "Housing associations in Adur | Where Landlords Stand"
+    assert area_title("Leeds", True, w) == "Housing associations and council landlords in Leeds"     # 75 with the name
+    p = _profile(also_known_as=[], sources=[], homes=None, regulator_notes=[], survey_note=None, safety=None,
+                 areas=[], formerly=[], reporting=None)
+    p["bands"] |= {"other": [], "source": ""}
+    p["ombudsman"] = {**p["ombudsman"], "earlier": [], "reports": [{**p["ombudsman"]["reports"][0], "_source": ""}]}
+    html = profile_html(p, w)
+    assert "<title>Example Housing: tenant satisfaction and complaints</title>" in html             # 74 with the name
+    assert ('<meta name="description" content="Grade C1 (March 2026). Tenant survey 2025/26: 65.5% satisfied, bottom '
+            'quarter of similar landlords. Ombudsman found fault in 59% of 316 findings (2025-26).">') in html
+    assert titled("Abri Group: tenant satisfaction and complaints", w).endswith(" | Where Landlords Stand")
+
+
+def test_an_areas_description_counts_its_landlords_and_names_the_one_with_most_homes():
+    from landlords.config import load_toml
+    from landlords.site_pages import area_description
+
+    w = load_toml("wording.toml")
+    assert area_description("Adur", [("Adur District Council", "2,523"), ("Clarion", "120")], w) == (
+        "2 social landlords we cover own rented homes in Adur. Adur District Council owns the most here: 2,523 homes. "
+        "See each one's grade and tenant satisfaction.")
+    assert area_description("Rutland", [("Longhurst Group", "1,001")], w) == (
+        "1 social landlord we cover owns rented homes in Rutland: Longhurst Group, with 1,001 homes. "
+        "See its grade and tenant satisfaction.")
+    long = area_description("Kingston upon Hull, City of", [("Kingston upon Hull City Council", "23,000")] * 12, w)
+    assert len(long) <= 160 and long.endswith("23,000 homes.")
+
+
+def test_a_landlords_page_links_to_its_areas_and_to_similar_landlords_nearest_in_size():
+    from landlords.config import load_toml
+    from landlords.site import similar_landlords
+
+    def member(i, homes, group="ha|1"):
+        p = _profile(id=f"L{i}", slug=f"l{i}", name=f"Landlord {i}")
+        p["bands"] = {**p["bands"], "peer": {**p["bands"]["peer"], "homes": homes, "peer_group": group}}
+        return p
+
+    ps = [member(1, 5000), member(2, 9000), member(3, 4800), member(4, 5100, "ha|2"), member(5, 1000)]
+    ps.append(_profile(id="L6", bands={"period": "2025/26", "peer": None, "headline": {"band": None}, "pillars": []}))
+    near = similar_landlords(ps, most=2)
+    assert [x["id"] for x in near["L1"]] == ["L3", "L2"] and near["L4"] == [] and "L6" not in near
+    assert load_toml("wording.toml")["similar"]["heading"] == "Similar landlords"

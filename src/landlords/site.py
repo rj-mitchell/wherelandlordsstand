@@ -42,6 +42,32 @@ def nice_date(d) -> str:
     return f"{d.day} {d:%B %Y}" if d else ""
 
 
+def month(d) -> str:
+    """A date as a month and year ("October 2026"), for the short descriptions search results show."""
+    if isinstance(d, str):
+        d = date.fromisoformat(d[:10])
+    return f"{d:%B %Y}" if d else ""
+
+
+TITLE_MAX = 70          # characters of a title before search results cut it short
+DESCRIPTION_MAX = 160   # and of a description
+
+
+def titled(lead: str, w: dict) -> str:
+    """A page's title: what it is about, then the site's name where that still fits in TITLE_MAX characters."""
+    full = f"{lead} | {w['site']['name']}"
+    return full if len(full) <= TITLE_MAX else lead
+
+
+def first_fit(*sentences: str, most: int = DESCRIPTION_MAX) -> str:
+    """As many of the sentences as fit in ``most`` characters, in order, skipping any that would not fit."""
+    out = ""
+    for x in sentences:
+        if x and len(f"{out} {x}".strip()) <= most:
+            out = f"{out} {x}".strip()
+    return out
+
+
 class Sources:
     """Numbers the files a page uses, and gives the link for each figure."""
 
@@ -314,7 +340,71 @@ def band_name(b: int | None) -> str:
     return rules()["scoring"]["bands"][b - 1] if b else ""
 
 
-def profile_html(p: dict, w: dict) -> str:
+def bands_shown(p: dict) -> bool:
+    """Whether a landlord's page compares it with similar landlords (its "Compared with similar landlords" bands)."""
+    b = p["bands"] or {}
+    return bool(b.get("peer") and (b["headline"]["band"] or any(x["band"] for x in b["pillars"])))
+
+
+def profile_description(p: dict, w: dict) -> str:
+    """A landlord's page in search results: the figures the page leads with, in the page's own terms, as many as fit
+    in 160 characters ([profile] in config/wording.toml). Only figures the page shows: the regulator's grade, overall
+    satisfaction and its band among similar landlords, and the Ombudsman's latest findings."""
+    t = w["profile"]
+    merged = ""
+    if p["status"] == "merged" and p.get("successor"):
+        merged = t["merged"].format(successor=p["successor"]["name"], date=month(p["successor"]["date"]))
+    g = p["grade"]
+    if g.get("grade"):
+        grade = t["grade" if g["by"] == p["id"] else "group_grade"].format(grade=g["grade"], date=month(g["date"]))
+    else:
+        grade = t["not_graded"]
+    satisfaction = ""
+    b = p["bands"] or {}
+    head = b.get("headline") or {}
+    if bands_shown(p) and head.get("band") and head.get("value") is not None:
+        satisfaction = t["satisfaction"].format(period=b["period"], value=pct(head["value"]),
+                                                band=band_name(head["band"]), peers=b["peer"]["peers"] - 1)
+    elif not bands_shown(p) and b.get("period"):
+        satisfaction = t["no_survey"].format(period=b["period"])
+    om, om_short = "", ""
+    if not p["ombudsman"]["reports"] and p["ombudsman"]["period"]:
+        om = om_short = t["no_ombudsman"].format(period=p["ombudsman"]["period"])
+    if p["ombudsman"]["reports"]:
+        r = p["ombudsman"]["reports"][0]
+        figures = {"rate": f'{100 * r.get("maladministration_rate", 0):.0f}%',
+                   "findings": f'{r.get("findings_in_jurisdiction", 0):,.0f}', "period": r["period"]}
+        om, om_short = t["ombudsman"].format(**figures), t["ombudsman_short"].format(**figures)
+    if not (g.get("grade") or bands_shown(p) or p["ombudsman"]["reports"]):
+        return t["fallback"].format(name=p["name"])
+    out = first_fit(merged, grade, satisfaction, om)
+    return out if om in out else first_fit(merged, grade, satisfaction, om_short)
+
+
+def similar_landlords(profiles: list[dict], most: int = 6) -> dict[str, list[dict]]:
+    """For each landlord compared with similar landlords, up to ``most`` of the others in the same group of similar
+    landlords (the group its bands are worked out in, docs/METHOD.md), nearest in size first: the size the groups
+    are made by, the number of tenants in its survey that year."""
+    groups: dict[tuple, list[dict]] = {}
+    for p in profiles:
+        if bands_shown(p):
+            peer = p["bands"]["peer"]
+            groups.setdefault((peer["period"], peer["peer_group"]), []).append(p)
+    out = {}
+    for members in groups.values():
+        for p in members:
+            size = p["bands"]["peer"]["homes"] or 0
+            others = sorted((x for x in members if x["id"] != p["id"]),
+                            key=lambda x: (abs((x["bands"]["peer"]["homes"] or 0) - size), x["name"]))
+            out[p["id"]] = others[:most]
+    return out
+
+
+def profile_html(p: dict, w: dict, area_slugs: dict[str, str] | None = None,
+                 similar: list[dict] | None = None) -> str:
+    """A landlord's page. ``area_slugs`` is each council area's page by its code, for links from the homes it owns in
+    each; ``similar``, the landlords to link to as similar (``similar_landlords``)."""
+    area_slugs = area_slugs or {}
     src = Sources(p["sources"])
     name = p["name"]
     out = [f"<h1>{esc(name)}</h1>"]
@@ -459,21 +549,36 @@ def profile_html(p: dict, w: dict) -> str:
 
     if p["type"] == "council":
         out.append(f'<h2>{esc(w["areas"]["heading"])}</h2><p>{fill(w["areas"]["council"], name=name)}</p>')
+        own = [a for a in p["areas"] if a["basis"] == "council total" and a["gss"] in area_slugs]
+        if own:
+            out.append("<p>" + fill_html(w["areas"]["council_area"], area=_area_link(own[0], area_slugs)) + "</p>")
         if p.get("council_link"):
             out.append(sister_link(p["council_link"], fill(w["council_link"]["text"], name=name)))
     elif p["areas"]:
         top = p["areas"][:12]
-        items = "".join(f'<li>{esc(a["area_name"])}: {a["rented_homes"]:,.0f}</li>' for a in top)
+        items = "".join(f'<li>{_area_link(a, area_slugs)}: {a["rented_homes"]:,.0f}</li>' for a in top)
         more = f'<p>{fill(w["areas"]["more"], count=len(p["areas"]) - len(top))}</p>' if len(p["areas"]) > len(top) else ""
         out.append(f'<h2>{esc(w["areas"]["heading"])}</h2><p>{esc(w["areas"]["intro"])}</p><ul class="list cols">{items}</ul>'
                    f'{more}{src.ref(*{s for a in p["areas"] for s in a["source_files"].split(",")})}')
+    if similar and bands_shown(p):
+        t = w["similar"]
+        items = "".join(f'<li><a href="../{esc(x["slug"])}/">{esc(x["name"])}</a></li>' for x in similar)
+        out.append(f'<section aria-labelledby="similar"><h2 id="similar">{esc(t["heading"])}</h2>'
+                   f'<p>{fill(t["intro"], name=name, peers=peer["peers"] - 1, peer_label=peer["peer_group_label"])}</p>'
+                   f'<ul class="list cols similar">{items}</ul></section>')
     out.append(f'<ul class="links"><li><a href="../../compare/?l={esc(p["slug"])}">{esc(w["card"]["compare"])}</a></li>'
                f'<li><a href="../../named/">{esc(w["corrections"]["named_link"])}</a></li></ul>')
     if p["formerly"]:
         out.append(f'<p class="src">Earlier names: {esc(", ".join(p["formerly"]))}.</p>')
     out.append(src.html(w))
-    return page(f"{name} | {w['site']['name']}", "".join(out), w, depth=2, path=f"landlords/{p['slug']}/",
-                description=f"{name}: grade, tenant satisfaction compared with similar landlords, Ombudsman complaints and safety checks.")
+    return page(titled(w["profile"]["title"].format(name=name), w), "".join(out), w, depth=2,
+                path=f"landlords/{p['slug']}/", description=profile_description(p, w))
+
+
+def _area_link(a: dict, area_slugs: dict[str, str]) -> str:
+    """A council area's name, linked to its page where it has one."""
+    slug = area_slugs.get(a["gss"])
+    return f'<a href="../../areas/{esc(slug)}/">{esc(a["area_name"])}</a>' if slug else esc(a["area_name"])
 
 
 def method_html(settings: Settings, w: dict) -> str:
@@ -559,17 +664,20 @@ def build(settings: Settings, out: Path | None = None) -> dict[str, int]:
     (out / "method").mkdir()
     use_build(settings, write_assets(out), bool(settings.section("site").get("launched")))
     profiles = build_profiles(settings)
+    from landlords.site_pages import area_rows, build_extra
+
+    areas = area_rows(settings, profiles)
+    area_slugs = {a["gss"]: a["slug"] for a in areas.values()}
+    similar = similar_landlords(profiles)
     sizes = []
     for p in profiles:
         d = out / "landlords" / p["slug"]
         d.mkdir()
-        text = profile_html(p, w)
+        text = profile_html(p, w, area_slugs, similar.get(p["id"]))
         (d / "index.html").write_text(text)
         sizes.append(len(text.encode()))
     (out / "method" / "index.html").write_text(method_html(settings, w))
-    from landlords.site_pages import build_extra
-
-    extra = build_extra(settings, profiles, out, w)
+    extra = build_extra(settings, profiles, out, w, areas)
     # the statements published now, written into the pages' slots (published later, they are written in at once)
     from landlords import statements
 

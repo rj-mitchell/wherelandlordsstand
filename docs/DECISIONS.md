@@ -150,3 +150,23 @@ The site went live on wts-core 0.3.0, so that it was deployed onto the shared pa
 taken from 0.3.0, as this site does not need them: the package's `would-lapse` command (the site's own
 `landlords lapsing` says the same), the check route's weekly figures and the privacy check of briefings (this site
 has no briefings), and the notice about older command names (this site keeps its own).
+
+## 19. Titles, descriptions and links between pages
+
+Search results showed most pages under the same few words (November 2026): every area's description was "N landlords
+we cover own homes in this area.", and a landlord's page didn't say what it holds for people who search for a
+landlord's "reviews" or "complaints". So (19 November 2026):
+
+- A landlord's title is "[name]: tenant satisfaction and complaints", and its description is made only from figures
+  its page shows, in the page's terms: the regulator's grade and its month, overall satisfaction and its band among
+  similar landlords, and the Ombudsman's latest share of findings at fault, as many as fit in 160 characters. The
+  word "reviews" is not used: the tenant survey is the regulator's measure, not reviews.
+- An area's title is "Housing associations in [area]", or "Housing associations and council landlords in [area]"
+  where a council we cover owns homes there; its description gives how many landlords we cover own rented homes
+  there and which owns the most.
+- A title ends "| Where Landlords Stand" only where that keeps it to 70 characters.
+- A landlord's page links to the council areas where it owns homes, and to up to six landlords in its group of
+  similar landlords, those nearest it in size (the number of tenants in its survey, which the groups are made by).
+  The order is by size only, never by any result, so it is not a ranking (decision 2).
+
+The wording is in `config/wording.toml` ([profile], [similar], [area]).

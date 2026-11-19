@@ -5,6 +5,9 @@
 [site]
 name = "Where Landlords Stand"
 tagline = "What social landlords in England are like, from what the regulator and the Housing Ombudsman publish."
+# The home page's title, in search results and browser tabs. Other pages' titles end " | {name}" where that keeps them
+# to 70 characters (site.titled); a longer title goes without it.
+home_title = "Where Landlords Stand: social landlords in England compared"
 # The footer's short form of the family's independence line (the family glossary). The full line is on the about
 # and terms pages (config/pages.toml).
 independence = "Independent. Not affiliated with the Regulator of Social Housing, the Housing Ombudsman Service or any landlord."
@@ -40,6 +43,28 @@ homes = "Rents out about {homes} homes in England."
 homes_note = "This is the number of tenants in rented homes it counted for its {period} tenant survey."
 merged = "{name} joined {successor} on {date}. These figures are from before then."
 compare = "Compare with other landlords"
+
+[profile]
+# A landlord's page in search results: its title, and a description made from the figures the page shows, as many of
+# these sentences as fit in 160 characters, in this order (site.profile_description). {date} is a month and year.
+title = "{name}: tenant satisfaction and complaints"
+merged = "Joined {successor} in {date}."
+grade = "Grade {grade} ({date})."
+group_grade = "Its group's grade: {grade} ({date})."
+not_graded = "Not yet graded by the regulator."
+satisfaction = "Tenant survey {period}: {value} satisfied, {band} of similar landlords."
+ombudsman = "Ombudsman found fault in {rate} of {findings} findings ({period})."
+ombudsman_short = "Ombudsman found fault in {rate} of {findings} findings."
+# when the page says there are none
+no_survey = "No tenant survey results for {period}."
+no_ombudsman = "No Ombudsman report for {period}."
+# when the page has none of those figures
+fallback = "{name}: grade, tenant satisfaction compared with similar landlords, Ombudsman complaints and safety checks."
+
+[similar]
+# Links from a landlord's page to others in its group of similar landlords, nearest in size first
+heading = "Similar landlords"
+intro = "{name} is compared with {peers} similar landlords: {peer_label}. These are some of those closest to it in size."
 
 [types]
 council = "Council"
@@ -110,6 +135,8 @@ heading = "Homes by council area"
 intro = "Homes it owns in each council area, 31 March 2026. We added up the figures for each company in the group."
 more = "and {count} more areas"
 council = "{name} is a council. Its homes are in its own area."
+# {area} becomes a link to the area's page
+council_area = "See every landlord we cover that owns homes in {area}."
 
 [sources]
 heading = "Sources"
@@ -145,6 +172,15 @@ count = "{count} social landlords in England with 1,000 or more homes."
 
 [area]
 heading = "Council areas"
+# An area's page in search results. "title_council" when a council we cover owns homes in the area. The description
+# is its first sentence, then the second if it still fits in 160 characters (site_pages.area_description).
+title = "Housing associations in {area}"
+title_council = "Housing associations and council landlords in {area}"
+description = "{count} social landlords we cover own rented homes in {area}. {top} owns the most here: {homes} homes."
+description_one = "1 social landlord we cover owns rented homes in {area}: {top}, with {homes} homes."
+description_none = "No social landlord we cover owns rented homes in {area}."
+description_more = "See each one's grade and tenant satisfaction."
+description_more_one = "See its grade and tenant satisfaction."
 index_intro = "Pick the council area where the home is. Each page lists the landlords we cover that own homes there, with the number of homes they own there."
 intro = "{count} landlords we cover own homes in this area."
 landlord = "Landlord"

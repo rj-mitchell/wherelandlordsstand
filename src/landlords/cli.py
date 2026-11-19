@@ -152,7 +152,12 @@ def serve(port: int = typer.Option(8000), host: str = typer.Option("127.0.0.1", 
 
     s = load_settings()
     typer.echo(f"Serving {site_dir(s)} at http://{host}:{port}/")
-    uvicorn.run(create_app(s, behind_proxy), host=host, port=port, access_log=False, log_level="warning")
+    # Behind the front door (Caddy, over the shared Docker network), the scheme a visitor used is in
+    # X-Forwarded-Proto: trusted from any address, as uvicorn otherwise trusts it only from 127.0.0.1, and without it
+    # every address the app builds (a redirect) starts http://. Safe only because the app can't be reached except
+    # through the front door: deploy/docker-compose.yml publishes its port on the server's 127.0.0.1 alone.
+    proxy = {"proxy_headers": True, "forwarded_allow_ips": "*"} if behind_proxy else {"proxy_headers": False}
+    uvicorn.run(create_app(s, behind_proxy), host=host, port=port, access_log=False, log_level="warning", **proxy)
 
 
 @app.command()

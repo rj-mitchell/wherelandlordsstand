@@ -287,3 +287,40 @@ def test_every_connection_to_the_state_database_is_closed_after_use(settings, mo
     for con in opened:
         with pytest.raises(sqlite3.ProgrammingError, match="closed"):
             con.execute("select 1")
+
+
+def test_a_folder_without_its_slash_is_moved_for_good_to_the_same_scheme(client, settings):
+    """https://wherelandlordsstand.com/areas/adur answered 307 to http://…/areas/adur/ (19 November 2026): StaticFiles
+    built the address from what the app saw, and the app was not told the visitor used https. The move is now a 301,
+    from the site's root, so it keeps whatever scheme the visitor used."""
+    (settings.data_dir / "site" / "areas" / "adur").mkdir(parents=True)
+    (settings.data_dir / "site" / "areas" / "adur" / "index.html").write_text("<h1>Adur</h1>")
+    for asked, sent in (("/areas/adur", "/areas/adur/"), ("/areas/adur?x=1", "/areas/adur/?x=1")):
+        r = client.get(asked, follow_redirects=False)
+        assert (r.status_code, r.headers["location"]) == (301, sent)
+    assert client.get("/areas/adur/").text == "<h1>Adur</h1>"
+    assert client.get("/areas/nowhere", follow_redirects=False).status_code == 404
+
+
+def test_behind_the_front_door_the_app_trusts_its_forwarded_scheme(monkeypatch, settings):
+    """`landlords serve --behind-proxy` (the server's command, Dockerfile) tells uvicorn to take the scheme from
+    X-Forwarded-Proto whoever passes it on: the front door reaches the app over the Docker network, not from
+    127.0.0.1, which is all uvicorn trusts by default. The port is published on the server's 127.0.0.1 only."""
+    import re
+    from pathlib import Path
+
+    import uvicorn
+    from typer.testing import CliRunner
+
+    from landlords import cli
+
+    seen = []
+    monkeypatch.setattr(uvicorn, "run", lambda app, **kw: seen.append(kw))
+    monkeypatch.setenv("LANDLORDS_DATA_DIR", str(settings.data_dir))
+    for args, proxied in ((["serve", "--behind-proxy"], True), (["serve"], False)):
+        assert CliRunner().invoke(cli.app, args).exit_code == 0
+        assert seen[-1]["proxy_headers"] is proxied
+        assert seen[-1].get("forwarded_allow_ips") == ("*" if proxied else None)
+    compose = (Path(__file__).parents[1] / "deploy" / "docker-compose.yml").read_text()
+    assert re.findall(r'^\s+- "([\d.]+:\d+:8000)"', compose, re.M) == ["127.0.0.1:8004:8000"]
+    assert '"--behind-proxy"' in (Path(__file__).parents[1] / "Dockerfile").read_text()

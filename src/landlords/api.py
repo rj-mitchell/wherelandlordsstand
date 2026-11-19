@@ -140,6 +140,18 @@ class LiveFiles(StaticFiles):
         self.all_directories = [site_dir(self.settings)]
         return super().lookup_path(path)
 
+    async def get_response(self, path: str, scope):
+        """As StaticFiles, but a folder asked for without its slash ("/areas/adur") is moved for good (301) to the
+        address with it, given from the site's root, so it keeps whatever scheme the visitor used (StaticFiles sends
+        a 307 to an address it builds itself, which behind a proxy can start http://)."""
+        response = await super().get_response(path, scope)
+        if response.status_code in (307, 308) and not scope["path"].endswith("/"):
+            raw = (scope.get("raw_path") or scope["path"].encode()).decode("latin-1")
+            if SAFE_PATH.fullmatch(raw):
+                query = scope.get("query_string", b"").decode("latin-1")
+                return RedirectResponse(raw + "/" + (f"?{query}" if query else ""), status_code=301)
+        return response
+
 
 def create_app(settings: Settings, behind_proxy: bool = False, clock: Clock = SYSTEM_CLOCK) -> FastAPI:
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)

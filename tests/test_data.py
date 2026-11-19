@@ -328,3 +328,14 @@ def test_a_published_statement_is_built_into_its_pages_and_nowhere_else(tmp_path
         if path.is_file() and path.suffix in (".json", ".csv", ".xml", ".txt"):
             assert "only this statement uses" not in path.read_text(errors="ignore"), path
     site.build(settings, settings.data_dir / "site")  # put the test-version pages back
+
+
+@pytest.mark.skipif(not (SITE / "index.html").exists(), reason="pages not built (`landlords build`)")
+def test_links_name_a_pages_folder_never_its_index_html():
+    """One address for each page: Google chose "…/index.html" over "…/" for several pages while the links named
+    index.html (19 November 2026)."""
+    for path in SITE.rglob("*.html"):
+        text = path.read_text()
+        assert not re.search(r'href="(?!https?:|mailto:)[^"]*index\.html', text), path
+    for js in (SITE / "assets").glob("*.js"):
+        assert "index.html" not in js.read_text(), js

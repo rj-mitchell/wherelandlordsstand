@@ -70,8 +70,10 @@ class Sources:
                 f'<p>{esc(w["sources"]["intro"])}</p><ol class="sources">{"".join(lis)}</ol></section>')
 
 
-NAV = [("index.html", "Find a landlord"), ("areas/index.html", "Areas"), ("compare/index.html", "Compare"),
-       ("rights/index.html", "Your rights"), ("method/index.html", "Methodology")]
+# Each tab's page, from the site's root. Links name a page's folder ("areas/"), never its index.html, so there is one
+# address for each page (the server sends any ".../index.html" address to its folder: src/landlords/api.py).
+NAV = [("", "Find a landlord"), ("areas/", "Areas"), ("compare/", "Compare"), ("rights/", "Your rights"),
+       ("method/", "Methodology")]
 # On a phone the tabs are one line that scrolls sideways (styles.css). The first three always show on a 320 px screen;
 # the pages of the others bring their tab into view with tabs.js. Pages with no tab of their own, such as landlords'
 # pages, have no script for it.
@@ -95,6 +97,13 @@ FAMILY = Path(__file__).parent / "family"
 FAMILY_FILES = ("fonts.css", "family.css", "icon.svg", "favicon.ico", "apple-touch-icon.png", "card.png")
 _PARTS: dict[str, str] = {}
 UP = "@@UP@@"   # stands for the way up to the site's root ("../../") in the head partial, filled in per page
+
+
+def to(up: str, address: str) -> str:
+    """A link from a page ``up`` below the root ("../../") to a page's address from the root ("areas/"; "" for the
+    home page). Links are relative, so a build's pages also work where they are looked at before they are approved
+    (/admin/preview/<token>/, src/landlords/api.py)."""
+    return up + address or "./"
 
 
 def asset(name: str) -> str:
@@ -183,7 +192,7 @@ def fill_html(template: str, **parts: str) -> str:
 
 def rich(text: str, up: str = "") -> str:
     """A sentence from config/pages.toml, escaped for HTML, with its [words](address) made into links. An address that
-    doesn't start with https:// or mailto: is a page on this site, from its root ("corrections/index.html")."""
+    doesn't start with https:// or mailto: is a page on this site, from its root ("corrections/")."""
     def link(m: re.Match) -> str:
         href = html.unescape(m[2])
         if not re.match(r"https://|mailto:", href):
@@ -201,7 +210,7 @@ def alpha_banner(words: dict, up: str) -> str:
     label, _, rest = words["alpha"].partition(":")
     rest = rest.strip()
     rest = rest[:1].upper() + rest[1:]
-    text = fill_html(rest, report=f'<a href="{up}corrections/index.html">{esc(words["alpha_report"])}</a>')
+    text = fill_html(rest, report=f'<a href="{up}corrections/">{esc(words["alpha_report"])}</a>')
     return f'<div class="phase"><p class="wrap"><span class="phase-tag">{esc(label)}</span> {text}</p></div>'
 
 
@@ -237,7 +246,7 @@ def launched() -> bool:
 def footer(w: dict, up: str) -> str:
     """The footer: the family shelf, then the site's own links (at most six, in the family's order) and one short
     paragraph of notices."""
-    links = "".join(f'<li><a href="{esc(href if href.startswith("https://") else up + href)}">{esc(label)}</a></li>'
+    links = "".join(f'<li><a href="{esc(href if href.startswith("https://") else to(up, href))}">{esc(label)}</a></li>'
                     for label, href in w["footer"]["links"])
     notices = " ".join(esc(x) for x in [w["site"]["independence"], *w["footer"]["notices"]])
     return (f'<footer>{_PARTS.get("shelf", "")}\n<div class="foot"><div class="wrap">'
@@ -246,13 +255,13 @@ def footer(w: dict, up: str) -> str:
 
 
 def page(title: str, body: str, w: dict, depth: int, description: str = "", scripts: tuple[str, ...] = (),
-         here: str = "", path: str | None = None) -> str:
+         here: str | None = None, path: str | None = None) -> str:
     """A whole page: our own stylesheets, fonts and scripts only, nothing from anywhere else. ``here`` is the NAV entry
     this page belongs to, marked as the current tab. ``path`` is the page's address from the site's root
     ("landlords/abri-group/"), for its canonical link and link card; None for a page with no address of its own."""
     up = "../" * depth
     live = launched()
-    nav = "".join(f'<a href="{up}{href}"{' aria-current="page"' if href == here else ""}>{esc(label)}</a>'
+    nav = "".join(f'<a href="{to(up, href)}"{' aria-current="page"' if href == here else ""}>{esc(label)}</a>'
                   for href, label in NAV)
     if here in SCROLLED_TABS:
         scripts += ("tabs.js",)
@@ -275,7 +284,7 @@ def page(title: str, body: str, w: dict, depth: int, description: str = "", scri
 <link rel="stylesheet" href="{up}{asset('styles.css')}">{js}</head>
 <body class="wts-headings"><a class="skip" href="#main">Skip to main content</a>
 <header class="mast"><div class="cloth"><div class="wrap mast-in"><div class="brand">{MARK}<div class="brand-words">
-<a class="name" href="{up}index.html">{esc(site['name'])}</a>
+<a class="name" href="{to(up, "")}">{esc(site['name'])}</a>
 {_PARTS.get("endorsement", "")}</div></div>
 <nav class="tabs" aria-label="Main">{nav}</nav></div></div>{alpha_banner(site, up)}</header>
 <main id="main" class="wrap">{body}</main>
@@ -314,7 +323,7 @@ def profile_html(p: dict, w: dict) -> str:
         sub.append("also known as " + ", ".join(p["also_known_as"]))
     out.append(f'<p class="sub">{esc("; ".join(sub))}.</p>')
     if p["status"] == "merged" and p["successor"]:
-        link = f'../{esc(p["successor"]["slug"])}/index.html' if p["successor"].get("slug") else ""
+        link = f'../{esc(p["successor"]["slug"])}/' if p["successor"].get("slug") else ""
         text = fill(w["card"]["merged"], name=name, successor=p["successor"]["name"],
                     date=nice_date(p["successor"]["date"]))
         out.append(f'<p class="note">{text} ' + (f'<a href="{link}">{esc(p["successor"]["name"])}</a>' if link else "")
@@ -370,7 +379,7 @@ def profile_html(p: dict, w: dict) -> str:
             bs.append(f'<p class="note">{fill(w["bands"]["too_small"], name=name, year="20" + why["from_period"][-2:])}</p>')
         elif why and why.get("other"):
             other = why["other"]
-            link = (f'<a href="../{esc(other["slug"])}/index.html">{esc(other["name"])}</a>' if other.get("slug")
+            link = (f'<a href="../{esc(other["slug"])}/">{esc(other["name"])}</a>' if other.get("slug")
                     else esc(other["name"]))
             key = "in_group" if why["reason"] == "group" else "in_other"
             bs.append(f'<p class="note">{fill(w["bands"][key], name=name, period=why["from_period"], other="@@OTHER@@").replace("@@OTHER@@", link)}</p>')
@@ -458,8 +467,8 @@ def profile_html(p: dict, w: dict) -> str:
         more = f'<p>{fill(w["areas"]["more"], count=len(p["areas"]) - len(top))}</p>' if len(p["areas"]) > len(top) else ""
         out.append(f'<h2>{esc(w["areas"]["heading"])}</h2><p>{esc(w["areas"]["intro"])}</p><ul class="list cols">{items}</ul>'
                    f'{more}{src.ref(*{s for a in p["areas"] for s in a["source_files"].split(",")})}')
-    out.append(f'<ul class="links"><li><a href="../../compare/index.html?l={esc(p["slug"])}">{esc(w["card"]["compare"])}</a></li>'
-               f'<li><a href="../../named/index.html">{esc(w["corrections"]["named_link"])}</a></li></ul>')
+    out.append(f'<ul class="links"><li><a href="../../compare/?l={esc(p["slug"])}">{esc(w["card"]["compare"])}</a></li>'
+               f'<li><a href="../../named/">{esc(w["corrections"]["named_link"])}</a></li></ul>')
     if p["formerly"]:
         out.append(f'<p class="src">Earlier names: {esc(", ".join(p["formerly"]))}.</p>')
     out.append(src.html(w))
@@ -524,7 +533,7 @@ its file.</p>
 <h2>{esc(w["method"]["sister_heading"])}</h2>
 <p>{rich(w["method"]["sister"])}</p>
 </div>"""
-    return page(f"Methodology | {w['site']['name']}", body, w, depth=1, here="method/index.html",
+    return page(f"Methodology | {w['site']['name']}", body, w, depth=1, here="method/",
                 path="method/", description=w["method"]["description"])
 
 

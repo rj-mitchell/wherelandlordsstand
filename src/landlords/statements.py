@@ -128,7 +128,7 @@ def filled(text: str, page: str, where: dict, folder: Path, w: dict) -> str:
         for s, about in here:
             link = ""
             if about:
-                link = (f'<a href="../../{esc(about)}index.html">'
+                link = (f'<a href="../../{esc(about)}">'
                         f'{fill(w["statement"]["about_page"], page="@@")}</a>').replace("@@", _h1(folder, about))
             shown.append(render(s, w, level, link))
         return f"<!--statements:{key}-->{''.join(shown)}<!--/statements:{key}-->"

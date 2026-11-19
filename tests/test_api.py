@@ -28,6 +28,33 @@ def test_pages_are_served_with_a_strict_policy_and_no_cookies(client):
     assert "set-cookie" not in r.headers
 
 
+def test_a_pages_index_html_address_is_sent_for_good_to_its_folder(client, settings):
+    """Google chose "…/index.html" over "…/" as the address of several pages, although each page's canonical link
+    names its folder (19 November 2026). Every link now names the folder, and the old addresses are moved for good,
+    with their query."""
+    (settings.data_dir / "site" / "landlords" / "x").mkdir(parents=True)
+    (settings.data_dir / "site" / "landlords" / "x" / "index.html").write_text("<h1>X</h1>")
+    for asked, sent in (("/index.html", "/"), ("/landlords/x/index.html", "/landlords/x/"),
+                        ("/compare/index.html?l=x", "/compare/?l=x"),
+                        ("/corrections/index.html?kind=unfair&page=landlords/x/", "/corrections/?kind=unfair&page=landlords/x/"),
+                        ("/no/such/index.html", "/no/such/")):
+        for method in (client.get, client.head):
+            r = method(asked, follow_redirects=False)
+            assert (r.status_code, r.headers["location"]) == (301, sent), asked
+            assert "default-src 'self'" in r.headers["content-security-policy"]
+    assert client.get("/landlords/x/index.html").text == "<h1>X</h1>"
+    # never to another site, whatever is asked for; and the preview of a build waiting for approval is left alone
+    from landlords.api import folder_address
+
+    for raw in (b"//example.org/index.html", b"///example.org/index.html", b"/\\example.org/index.html",
+                b"/a b/index.html", b"/admin/preview/t/index.html", b"/index.htm", b"/landlords/x/"):
+        assert folder_address({"path": raw.decode(), "raw_path": raw, "query_string": b""}) is None, raw
+    assert folder_address({"path": "/a/index.html", "raw_path": b"/a/index.html", "query_string": b"q=1"}) == "/a/?q=1"
+    # and nothing else is moved: a thank-you page, a file, a post
+    assert client.get("/corrections/thanks.html", follow_redirects=False).status_code == 200
+    assert client.post("/index.html", follow_redirects=False).status_code != 301
+
+
 def test_a_report_from_the_form_is_kept_and_its_email_deleted_on_closing(client, settings):
     r = client.post("/api/corrections", content="page=landlords%2Fx%2F&message=Wrong+grade&email=a%40b.org",
                     headers={"content-type": "application/x-www-form-urlencoded"}, follow_redirects=False)

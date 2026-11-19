@@ -73,17 +73,17 @@
       if (!WLS.norm(input.value)) return;
       for (const e of r.covered) {
         const also = e.a.length ? ` <span class="hint">(${esc(e.a.slice(0, 3).join(", "))})</span>` : "";
-        out.append(li(`<a href="${root}landlords/${e.s}/index.html">${esc(e.n)}</a> <span class="hint">${esc(e.t)}</span>${also}`));
+        out.append(li(`<a href="${root}landlords/${e.s}/">${esc(e.n)}</a> <span class="hint">${esc(e.t)}</span>${also}`));
       }
       for (const e of r.part) {
-        const link = `<a href="${root}landlords/${e.s}/index.html">${esc(e.g)}</a>`;
+        const link = `<a href="${root}landlords/${e.s}/">${esc(e.g)}</a>`;
         out.append(li(esc(e.r === "group" ? text.group : text.part).replace("{name}", () => esc(e.n)).replace("{group}", () => link)));
       }
       if (!r.covered.length && !r.part.length) {
         for (const e of r.small) out.append(li(esc(text.small.replace("{name}", () => e.n))));
         for (const e of r.unlisted) out.append(li(esc(text.unlisted.replace("{name}", () => e.n))));
         const some = r.small.length || r.unlisted.length;
-        out.append(li(esc(some ? text.unlisted_areas : text.none) + ` <a href="${root}areas/index.html">${esc(text.areas)}</a>`));
+        out.append(li(esc(some ? text.unlisted_areas : text.none) + ` <a href="${root}areas/">${esc(text.areas)}</a>`));
         if (submitted) {
           // Count the miss, even when it named a landlord we have no page for, so the name can be looked at. Fails
           // quietly where there is no server (the pages opened from disk).

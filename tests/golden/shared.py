@@ -59,13 +59,21 @@ def pages(root: Path) -> dict[str, str]:
 
 
 def as_before(html: dict[str, str]) -> dict[str, str]:
-    """Pages as the site wrote them before the shared package. The one change to a statement's markup since is that
-    its element carries ``data-nosnippet``, which asks search engines not to quote it as the site's own words
-    (wts-core docs/adr/0008, the first question, decided for every site): each statement must have it, and with it
-    taken out the pages must be what they were, byte for byte."""
+    """Pages as the site wrote them before the shared package. The changes to a statement's markup since: its element
+    carries ``data-nosnippet``, which asks search engines not to quote it as the site's own words (wts-core
+    docs/adr/0008, the first question, decided for every site), so each statement must have it; and its link to the
+    page it is about names the page's folder, not its index.html (``old_links``). With those taken back, the pages
+    must be what they were, byte for byte."""
     for page in html.values():
         assert page.count(" data-nosnippet>") == page.count('<div class="statement"'), page
-    return {address: page.replace(" data-nosnippet>", ">") for address, page in html.items()}
+    return {address: old_links(page.replace(" data-nosnippet>", ">")) for address, page in html.items()}
+
+
+def old_links(text: str) -> str:
+    """Links as they were before 19 November 2026, when they began to name a page's folder ("../../areas/leeds/",
+    "/named/#send") rather than its index.html, so that search engines see one address for each page."""
+    text = re.sub(r'href="((?:\.\./)*(?:landlords|areas)/[a-z0-9-]+/)"', r'href="\1index.html"', text)
+    return text.replace('href="/named/#send"', 'href="/named/index.html#send"')
 
 
 def read(name: str):

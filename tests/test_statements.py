@@ -490,7 +490,7 @@ def test_beside_its_item_and_on_the_landlords_own_page(site):
     assert re.search(r'<!--statements:page--><div class="statement" role="note" id="statement-2"', council)
     # a statement about an area's page: on that page, and on the landlord's own page with a link to the area
     assert 'id="statement-3"' in area and area.index('class="warn"') < area.index('id="statement-3"')
-    assert ('<p class="st-about">This statement is about <a href="../../areas/leeds/index.html">what we say on the '
+    assert ('<p class="st-about">This statement is about <a href="../../areas/leeds/">what we say on the '
             'page for Leeds</a>.</p>') in council
     assert st.write_into(site, items) == 0                              # nothing new: nothing written
     assert st.write_into(site, []) == 3                                 # taken down: the slots are empty again
@@ -598,7 +598,7 @@ def test_report_kinds_and_links_that_choose_one(client, settings):
     assert labels[:2] == ["Something is wrong", "You&#x27;ve been characterised unfairly"]
     assert 'name="kind" value="wrong" checked>' in html
     assert '<p class="times">We reply within 5 working days, and decide within 20 working days.' in html
-    assert '<a href="../named/index.html">If you&#x27;re named on this site</a>' in html
+    assert '<a href="../named/">If you&#x27;re named on this site</a>' in html
     for kind, chosen in (("unfair", "unfair"), ("takedown", "takedown"), ("complaint", "unfair"),
                          ("correction", "wrong"), ("nonsense", "wrong")):
         page = client.get(f"/corrections/?kind={kind}").text
@@ -648,8 +648,8 @@ def test_the_named_page(settings, client):
                   "Statement from [your name], [the date it is published]",
                   "In their own words. Not checked or endorsed by Where Landlords Stand.",
                   "Decisions and appeals", "mailto:admin@wheretheystand.uk", "three months",
-                  'href="../corrections/index.html?kind=wrong"', 'href="../corrections/index.html?kind=unfair"',
-                  'href="../named/index.html#send"', 'action="../api/statements"', "The bands we work out",
+                  'href="../corrections/?kind=wrong"', 'href="../corrections/?kind=unfair"',
+                  'href="../named/#send"', 'action="../api/statements"', "The bands we work out",
                   "which companies we count as part of a group", "The homes we list"):
         assert words in text, words
     for name in ("name", "role", "page", "part", "text", "link", "email", "website"):
@@ -669,13 +669,13 @@ def test_the_named_page_is_linked_from_corrections_about_and_pages_that_name_lan
     from landlords.site import page
     from landlords.site_pages import area_html, corrections_html, text_page
 
-    link = '<a href="../named/index.html">If you&#x27;re named on this site</a>'
+    link = '<a href="../named/">If you&#x27;re named on this site</a>'
     assert link in corrections_html(W) and link in text_page(settings, W, "about")
     p = {"slug": "abri-group", "name": "Abri Group", "grade": {}, "bands": {}}
     area = area_html({"name": "Leeds", "slug": "leeds", "landlords": [(p, 100, "")], "sources": set()}, W, {})
-    assert '<a href="../../named/index.html">If you&#x27;re named on this site</a>' in area
+    assert '<a href="../../named/">If you&#x27;re named on this site</a>' in area
     footer = page("T", "", W, depth=1).split("<footer>")[1]
-    assert "named/index.html" not in footer
+    assert "named/" not in footer
     assert re.findall(r'<li><a href="[^"]+">([^<]+)</a></li>', footer.split('<div class="foot">')[1]) == [
         "About", "Methodology", "Corrections", "Accessibility", "Privacy", "Source code"]
 

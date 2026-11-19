@@ -201,7 +201,8 @@ def _leave_out(pages: _Pages, slug: str, note: str, w: dict) -> None:
 
     sitemap = pages.read("sitemap.xml")
     if sitemap is not None:
-        pages.now["sitemap.xml"] = re.sub(rf"<url><loc>[^<]*/landlords/{re.escape(slug)}/</loc></url>", "", sitemap)
+        pages.now["sitemap.xml"] = re.sub(
+            rf"<url><loc>[^<]*/landlords/{re.escape(slug)}/</loc>(?:<lastmod>[^<]*</lastmod>)?</url>", "", sitemap)
 
     # the downloads: its rows go from each file, and the downloads page says how many rows are left
     landlords = pages.read("data/landlords.csv")

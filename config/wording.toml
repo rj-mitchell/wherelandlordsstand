@@ -220,6 +220,8 @@ noscript = "Comparing needs JavaScript. Without it, each landlord's page has the
 heading = "Download the data"
 intro = "Everything on this site, as CSV files. Each row of published figures names the file it comes from and its licence."
 description = "Download the figures on Where Landlords Stand as CSV files, with each row's source and licence."
+# the name of the downloads as one dataset, for search engines (site_pages.dataset)
+dataset_name = "Social landlords in England: grades, tenant satisfaction, complaints and homes by area"
 attribution_heading = "Using this data"
 attribution = [
   "Tenant Satisfaction Measures, regulatory judgements and stock figures: Regulator of Social Housing. Contains public sector information licensed under the Open Government Licence v3.0.",

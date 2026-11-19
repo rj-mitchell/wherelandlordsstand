@@ -25,7 +25,11 @@ The kit's files are copied into `src/landlords/family/` by the kit's own sync sc
 (docs/OPERATIONS.md, "Scoring and the pages"). To change them, change the kit and sync again.
 
 - `head.html` gives every page its favicons, `theme-color` (roof slate), the kit's stylesheets and fonts, and the
-  link-preview card for this site. Every page also has Open Graph and Twitter tags and a canonical link.
+  link-preview card for this site. Every page also has Open Graph and Twitter tags and a canonical link. Some
+  carry structured data for search engines (schema.org JSON-LD, `site.json_ld`): the home page a WebSite published
+  by the charity (`https://wheretheystand.uk/#org`), landlords' and areas' pages a BreadcrumbList, and the data page
+  a Dataset with each CSV file and its licence. It is a block of data that browsers never run and that loads
+  nothing, so content pages still load no scripts.
 - `endorsement.html` (this site's spine and "A Where They Stand project", linking to wheretheystand.uk) sits under
   the site's name in the header.
 - `shelf.html` opens the footer of every page: the Where They Stand wordmark, the charity's line, links to

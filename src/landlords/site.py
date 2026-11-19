@@ -281,10 +281,14 @@ def footer(w: dict, up: str) -> str:
 
 
 def page(title: str, body: str, w: dict, depth: int, description: str = "", scripts: tuple[str, ...] = (),
-         here: str | None = None, path: str | None = None) -> str:
+         here: str | None = None, path: str | None = None, noindex: bool = False,
+         data: list[dict] | None = None) -> str:
     """A whole page: our own stylesheets, fonts and scripts only, nothing from anywhere else. ``here`` is the NAV entry
     this page belongs to, marked as the current tab. ``path`` is the page's address from the site's root
-    ("landlords/abri-group/"), for its canonical link and link card; None for a page with no address of its own."""
+    ("landlords/abri-group/"), for its canonical link and link card; None for a page with no address of its own.
+    ``noindex`` keeps a page out of search engines even once the site is launched (a thank-you page). ``data`` is
+    structured data about the page for search engines (schema.org, as JSON-LD), written only where the site's
+    address is known: a block of data that browsers never run, and that loads nothing."""
     up = "../" * depth
     live = launched()
     nav = "".join(f'<a href="{to(up, href)}"{' aria-current="page"' if href == here else ""}>{esc(label)}</a>'
@@ -304,7 +308,7 @@ def page(title: str, body: str, w: dict, depth: int, description: str = "", scri
     return f"""<!doctype html>
 <html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light dark"><title>{esc(title)}</title><meta name="description" content="{esc(description)}">
-{"" if live else '<meta name="robots" content="noindex">'}{card}
+{'<meta name="robots" content="noindex">' if noindex or not live else ""}{card}{json_ld(data) if url else ""}
 {_PARTS.get("head", "").replace(UP, up)}
 <link rel="preload" href="{up}{asset('fonts/source-sans-3-normal-latin.woff2')}" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{up}{asset('styles.css')}">{js}</head>
@@ -317,6 +321,31 @@ def page(title: str, body: str, w: dict, depth: int, description: str = "", scri
 {footer(w, up)}
 </body></html>
 """
+
+
+def json_ld(data: list[dict] | None) -> str:
+    """Structured data for search engines, one block per item. "</" is written "<\\/" so no text in it can end it."""
+    return "".join('<script type="application/ld+json">'
+                   + json.dumps({"@context": "https://schema.org", **d}, ensure_ascii=False,
+                                separators=(",", ":")).replace("</", "<\\/") + "</script>" for d in data or ())
+
+
+def site_url() -> str:
+    """The site's address, without a slash at the end ("https://wherelandlordsstand.com"); "" if it isn't set."""
+    return (_SITE.get("url") or "").rstrip("/")
+
+
+def charity() -> dict:
+    """The charity that runs the site, as structured data: the same @id wherever its sites name it."""
+    return {"@type": "Organization", "@id": "https://wheretheystand.uk/#org",
+            "name": _SITE.get("parent_name") or "Where They Stand", "url": "https://wheretheystand.uk/"}
+
+
+def breadcrumbs(*steps: tuple[str, str]) -> dict:
+    """Where a page sits under the home page, for search results: each step a name and an address from the root."""
+    return {"@type": "BreadcrumbList", "itemListElement": [
+        {"@type": "ListItem", "position": i, "name": name, "item": f"{site_url()}/{address}"}
+        for i, (name, address) in enumerate(steps, 1)]}
 
 
 def stack_table(heads: list[str], rows: list[str], numeric: tuple[int, ...] = (), cls: str = "stack") -> str:
@@ -572,7 +601,8 @@ def profile_html(p: dict, w: dict, area_slugs: dict[str, str] | None = None,
         out.append(f'<p class="src">Earlier names: {esc(", ".join(p["formerly"]))}.</p>')
     out.append(src.html(w))
     return page(titled(w["profile"]["title"].format(name=name), w), "".join(out), w, depth=2,
-                path=f"landlords/{p['slug']}/", description=profile_description(p, w))
+                path=f"landlords/{p['slug']}/", description=profile_description(p, w),
+                data=[breadcrumbs((w["site"]["name"], ""), (name, f"landlords/{p['slug']}/"))])
 
 
 def _area_link(a: dict, area_slugs: dict[str, str]) -> str:
@@ -656,7 +686,12 @@ def build(settings: Settings, out: Path | None = None) -> dict[str, int]:
     w = load_toml("wording.toml")
     out = out or settings.data_dir / "site"
     from landlords import hiding
+    from landlords.publish import site_dir
+    from landlords.site_pages import area_rows, build_extra, read_page_dates
 
+    # the day each page last changed, as the pages live now recorded it (or data/site's, while none are published),
+    # read before data/site is built again in their place
+    previous = read_page_dates(site_dir(settings))
     hiding.forget(settings, out)        # built from nothing: nothing of the pages it replaces is kept
     if out.exists():
         shutil.rmtree(out)
@@ -664,7 +699,6 @@ def build(settings: Settings, out: Path | None = None) -> dict[str, int]:
     (out / "method").mkdir()
     use_build(settings, write_assets(out), bool(settings.section("site").get("launched")))
     profiles = build_profiles(settings)
-    from landlords.site_pages import area_rows, build_extra
 
     areas = area_rows(settings, profiles)
     area_slugs = {a["gss"]: a["slug"] for a in areas.values()}
@@ -677,7 +711,7 @@ def build(settings: Settings, out: Path | None = None) -> dict[str, int]:
         (d / "index.html").write_text(text)
         sizes.append(len(text.encode()))
     (out / "method" / "index.html").write_text(method_html(settings, w))
-    extra = build_extra(settings, profiles, out, w, areas)
+    extra = build_extra(settings, profiles, out, w, areas, previous)
     # the statements published now, written into the pages' slots (published later, they are written in at once)
     from landlords import statements
 

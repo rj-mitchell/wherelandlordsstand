@@ -60,7 +60,10 @@ repository; the live site turns it on with `LANDLORDS_LAUNCHED=true` in `/opt/wh
 
 - Off: every page carries `noindex`, and `robots.txt` asks crawlers to stay away.
 - On: `robots.txt` allows crawling and points to `/sitemap.xml`, which lists every page. This needs `[site] url`
-  (or `LANDLORDS_SITE_URL`).
+  (or `LANDLORDS_SITE_URL`). Each page's `<lastmod>` is the day its content (what is inside `<main>`) last changed:
+  each build keeps a fingerprint and date for every page in `page-dates.json`, and the next build keeps a page's
+  date if its fingerprint is the same as in the pages live when it is built. The status and press pages, which
+  change with every build, have no date. Thank-you pages carry `noindex` and are not in the sitemap.
 
 It changes nothing else: new pages wait for approval by email either way (docs/DECISIONS.md, 12). A change to it
 counts as something new, so the next update builds the pages again. To switch it, edit `.env`, then run

@@ -17,6 +17,8 @@ from landlords.score import rules
 from landlords.sisters import council_url, councils_covered
 from landlords.site import (
     band_name,
+    breadcrumbs,
+    charity,
     esc,
     fill,
     fill_html,
@@ -25,6 +27,7 @@ from landlords.site import (
     page,
     rich,
     sister_link,
+    site_url,
     stack_table,
     titled,
 )
@@ -114,8 +117,10 @@ def index_html(profiles: list[dict], w: dict) -> str:
     for letter, ps in by_letter.items():
         items = "".join(f'<li><a href="landlords/{esc(p["slug"])}/">{esc(p["name"])}</a></li>' for p in ps)
         parts.append(f'<h3>{esc(letter)}</h3><ul class="az">{items}</ul>')
+    website = {"@type": "WebSite", "@id": f"{site_url()}/#website", "name": w["site"]["name"], "url": f"{site_url()}/",
+               "description": w["site"]["tagline"], "inLanguage": "en-GB", "publisher": charity()}
     return page(w["site"]["home_title"], "".join(parts), w, depth=0, scripts=("search.js",), here="",
-                path="", description=w["site"]["tagline"])
+                path="", description=w["site"]["tagline"], data=[website])
 
 
 # Council areas
@@ -190,7 +195,8 @@ def area_html(a: dict, w: dict, sources: dict) -> str:
             + src.html(w))
     council = any(p.get("type") == "council" for p, _, _ in a["landlords"])
     return page(area_title(a["name"], council, w), body, w, depth=2, here="areas/", path=f"areas/{a['slug']}/",
-                description=area_description(a["name"], [(p["name"], f"{h:,.0f}") for p, h, _ in a["landlords"]], w))
+                description=area_description(a["name"], [(p["name"], f"{h:,.0f}") for p, h, _ in a["landlords"]], w),
+                data=[breadcrumbs((w["site"]["name"], ""), (t["heading"], "areas/"), (a["name"], f"areas/{a['slug']}/"))])
 
 
 def areas_index_html(areas: dict[str, dict], w: dict) -> str:
@@ -313,6 +319,27 @@ def downloads(settings: Settings, profiles: list[dict], out: Path, w: dict) -> l
     return [(n, t, c) for n, t, c in files]
 
 
+# The licence of each download, as the data page and the terms page state them: the regulator's figures under the
+# Open Government Licence v3.0, and our own work (the bands, homes by area) under CC BY 4.0. The Ombudsman's terms
+# for reuse are still being confirmed, so its file states none.
+OGL = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+CC_BY = "https://creativecommons.org/licenses/by/4.0/"
+LICENCES = {"landlords.csv": OGL, "bands.csv": CC_BY, "tenant-satisfaction-measures.csv": OGL,
+            "regulatory-judgements.csv": OGL, "homes-by-area.csv": CC_BY}
+
+
+def dataset(files: list[tuple[str, str, int]], w: dict) -> dict:
+    """The data page's downloads as a schema.org Dataset, each file a DataDownload with its licence (LICENCES)."""
+    t = w["downloads"]
+    url = site_url()
+    return {"@type": "Dataset", "name": t["dataset_name"], "description": t["description"], "url": f"{url}/data/",
+            "inLanguage": "en-GB", "isAccessibleForFree": True, "spatialCoverage": "England",
+            "creator": {"@type": "Organization", "name": w["site"]["name"], "url": f"{url}/"}, "publisher": charity(),
+            "distribution": [{"@type": "DataDownload", "name": n, "description": t["files"].get(n, ""),
+                              "contentUrl": f"{url}/data/{n}", "encodingFormat": "text/csv",
+                              **({"license": LICENCES[n]} if n in LICENCES else {})} for n, _, _ in files]}
+
+
 def downloads_html(files: list[tuple[str, str, int]], w: dict) -> str:
     t = w["downloads"]
     items = "".join(f'<li><a href="{esc(n)}">{esc(n)}</a> <span class="hint">({c:,} rows, '
@@ -320,7 +347,8 @@ def downloads_html(files: list[tuple[str, str, int]], w: dict) -> str:
                     for n, text, c in files)
     body = (f"<h1>{esc(t['heading'])}</h1><p>{esc(t['intro'])}</p><ul class=\"list\">{items}</ul>"
             f"<h2>{esc(t['attribution_heading'])}</h2>" + "".join(f"<p>{esc(x)}</p>" for x in t["attribution"]))
-    return page(f"{t['heading']} | {w['site']['name']}", body, w, depth=1, path="data/", description=t["intro"])
+    return page(f"{t['heading']} | {w['site']['name']}", body, w, depth=1, path="data/", description=t["intro"],
+                data=[dataset(files, w)])
 
 
 # Corrections, "If you're named" and privacy
@@ -448,7 +476,7 @@ def named_thanks_html(w: dict) -> str:
                 f"<h1>{esc(t['thanks_heading'])}</h1><p>{esc(t['thanks'])}</p>"
                 f'<p class="times">{esc(w["corrections"]["times"])}</p>'
                 f'<p><a href="./">{esc(load_toml("pages.toml")["named"]["heading"])}</a></p>', w, depth=1,
-                path="named/thanks.html")
+                path="named/thanks.html", noindex=True)
 
 
 def thanks_html(w: dict) -> str:
@@ -456,7 +484,7 @@ def thanks_html(w: dict) -> str:
     return page(f"{t['thanks_heading']} | {w['site']['name']}",
                 f"<h1>{esc(t['thanks_heading'])}</h1><p>{esc(t['thanks'])}</p>"
                 f'<p class="times">{esc(t["times"])} {esc(t["times_note"])}</p>', w, depth=1,
-                path="corrections/thanks.html")
+                path="corrections/thanks.html", noindex=True)
 
 
 def privacy_html(w: dict) -> str:
@@ -565,10 +593,40 @@ def not_found_html(w: dict) -> str:
     return text.replace('href="/./"', 'href="/"')
 
 
-def robots_and_sitemap(settings: Settings, out: Path) -> None:
-    """Until the site is launched, crawlers are asked to stay away. Once launched, they get a sitemap."""
+# Where each set of pages records, for its sitemap, a fingerprint of each page's content and the day it last changed
+PAGE_DATES = "page-dates.json"
+# Pages that change with every build for no reason a reader would care about (the day they were made), so the
+# sitemap gives no date for them: the status page, rewritten every week, and the press page, which gives today's date
+UNDATED = {"status/", "press/"}
+
+
+def page_dates(out: Path, previous: dict, today: str) -> dict[str, dict]:
+    """Each page's address, a fingerprint of its main content (what is inside <main>: not the header, the footer or
+    the head, which change for every page at once) and the day that content last changed: the day recorded by the
+    pages it replaces (``previous``, their PAGE_DATES) if it is the same, else ``today``."""
+    import hashlib
+    import re
+
+    out_dates = {}
+    for path in sorted(out.rglob("index.html")):
+        address = path.relative_to(out).as_posix().removesuffix("index.html")
+        main = re.search(r'<main id="main" class="wrap">(.*)</main>', path.read_text(), re.S)
+        digest = hashlib.sha256((main[1] if main else path.read_text()).encode()).hexdigest()[:16]
+        was = previous.get(address) or {}
+        out_dates[address] = {"hash": digest, "date": was["date"] if was.get("hash") == digest else today}
+    return out_dates
+
+
+def robots_and_sitemap(settings: Settings, out: Path, previous: dict | None = None, today: str | None = None) -> None:
+    """Until the site is launched, crawlers are asked to stay away. Once launched, they get a sitemap, with the day
+    each page's content last changed (``page_dates``, kept in PAGE_DATES beside the pages for the next build).
+    ``previous`` is the PAGE_DATES of the pages these replace, if any."""
+    from datetime import UTC, datetime
+
     from landlords.site import launched
 
+    dates = page_dates(out, previous or {}, today or datetime.now(UTC).date().isoformat())
+    (out / PAGE_DATES).write_text(json.dumps(dates, indent=1, sort_keys=True) + "\n")
     site = settings.section("site")
     if not launched():
         (out / "robots.txt").write_text("# Not launched yet: please don't index.\nUser-agent: *\nDisallow: /\n")
@@ -576,16 +634,27 @@ def robots_and_sitemap(settings: Settings, out: Path) -> None:
     url = (site.get("url") or "").rstrip("/")
     if not url.startswith("https://"):
         raise RuntimeError("[site] launched is true but [site] url is not set (https://…): see docs/DEPLOY.md")
-    pages = sorted(p.relative_to(out).as_posix() for p in out.rglob("index.html"))
-    locs = "".join(f"<url><loc>{url}/{p.removesuffix('index.html')}</loc></url>" for p in pages)
+    locs = "".join(f"<url><loc>{url}/{p}</loc>" + ("" if p in UNDATED else f"<lastmod>{d['date']}</lastmod>")
+                   + "</url>" for p, d in dates.items())
     (out / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n'
                                      f'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{locs}</urlset>\n')
     (out / "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: {url}/sitemap.xml\n")
 
 
-def build_extra(settings: Settings, profiles: list[dict], out: Path, w: dict, areas: dict | None = None) -> dict:
+def read_page_dates(folder: Path) -> dict:
+    """The PAGE_DATES of a set of pages: {} if it has none (pages built before it was kept) or it can't be read."""
+    try:
+        dates = json.loads((folder / PAGE_DATES).read_text())
+        return dates if isinstance(dates, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def build_extra(settings: Settings, profiles: list[dict], out: Path, w: dict, areas: dict | None = None,
+                previous: dict | None = None) -> dict:
     """Write every page except the profiles and the method page (the stylesheet, scripts and fonts are in assets/,
-    written by ``site.write_assets``). ``areas`` is ``area_rows``, if already worked out."""
+    written by ``site.write_assets``). ``areas`` is ``area_rows``, if already worked out; ``previous``, the
+    PAGE_DATES of the pages these replace (``robots_and_sitemap``)."""
     from landlords.register import aliases, landlords
 
     parents, small = search_facts(settings)
@@ -632,5 +701,5 @@ def build_extra(settings: Settings, profiles: list[dict], out: Path, w: dict, ar
 
     status.write(settings, out, w)
     (out / "404.html").write_text(not_found_html(w))
-    robots_and_sitemap(settings, out)
+    robots_and_sitemap(settings, out, previous)
     return {"areas": len(areas), "downloads": len(files)}

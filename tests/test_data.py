@@ -105,7 +105,9 @@ def test_pages_are_small_self_contained_and_carry_the_warning():
         text = path.read_text()
         assert len(text.encode()) < 100 * 1024, path
         assert refusal in text, path
-        assert "<script" not in text, path                       # readable without JavaScript, nothing third-party
+        # readable without JavaScript, nothing third-party: the one script element is structured data for search
+        # engines, which browsers never run
+        assert "<script" not in re.sub(r'<script type="application/ld\+json">.*?</script>', "", text), path
         # nothing loaded from another site (a canonical link names this page's own address; it loads nothing)
         assert not re.search(r'<link(?![^>]*rel="canonical")[^>]+href="https?:', text), path
         assert not re.search(r'src="https?:', text), path
@@ -160,8 +162,10 @@ def test_area_pages_link_to_the_council_on_where_councils_stand_where_it_is_cove
 @pytest.mark.skipif(not (settings.staging_dir / "scores.parquet").exists(), reason="data not scored")
 def test_the_launch_switch(tmp_path):
     import dataclasses
+    import json
 
     from landlords import site
+    from landlords.site_pages import CC_BY, OGL
 
     def build(**site_cfg):
         raw = {**settings.raw, "site": {**settings.section("site"), **site_cfg}}
@@ -183,7 +187,22 @@ def test_the_launch_switch(tmp_path):
     assert "noindex" not in page
     assert "Sitemap: https://example.org/sitemap.xml" in (live / "robots.txt").read_text()
     assert "<loc>https://example.org/landlords/abri-group/</loc>" in (live / "sitemap.xml").read_text()
-    assert "<loc>https://example.org/named/</loc>" in (live / "sitemap.xml").read_text()   # "If you're named"
+    sitemap = (live / "sitemap.xml").read_text()
+    assert "<loc>https://example.org/named/</loc>" in sitemap   # "If you're named"
+    # the day each page last changed; none for the pages that change with every build
+    assert re.search(r"<loc>https://example.org/landlords/abri-group/</loc><lastmod>\d{4}-\d\d-\d\d</lastmod>", sitemap)
+    assert "<url><loc>https://example.org/status/</loc></url>" in sitemap and "thanks.html" not in sitemap
+    for thanks in ("corrections/thanks.html", "named/thanks.html"):
+        assert '<meta name="robots" content="noindex">' in (live / thanks).read_text(), thanks
+    # structured data for search engines, at the site's own address
+    assert '"@type":"WebSite"' in (live / "index.html").read_text()
+    assert '"item":"https://example.org/landlords/abri-group/"' in page
+    assert '"item":"https://example.org/areas/leeds/"' in (live / "areas" / "leeds" / "index.html").read_text()
+    data = json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script>',
+                                (live / "data" / "index.html").read_text())[1])
+    licences = {d["name"]: d.get("license") for d in data["distribution"]}
+    assert licences == {"landlords.csv": OGL, "bands.csv": CC_BY, "tenant-satisfaction-measures.csv": OGL,
+                        "ombudsman.csv": None, "regulatory-judgements.csv": OGL, "homes-by-area.csv": CC_BY}
     site.build(settings, settings.data_dir / "site")  # put the test-version pages back
 
 
@@ -321,7 +340,7 @@ def test_a_published_statement_is_built_into_its_pages_and_nowhere_else(tmp_path
     assert re.search(r'<h3 id="bands">.*?<div class="statement".*?' + re.escape(phrase), abri, re.S)
     assert phrase in (out / "areas" / "birmingham" / "index.html").read_text()
     assert phrase in (out / "landlords" / "birmingham-city-council" / "index.html").read_text()
-    assert "<script" not in abri and len(abri.encode()) < 100 * 1024
+    assert "<script" not in re.sub(r'<script type="application/ld\+json">.*?</script>', "", abri) and len(abri.encode()) < 100 * 1024
     # never in the page's title, description or link card, and in an element that asks search engines not to quote it
     assert phrase not in abri.split("</head>")[0] and abri.count("data-nosnippet") == abri.count('class="statement"')
     for path in out.rglob("*"):

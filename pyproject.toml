@@ -20,7 +20,7 @@ dependencies = [
     # (wts-core docs/adr/0006). This site has no AI, so it never takes the "ai" extra (docs/DECISIONS.md, 6;
     # tests/test_dependencies.py). "cli" is Typer, for the shared commands; "offsite" is httpx, for the copies of
     # the backup sent to Backblaze B2. To take a newer release, change the version in both places and run `uv lock`.
-    "wts-core[cli,offsite] @ https://github.com/rj-mitchell/wts-core/releases/download/v0.3.1/wts_core-0.3.1-py3-none-any.whl",
+    "wts-core[cli,offsite] @ https://github.com/rj-mitchell/wts-core/releases/download/v0.3.2/wts_core-0.3.2-py3-none-any.whl",
 ]
 
 [project.scripts]

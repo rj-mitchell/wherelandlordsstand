@@ -19,7 +19,7 @@ jobs:
   # ruff check ., pytest. The tests on the real data (tests/test_data.py: the 100 KB page budget, no scripts on
   # landlords' pages, the family binding, reconciliation) skip themselves here; the next job runs them.
   tests:
-    uses: rj-mitchell/wts-core/.github/workflows/python.yml@v0.3.1
+    uses: rj-mitchell/wts-core/.github/workflows/python.yml@v0.3.2
 
   # The real pages, built from the publishers' files, then the tests on them and the accessibility check. The files are
   # kept in the Actions cache and fetched again only when config/sources.toml changes, so the publishers' servers are
@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: rj-mitchell/wts-core/.github/actions/setup@v0.3.1
+      - uses: rj-mitchell/wts-core/.github/actions/setup@v0.3.2
       - run: uv sync --frozen --python 3.12
       - name: The publishers' files, from the cache
         id: raw
@@ -51,7 +51,7 @@ jobs:
       # axe, WCAG 2.2 AA, light and dark, desktop and phone: scripts/a11y.mjs, with Node 22, Playwright and axe at the
       # family's versions
       - name: Accessibility check
-        uses: rj-mitchell/wts-core/.github/actions/a11y@v0.3.1
+        uses: rj-mitchell/wts-core/.github/actions/a11y@v0.3.2
         with:
           url: http://127.0.0.1:8000
       - name: Show the server's log if anything failed
@@ -66,7 +66,7 @@ jobs:
   # The server's image must build, and its command must run inside it. The image has no git: the shared package is
   # installed from the wheel of its release (pyproject.toml), which this job proves on every pull request.
   docker:
-    uses: rj-mitchell/wts-core/.github/workflows/docker.yml@v0.3.1
+    uses: rj-mitchell/wts-core/.github/workflows/docker.yml@v0.3.2
     with:
       tag: wherelandlordsstand:ci
       run: landlords --help

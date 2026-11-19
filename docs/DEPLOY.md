@@ -126,6 +126,15 @@ Stylesheets, scripts, fonts, icons and the link card are served from `/assets/` 
 content, and the front door and the site tell caches to keep them for a year. Pages and downloads are checked with
 the server each time. So a new release needs no Cloudflare purge.
 
+### Addresses
+
+Each page has one address, its folder (`/landlords/abri-group/`), which every link and the canonical link name. The
+site moves `…/index.html` there for good (301, keeping the query), and a folder asked for without its slash to the
+address with it (301, from the site's root, so it keeps https). The container runs `landlords serve
+--behind-proxy`, which also tells uvicorn to trust the front door's `X-Forwarded-Proto` from any address (the front
+door reaches it over the Docker network, not from 127.0.0.1). That is safe only while the app's port is published on
+the server's `127.0.0.1` alone (`deploy/docker-compose.yml`; `tests/test_api.py` checks it).
+
 ### Backups
 
 Everything but the state database can be rebuilt from the publishers' files. The state database holds readers'

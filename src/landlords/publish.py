@@ -125,7 +125,7 @@ def update(settings: Settings, fetch: bool = True, notify: bool = True) -> dict:
             days = int(cfg.get("approval_days", 14))
             token = own(settings).add_approval(info["build"], days)
             url = (settings.section("site").get("url") or "").rstrip("/")
-            links = {"approve": f"{url}/admin/approve/{token}", "preview": f"{url}/admin/preview/{token}/index.html",
+            links = {"approve": f"{url}/admin/approve/{token}", "preview": f"{url}/admin/preview/{token}/",
                      "days": days}
             info["approval"] = "waiting for approval by email"
     if info["build"]:

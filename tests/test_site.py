@@ -75,8 +75,8 @@ def test_sentences_with_links():
 
     assert rich("Read <this> [the code](https://example.org/a?b=1&c=2).") == (
         'Read &lt;this&gt; <a href="https://example.org/a?b=1&amp;c=2">the code</a>.')
-    assert rich("Use the [form](corrections/index.html).", "../") == (
-        'Use the <a href="../corrections/index.html">form</a>.')
+    assert rich("Use the [form](corrections/).", "../") == (
+        'Use the <a href="../corrections/">form</a>.')
     assert rich("Email [a@b.org](mailto:a@b.org).") == 'Email <a href="mailto:a@b.org">a@b.org</a>.'
     assert fill_html("It's {link}, or {x}.", link="<a>here</a>", x="<b>") == "It&#x27;s <a>here</a>, or <b>."
 
@@ -97,7 +97,7 @@ def test_area_tables_stack_on_a_phone_and_stay_tables():
     assert f'<th scope="col" role="columnheader" class="n">{t["homes"]}</th>' in html
     for label, value in ((t["homes"], "12,345"), (t["grade"], "G1")):
         assert f'data-label="{label}">{value}</td>' in html
-    assert '<tr role="row"><td role="cell"><a href="../../landlords/abri-group/index.html">Abri Group</a></td>' in html
+    assert '<tr role="row"><td role="cell"><a href="../../landlords/abri-group/">Abri Group</a></td>' in html
 
 
 def test_search_tells_screen_readers_the_number_found_not_the_whole_list():
@@ -264,11 +264,11 @@ def test_the_search_page_links_a_groups_company_to_the_group_and_counts_no_miss(
     s = load_toml("wording.toml")["search"]
     r = _run_search_page(_search_names(), "Example North")
     assert r["items"] == [s["part"].replace("{name}", "Example North Limited").replace(
-        "{group}", '<a href="landlords/example-group/index.html">Example Group</a>')]
+        "{group}", '<a href="landlords/example-group/">Example Group</a>')]
     assert r["status"] == s["found_one"] and r["posts"] == []
     r = _run_search_page(_search_names(), "Sibling Care")
     assert r["items"] == [s["group"].replace("{name}", "Sibling Care Limited").replace(
-        "{group}", '<a href="landlords/sibling-homes/index.html">Sibling Homes</a>')]
+        "{group}", '<a href="landlords/sibling-homes/">Sibling Homes</a>')]
 
 
 def test_the_search_page_counts_a_miss_when_it_finds_only_landlords_without_a_page():
@@ -277,7 +277,7 @@ def test_the_search_page_counts_a_miss_when_it_finds_only_landlords_without_a_pa
     from landlords.config import load_toml
 
     s = load_toml("wording.toml")["search"]
-    areas = f' <a href="areas/index.html">{s["areas_link"]}</a>'
+    areas = f' <a href="areas/">{s["areas_link"]}</a>'
     r = _run_search_page(_search_names(), "Tiny Homes")
     assert r["items"] == [s["small"].replace("{name}", "Tiny Homes Limited"), s["unlisted_areas"] + areas]
     assert r["status"] == s["found_small"] and r["posts"] == [{"q": "Tiny Homes"}]
@@ -288,4 +288,4 @@ def test_the_search_page_counts_a_miss_when_it_finds_only_landlords_without_a_pa
     r = _run_search_page(_search_names(), "Nobody At All")
     assert r["items"] == [s["none"] + areas] and r["status"] == s["found_none"] and r["posts"] == [{"q": "Nobody At All"}]
     r = _run_search_page(_search_names(), "Example Council")
-    assert r["posts"] == [] and r["items"][0].startswith('<a href="landlords/example-council/index.html">')
+    assert r["posts"] == [] and r["items"][0].startswith('<a href="landlords/example-council/">')

@@ -119,3 +119,17 @@ def test_the_approval_page_uses_the_live_builds_stylesheet(site):
     token = state.add_approval("20261105-000000", 14)
     text = client.get(f"/admin/approve/{token}").text
     assert 'href="/assets/styles.0123456789.css"' in text and 'href="/assets/fonts.0123456789.css"' in text
+
+
+def test_the_preview_serves_a_folders_page_at_its_slashed_address(site):
+    """The pages link to folders ("../../areas/leeds/"), relative to the page, so the preview of a build must serve a
+    folder's page at its address with the slash, or those links would lead out of the build (19 November 2026)."""
+    settings, state, client = site
+    token = state.add_approval("20261105-000000", 14)
+    assert client.get(f"/admin/preview/{token}/").text == "home 20261105-000000"
+    r = client.get(f"/admin/preview/{token}/landlords/x", follow_redirects=False)
+    assert r.status_code == 301 and r.headers["location"] == f"/admin/preview/{token}/landlords/x/"
+    # links in emails sent before still work: the preview is never sent on to a folder's address
+    r = client.get(f"/admin/preview/{token}/index.html", follow_redirects=False)
+    assert r.status_code == 200 and r.text == "home 20261105-000000"
+    assert f"/admin/preview/{token}/\"" in client.get(f"/admin/approve/{token}").text

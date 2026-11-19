@@ -2,7 +2,7 @@
 # every sentence lives here.
 # {contact}, {operator}, {parent}, {site} and {url} are filled from config/settings.toml ([site]).
 # [Words](address) in a sentence become a link: an address that doesn't start with https:// or mailto: is a page on this
-# site, from its root ("corrections/index.html"). A paragraph that is a list of sentences is shown as a bulleted list.
+# site, from its root ("corrections/"). A paragraph that is a list of sentences is shown as a bulleted list.
 
 [about]
 heading = "About"
@@ -14,7 +14,7 @@ sections = [
   ]],
   ["Limits", [
     "It gives information to help you decide, and never tells anyone to turn down an offer: saying no to an offer can affect your place on the housing register.",
-    "It never changes the publishers' figures. Where we work something out, such as how a landlord compares with similar landlords, we say so and explain how on the [Methodology](method/index.html) page.",
+    "It never changes the publishers' figures. Where we work something out, such as how a landlord compares with similar landlords, we say so and explain how on the [Methodology](method/) page.",
   ]],
   ["Running the site", [
     "Where They Stand is applying to register as a charity in England and Wales. Until it is registered, the site is run by its founder, {operator}.",
@@ -32,15 +32,15 @@ sections = [
     "Each council's page here, and each council area's page, links to that council's page on Where Councils Stand, where that site covers the council. Where Councils Stand links back here.",
   ]],
   ["Contact", [
-    "Email [{contact}](mailto:{contact}). To report a mistake, use the form on the [Corrections](corrections/index.html) page.",
-    "Landlords this site names, and people acting for them, can read [If you're named on this site](named/index.html).",
+    "Email [{contact}](mailto:{contact}). To report a mistake, use the form on the [Corrections](corrections/) page.",
+    "Landlords this site names, and people acting for them, can read [If you're named on this site](named/).",
   ]],
   ["More about the site", [
     [
-      "[Terms of use](terms/index.html) set out how you may use and reuse the site's work.",
-      "[Download the data](data/index.html) as CSV files, with each row's source and licence.",
-      "The [Press](press/index.html) page has facts in brief, how to cite a page, and logo files.",
-      "[Site status](status/index.html) says when the pages were last made and when the site last looked for new files.",
+      "[Terms of use](terms/) set out how you may use and reuse the site's work.",
+      "[Download the data](data/) as CSV files, with each row's source and licence.",
+      "The [Press](press/) page has facts in brief, how to cite a page, and logo files.",
+      "[Site status](status/) says when the pages were last made and when the site last looked for new files.",
     ],
   ]],
 ]
@@ -68,7 +68,7 @@ sections = [
     "Please don't send automated requests in bulk: everything is in the data downloads. Please don't try to break, overload or gain unauthorised access to the site, or present its figures as saying something they do not. Access may be limited or blocked to protect the service.",
   ]],
   ["Responsibility", [
-    "We check the site against its sources, and correct our mistakes when we find them; each correction is listed on the [Corrections](corrections/index.html) page. To the extent the law allows, {parent} is not liable for any loss arising from use of, or reliance on, the site. Nothing in these terms limits liability that cannot be limited by law.",
+    "We check the site against its sources, and correct our mistakes when we find them; each correction is listed on the [Corrections](corrections/) page. To the extent the law allows, {parent} is not liable for any loss arising from use of, or reliance on, the site. Nothing in these terms limits liability that cannot be limited by law.",
   ]],
   ["Changes and law", [
     "These terms may be updated; the date above shows when. They are governed by the law of England and Wales, and the courts of England and Wales have jurisdiction, without affecting any rights you have where you live.",
@@ -96,7 +96,7 @@ sections = [
     "Links to the regulator's and the Ombudsman's files go to sites we do not run; some are spreadsheets, which can be hard to use with a screen reader.",
   ]],
   ["Reporting a problem", [
-    "If you find something hard to use, or need information in a different format, email {contact} or use the form on the [Corrections](corrections/index.html) page. We aim to reply within 10 working days.",
+    "If you find something hard to use, or need information in a different format, email {contact} or use the form on the [Corrections](corrections/) page. We aim to reply within 10 working days.",
   ]],
 ]
 
@@ -123,17 +123,17 @@ id = "who"
 heading = "Landlords and people acting for them"
 text = [
   "Every landlord this site covers: councils, housing associations and for-profit landlords in England with 1,000 or more homes, and the companies in their groups. Someone acting for a landlord can use it too: a member of its staff or board, or a council officer or councillor speaking for a council as a landlord.",
-  "Everyone else, including tenants and people looking for a home, is welcome to tell us about a mistake on the [Corrections](corrections/index.html) page.",
-  "If your own name or details are on this site and you don't speak for a landlord, [ask us to remove them](corrections/index.html?kind=takedown). We deal with these first. The [privacy page](privacy/index.html) says more.",
+  "Everyone else, including tenants and people looking for a home, is welcome to tell us about a mistake on the [Corrections](corrections/) page.",
+  "If your own name or details are on this site and you don't speak for a landlord, [ask us to remove them](corrections/?kind=takedown). We deal with these first. The [privacy page](privacy/) says more.",
 ]
 
 [[named.section]]
 id = "routes"
 heading = "Raising a concern"
 routes = [
-  ["Errors", "A figure, a name, a date, a label or a connection is wrong. For example, a grade shown for the wrong landlord, a name matched to the wrong landlord, a company counted in the wrong group, a merger we missed, or homes listed in the wrong council area. We put it right as soon as we can, and say what changed and when in the [list of fixes](corrections/index.html#log).", "Tell us what is wrong", "corrections/index.html?kind=wrong"],
-  ["Unfair descriptions", "The figures are right, but our own words, labels or groupings aren't fair. For example, a sentence in our own voice that takes sides, or a group of similar landlords that suggests something the figures don't show. We check it against the charity's [impartiality policy](https://wheretheystand.uk/right-of-reply) and, if it breaks it, put it right in the same way.", "Report unfair treatment", "corrections/index.html?kind=unfair"],
-  ["Statements in your own words", "The figures are right and we have followed the policy, but you see it differently. You can add a short statement beside what we say about you. It is shown as you wrote it, marked as yours.", "Write a statement", "named/index.html#send"],
+  ["Errors", "A figure, a name, a date, a label or a connection is wrong. For example, a grade shown for the wrong landlord, a name matched to the wrong landlord, a company counted in the wrong group, a merger we missed, or homes listed in the wrong council area. We put it right as soon as we can, and say what changed and when in the [list of fixes](corrections/#log).", "Tell us what is wrong", "corrections/?kind=wrong"],
+  ["Unfair descriptions", "The figures are right, but our own words, labels or groupings aren't fair. For example, a sentence in our own voice that takes sides, or a group of similar landlords that suggests something the figures don't show. We check it against the charity's [impartiality policy](https://wheretheystand.uk/right-of-reply) and, if it breaks it, put it right in the same way.", "Report unfair treatment", "corrections/?kind=unfair"],
+  ["Statements in your own words", "The figures are right and we have followed the policy, but you see it differently. You can add a short statement beside what we say about you. It is shown as you wrote it, marked as yours.", "Write a statement", "named/#send"],
 ]
 
 [[named.section]]
@@ -206,7 +206,7 @@ text = [
 id = "information"
 heading = "Your information"
 text = [
-  "A statement is published with your name and role, as you wrote them. The email address you give is used only to confirm who you are, and to let you update or withdraw your statement. It is never shown. We keep it while the statement is waiting or shown, and delete it three months after the statement is withdrawn, declined or removed. The [privacy page](privacy/index.html) says more.",
+  "A statement is published with your name and role, as you wrote them. The email address you give is used only to confirm who you are, and to let you update or withdraw your statement. It is never shown. We keep it while the statement is waiting or shown, and delete it three months after the statement is withdrawn, declined or removed. The [privacy page](privacy/) says more.",
 ]
 
 [press]
@@ -216,7 +216,7 @@ description = "For journalists: facts about Where Landlords Stand, how to cite a
 sections = [
   ["Contact", [
     "If you are writing about {site}, email [{contact}](mailto:{contact}). We will reply as soon as we can.",
-    "To tell us about a mistake on a page, use the form on the [Corrections](corrections/index.html) page.",
+    "To tell us about a mistake on a page, use the form on the [Corrections](corrections/) page.",
   ]],
   ["Facts in brief", [
     [
@@ -233,8 +233,8 @@ sections = [
   ["Citing a landlord's page", [
     "Give the landlord's name, the site's name, the page's address and the day you looked at it. For example:",
     "{example_name}. {site}. {example_url} (seen on {today}).",
-    "The figures belong to the publishers: the regulator's are under the Open Government Licence v3.0. The bands and the groups of similar landlords are our own work, under CC BY 4.0: credit {site} and link to the page. The [terms](terms/index.html) say more.",
-    "Pages change when new figures come out. The [Site status](status/index.html) page says when they were last made.",
+    "The figures belong to the publishers: the regulator's are under the Open Government Licence v3.0. The bands and the groups of similar landlords are our own work, under CC BY 4.0: credit {site} and link to the page. The [terms](terms/) say more.",
+    "Pages change when new figures come out. The [Site status](status/) page says when they were last made.",
   ]],
   ["Logo files", [
     "You can use these to show the site in a story about it. Please don't change them, or use them in a way that suggests the site supports you or your work.",

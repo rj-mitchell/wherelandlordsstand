@@ -254,6 +254,10 @@ def test_every_answer_to_what_is_sent_is_as_before(scenario):
                                 "json": {"ok": False, "error": "please say what is wrong"}}
     assert answers.pop(case) == {"case": case, "status": 400, "location": None, "text": None,
                                  "json": {"ok": False, "error": "Please say what is wrong, in a few words."}}
+    # The page that gives a sender's words back now links to the form at its folder's address (shared.old_links).
+    for answer in answers.values():
+        if answer.get("text"):
+            answer["text"] = shared.old_links(answer["text"])
     # Every other answer, word for word and byte for byte: each refusal, the page that gives a sender's words back,
     # the hidden field, the limit of ten a minute in each route's own words.
     assert answers == before

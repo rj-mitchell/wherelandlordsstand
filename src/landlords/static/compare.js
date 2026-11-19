@@ -32,7 +32,7 @@
     if (!rows.length) { table.innerHTML = `<p>${esc(text.empty)}</p>`; return; }
     const line = (label, f) => `<tr><th scope="row">${esc(label)}</th>${rows.map((l) => `<td>${f(l)}</td>`).join("")}</tr>`;
     // the table scrolls sideways on a phone, so its box takes the keyboard focus and is named by the page's heading
-    let html = `<div class="scroll" tabindex="0" role="region" aria-labelledby="compare-heading"><table class="cmp"><thead><tr><th scope="col"><span class="sr-only">${esc(text.measure)}</span></th>${rows.map((l) => `<th scope="col"><a href="${root}landlords/${esc(l.slug)}/index.html">${esc(l.name)}</a></th>`).join("")}</tr></thead><tbody>`;
+    let html = `<div class="scroll" tabindex="0" role="region" aria-labelledby="compare-heading"><table class="cmp"><thead><tr><th scope="col"><span class="sr-only">${esc(text.measure)}</span></th>${rows.map((l) => `<th scope="col"><a href="${root}landlords/${esc(l.slug)}/">${esc(l.name)}</a></th>`).join("")}</tr></thead><tbody>`;
     html += line(text.type, (l) => esc(l.type));
     html += line(text.homes, (l) => l.homes ? esc(l.homes.toLocaleString("en-GB")) : "–");
     html += line(text.grade, (l) => l.grade ? `${esc(l.grade)} <span class="hint">(${esc(l.grade_date)})</span>` : esc(text.not_graded));

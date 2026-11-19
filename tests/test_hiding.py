@@ -147,7 +147,7 @@ def test_a_hidden_landlord_is_left_out_of_every_list_and_its_page_shows_the_note
     # the list of all landlords, and its count
     assert "landlords/example-council/" not in now["index.html"] and "Example Council" not in now["index.html"]
     assert "3 social landlords" in before["index.html"].decode() and "2 social landlords" in now["index.html"]
-    assert 'landlords/example-housing/index.html">Example Housing</a>' in now["index.html"]
+    assert 'landlords/example-housing/">Example Housing</a>' in now["index.html"]
     # search, and the compare page's box and data
     names = json.loads(now["names.json"])
     assert [e.get("s") for e in names] == ["example-housing", "other-homes", None]
@@ -160,7 +160,7 @@ def test_a_hidden_landlord_is_left_out_of_every_list_and_its_page_shows_the_note
     assert "A council&#x27;s homes are counted in its own area." not in leeds
     assert "A council&#x27;s homes are counted in its own area." in before["areas/leeds/index.html"].decode()
     assert now["areas/york/index.html"] == before["areas/york/index.html"].decode()       # it has no homes there
-    assert re.findall(r'<a href="(\w+)/index.html">[^<]*</a> <span class="hint">\((\d+)\)', now["areas/index.html"]) \
+    assert re.findall(r'<a href="(\w+)/">[^<]*</a> <span class="hint">\((\d+)\)', now["areas/index.html"]) \
         == [("scilly", "0"), ("leeds", "2"), ("york", "2")]
     # an area where it was the only landlord keeps its page, with nobody in its table
     assert "example-council" not in now["areas/scilly/index.html"]

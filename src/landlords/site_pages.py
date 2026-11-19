@@ -96,13 +96,13 @@ def index_html(profiles: list[dict], w: dict) -> str:
              '<p id="results-status" class="sr-only" role="status" aria-live="polite"></p>'
              f'<script type="application/json" id="search-text">{text}</script>'
              f'<noscript><p>{esc(s["noscript"])}</p></noscript></div>',
-             f'<div class="panel lead-side"><p><a href="areas/index.html">{esc(s["areas_link"])}</a></p>'
+             f'<div class="panel lead-side"><p><a href="areas/">{esc(s["areas_link"])}</a></p>'
              f'<p>{esc(s["areas_note"])}</p><p>{esc(w["card"]["refusal"])}</p></div></div>',
              f"<h2>{esc(s['all'])}</h2><p>{fill(s['count'], count=len(profiles))}</p>"]
     for letter, ps in by_letter.items():
-        items = "".join(f'<li><a href="landlords/{esc(p["slug"])}/index.html">{esc(p["name"])}</a></li>' for p in ps)
+        items = "".join(f'<li><a href="landlords/{esc(p["slug"])}/">{esc(p["name"])}</a></li>' for p in ps)
         parts.append(f'<h3>{esc(letter)}</h3><ul class="az">{items}</ul>')
-    return page(w["site"]["name"], "".join(parts), w, depth=0, scripts=("search.js",), here="index.html",
+    return page(w["site"]["name"], "".join(parts), w, depth=0, scripts=("search.js",), here="",
                 path="", description=w["site"]["tagline"])
 
 
@@ -141,7 +141,7 @@ def area_html(a: dict, w: dict, sources: dict) -> str:
     for p, homes, basis in a["landlords"]:
         g = p["grade"].get("grade") or "–"
         b = p["bands"].get("headline", {}) if p["bands"] else {}
-        rows.append(f'<tr role="row"><td role="cell"><a href="../../landlords/{esc(p["slug"])}/index.html">{esc(p["name"])}</a>'
+        rows.append(f'<tr role="row"><td role="cell"><a href="../../landlords/{esc(p["slug"])}/">{esc(p["name"])}</a>'
                     f'{" *" if basis == "council total" else ""}</td>'
                     f'<td role="cell" class="n" data-label="{esc(t["homes"])}">{homes:,.0f}</td>'
                     f'<td role="cell" data-label="{esc(t["grade"])}">{esc(g)}</td>'
@@ -153,22 +153,22 @@ def area_html(a: dict, w: dict, sources: dict) -> str:
             + f'<p class="hint">{esc(t["notes"])}</p>'
             + (f'<p class="hint">* {esc(t["council_note"])}</p>' if any(x[2] == "council total" for x in a["landlords"]) else "")
             + f'<p class="warn">{esc(w["card"]["refusal"])}</p>' + src.ref(*a["sources"])
-            + f'<p><a href="../../named/index.html">{esc(w["corrections"]["named_link"])}</a></p>'
+            + f'<p><a href="../../named/">{esc(w["corrections"]["named_link"])}</a></p>'
             # statements from landlords about this page, in their own words (src/landlords/statements.py)
             + slot("page")
             + sister_link(a.get("council_url", ""), fill(t["council_link"], council=a.get("council_name", "")))
             + src.html(w))
-    return page(f"{a['name']} | {w['site']['name']}", body, w, depth=2, here="areas/index.html", path=f"areas/{a['slug']}/",
+    return page(f"{a['name']} | {w['site']['name']}", body, w, depth=2, here="areas/", path=f"areas/{a['slug']}/",
                 description=fill(t["intro"], count=len(a["landlords"])))
 
 
 def areas_index_html(areas: dict[str, dict], w: dict) -> str:
     t = w["area"]
-    items = "".join(f'<li><a href="{esc(a["slug"])}/index.html">{esc(a["name"])}</a> '
+    items = "".join(f'<li><a href="{esc(a["slug"])}/">{esc(a["name"])}</a> '
                     f'<span class="hint">({len(a["landlords"])})</span></li>'
                     for a in sorted(areas.values(), key=lambda a: a["name"]))
     body = f"<h1>{esc(t['heading'])}</h1><p class=\"prose\">{esc(t['index_intro'])}</p><ul class=\"az\">{items}</ul>"
-    return page(f"{t['heading']} | {w['site']['name']}", body, w, depth=1, here="areas/index.html", path="areas/",
+    return page(f"{t['heading']} | {w['site']['name']}", body, w, depth=1, here="areas/", path="areas/",
                 description=t["index_intro"])
 
 
@@ -208,7 +208,7 @@ def compare_html(w: dict) -> str:
             f'<script type="application/json" id="compare-text">{json.dumps(text)}</script>'
             f'<noscript><p>{esc(t["noscript"])}</p></noscript><p class="warn">{esc(w["card"]["refusal"])}</p>')
     return page(f"{t['heading']} | {w['site']['name']}", body, w, depth=1, scripts=("search.js", "compare.js"), path="compare/",
-                here="compare/index.html", description=t["intro"])
+                here="compare/", description=t["intro"])
 
 
 # Data downloads
@@ -301,7 +301,7 @@ def corrections_html(w: dict, fixed: list[dict] | tuple = ()) -> str:
     option and fill in the page, when the page is served by the site's API (api.prefill). ``fixed`` is the public
     notes on closed reports, for the list of what has been put right (src/landlords/corrections.py)."""
     t = w["corrections"]
-    named = fill_html(t["named"], named=f'<a href="../named/index.html">{esc(t["named_link"])}</a>')
+    named = fill_html(t["named"], named=f'<a href="../named/">{esc(t["named_link"])}</a>')
     kinds = "".join(
         f'<div class="choice"><input type="radio" id="kind-{v}" aria-describedby="kind-{v}-hint" name="kind" '
         f'value="{v}"{" checked" if i == 0 else ""}><label for="kind-{v}">{esc(label)}</label>'
@@ -416,7 +416,7 @@ def named_thanks_html(w: dict) -> str:
     return page(f"{t['thanks_heading']} | {w['site']['name']}",
                 f"<h1>{esc(t['thanks_heading'])}</h1><p>{esc(t['thanks'])}</p>"
                 f'<p class="times">{esc(w["corrections"]["times"])}</p>'
-                f'<p><a href="index.html">{esc(load_toml("pages.toml")["named"]["heading"])}</a></p>', w, depth=1,
+                f'<p><a href="./">{esc(load_toml("pages.toml")["named"]["heading"])}</a></p>', w, depth=1,
                 path="named/thanks.html")
 
 
@@ -454,7 +454,7 @@ def rights_html(w: dict) -> str:
         parts.append(f'<dl class="src"><dt>Sources</dt>{links}<dt>Checked</dt><dd>{esc(nice_date(sec["checked"]))}</dd>'
                      f'<dt>To be checked again by</dt><dd>{esc(nice_date(sec["recheck"]))}</dd></dl>')
     parts.append(f'<p class="hint">{esc(r["not_advice"])}</p>')
-    return page(f"{r['heading']} | {w['site']['name']}", "".join(parts), w, depth=1, here="rights/index.html",
+    return page(f"{r['heading']} | {w['site']['name']}", "".join(parts), w, depth=1, here="rights/",
                 path="rights/", description=r["description"])
 
 
@@ -526,11 +526,12 @@ def press(settings: Settings, profiles: list[dict], areas: dict, out: Path, w: d
 def not_found_html(w: dict) -> str:
     t = load_toml("pages.toml")["not_found"]
     # Served for any missing address, at any depth, so its links start from the site's root.
-    body = f'<h1>{esc(t["heading"])}</h1><p>{esc(t["text"])}</p><p><a href="/index.html">{esc(t["link"])}</a></p>'
+    body = f'<h1>{esc(t["heading"])}</h1><p>{esc(t["text"])}</p><p><a href="/">{esc(t["link"])}</a></p>'
     import re
 
     text = page(f"{t['heading']} | {w['site']['name']}", body, w, depth=0)
-    return re.sub(r'(href|src)="(?![a-z]+:|/|#)', r'\1="/', text)   # every link and file from the site's root
+    text = re.sub(r'(href|src)="(?![a-z]+:|/|#)', r'\1="/', text)   # every link and file from the site's root
+    return text.replace('href="/./"', 'href="/"')
 
 
 def robots_and_sitemap(settings: Settings, out: Path) -> None:

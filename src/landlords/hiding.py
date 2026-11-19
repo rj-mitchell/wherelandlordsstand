@@ -42,6 +42,9 @@ from pathlib import Path
 from landlords.config import Settings, load_toml
 
 ORIGINALS = "hidden-originals"        # in the data folder, beside the builds: never served
+# A link to a page's folder: "landlords/x/" since November 2026, "landlords/x/index.html" in pages built before, which
+# can still be live or kept, so both are matched
+INDEX = r"(?:index\.html)?"
 LANDLORD = re.compile(r"^landlords/([a-z0-9][a-z0-9-]*)/$")
 # the CSV files of the downloads, and the columns that say whose a row is
 DOWNLOADS = {"landlords.csv": ("landlord_id",), "bands.csv": ("landlord_id",),
@@ -127,15 +130,15 @@ def _leave_out(pages: _Pages, slug: str, note: str, w: dict) -> None:
                                              separators=(",", ":"))
 
     index = pages.read("index.html")                                    # the list of all landlords, and its count
-    item = re.compile(rf'<li><a href="landlords/{re.escape(slug)}/index\.html">[^<]*</a></li>')
+    item = re.compile(rf'<li><a href="landlords/{re.escape(slug)}/{INDEX}">[^<]*</a></li>')
     if index is not None and item.search(index):
-        listed = len(re.findall(r'<li><a href="landlords/[a-z0-9-]+/index\.html">', index))
+        listed = len(re.findall(rf'<li><a href="landlords/[a-z0-9-]+/{INDEX}">', index))
         index = item.sub("", index, count=1)
         index = re.sub(r'<h3>[^<]*</h3><ul class="az"></ul>', "", index)        # a letter with nobody left under it
         index = index.replace(fill(w["search"]["count"], count=listed), fill(w["search"]["count"], count=listed - 1), 1)
         pages.now["index.html"] = index
 
-    row = re.compile(rf'<tr role="row"><td role="cell"><a href="\.\./\.\./landlords/{re.escape(slug)}/index\.html">'
+    row = re.compile(rf'<tr role="row"><td role="cell"><a href="\.\./\.\./landlords/{re.escape(slug)}/{INDEX}">'
                      r".*?</tr>", re.S)
     fewer: list[str] = []
     for address in pages.areas():                                       # each council area's table, and its count
@@ -152,7 +155,7 @@ def _leave_out(pages: _Pages, slug: str, note: str, w: dict) -> None:
     areas = pages.read("areas/index.html")
     if areas is not None and fewer:
         for area_slug in fewer:
-            areas = re.sub(rf'(<a href="{re.escape(area_slug)}/index\.html">[^<]*</a> <span class="hint">\()(\d+)(\))',
+            areas = re.sub(rf'(<a href="{re.escape(area_slug)}/{INDEX}">[^<]*</a> <span class="hint">\()(\d+)(\))',
                            lambda m: f"{m[1]}{int(m[2]) - 1}{m[3]}", areas, count=1)
         pages.now["areas/index.html"] = areas
 

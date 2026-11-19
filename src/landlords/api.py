@@ -102,6 +102,23 @@ def cache_control(path: str) -> str:
     return "no-cache"
 
 
+# A path that can safely be sent back in a Location header as it came: no backslash, quote or space, and no leading
+# "//" (which a browser would read as another site's address)
+SAFE_PATH = re.compile(r"/(?!/)[A-Za-z0-9._~%!$&'()*+,;=:@/-]*")
+
+
+def folder_address(scope: dict) -> str | None:
+    """Where a request for a page's ".../index.html" should go: its folder ("/landlords/x/"), with the same query.
+    None for any other address, and for the pages of a build waiting for approval (/admin/preview/...), which are
+    served as they are."""
+    raw = scope.get("raw_path") or scope["path"].encode()
+    path = raw.decode("latin-1")
+    if not path.endswith("/index.html") or path.startswith("/admin/") or not SAFE_PATH.fullmatch(path):
+        return None
+    query = scope.get("query_string", b"").decode("latin-1")
+    return path.removesuffix("index.html") + (f"?{query}" if query else "")
+
+
 def stylesheets(settings: Settings) -> list[str]:
     """The live build's stylesheets, for the API's own pages (assets.json, written by the build): the family kit's
     fonts and styles, then the site's own."""
@@ -137,6 +154,14 @@ def create_app(settings: Settings, behind_proxy: bool = False, clock: Clock = SY
         X-Forwarded-For."""
         return counted_by(client_address(request.headers, request.client.host if request.client else None,
                                          behind_proxy=behind_proxy, trust_forwarded_first=True))
+
+    # One address for each page: ".../index.html" is sent, for good, to its folder, the address every link and the
+    # canonical link use (search engines otherwise list both). Added before the headers below, so the redirect gets them.
+    @app.middleware("http")
+    async def one_address(request: Request, call_next):
+        if request.method in ("GET", "HEAD") and (to := folder_address(request.scope)):
+            return RedirectResponse(to, status_code=301)
+        return await call_next(request)
 
     @app.middleware("http")
     async def headers(request: Request, call_next):
@@ -210,14 +235,15 @@ def create_app(settings: Settings, behind_proxy: bool = False, clock: Clock = SY
                 f'<textarea id="words" rows="8" readonly>{escape(str(data.get("text", "")))}</textarea>')
             return admin_page("Your statement wasn't sent", (
                 f"<p>{escape(str(exc))}</p><p>Go back to the form to change it: your browser should still have what "
-                f'you wrote.{words}<p><a href="/named/index.html#send">Back to the form</a></p>'), 400)
+                f'you wrote.{words}<p><a href="/named/#send">Back to the form</a></p>'), 400)
         if is_json:
             return {"ok": True} if sid is None else {"ok": True, "id": sid}
         return RedirectResponse("/named/thanks.html", status_code=303)
 
     # The report form and the statement form, with a choice made by the link that led there: ?kind= picks the kind of
     # report ("wrong", "unfair", "takedown", "other", or the sister sites' words for them) and ?page= fills in the
-    # page, so "If you're named" can start each route. Without a query the page is served as it was built.
+    # page, so "If you're named" can start each route. Without a query the page is served as it was built. Their
+    # ".../index.html" addresses are sent here with the query (one_address).
     def prefilled(page: str, request: Request):
         path = site_dir(settings) / page / "index.html"
         if not path.is_file():
@@ -228,12 +254,10 @@ def create_app(settings: Settings, behind_proxy: bool = False, clock: Clock = SY
         return HTMLResponse(prefill(path.read_text(), q.get("kind", ""), q.get("page", ""), q.get("part", "")))
 
     @app.api_route("/corrections/", methods=["GET", "HEAD"])
-    @app.api_route("/corrections/index.html", methods=["GET", "HEAD"])
     def corrections_page(request: Request):
         return prefilled("corrections", request)
 
     @app.api_route("/named/", methods=["GET", "HEAD"])
-    @app.api_route("/named/index.html", methods=["GET", "HEAD"])
     def named_page(request: Request):
         return prefilled("named", request)
 
@@ -304,7 +328,7 @@ def create_app(settings: Settings, behind_proxy: bool = False, clock: Clock = SY
                 body += (f'<form method="post" action="/admin/rollback/{token}"><p><button type="submit">'
                          "Undo: put back the previous pages</button></p></form>")
             return admin_page("Published", body)
-        body = summary(info) + f'<p><a href="/admin/preview/{token}/index.html">Look at the new pages</a></p>'
+        body = summary(info) + f'<p><a href="/admin/preview/{token}/">Look at the new pages</a></p>'
         if info.get("checks_failed"):
             body += "<p>These pages can't be published until the failed checks are fixed.</p>"
         else:
@@ -348,6 +372,9 @@ def create_app(settings: Settings, behind_proxy: bool = False, clock: Clock = SY
         root = (settings.data_dir / "builds" / got[0]["build"]).resolve()
         target = (root / path).resolve()
         if target.is_dir():
+            # a folder's page, at its address with the slash, so the page's relative links lead within the build
+            if path and not path.endswith("/") and target.is_relative_to(root):
+                return RedirectResponse(f"/admin/preview/{token}/{path}/", status_code=301)
             target = target / "index.html"
         if not target.is_relative_to(root) or not target.is_file():
             return admin_page("Not found", "<p>That page isn't in this build.</p>", 404)

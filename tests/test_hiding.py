@@ -53,7 +53,12 @@ AREAS = {"leeds": ("Leeds", [("example-council", 5000, "council total"), ("examp
 def landlord_page(p: dict) -> str:
     card = "".join(f'<section><h3 id="{part}">{part}</h3><p>Grade {p["grade"].get("grade", "none")}.</p>{slot(part)}'
                    "</section>" for part in PARTS)
-    body = f'<h1>{p["name"]}</h1><section class="card">{card}</section>{slot("page")}<h2>Figures</h2><p>87.5%</p>'
+    # its similar landlords, as site.profile_html lists them: here, every other landlord
+    similar = "".join(f'<li><a href="../{x["slug"]}/">{x["name"]}</a></li>' for x in LANDLORDS if x is not p)
+    similar = (f'<section aria-labelledby="similar"><h2 id="similar">Similar landlords</h2><p>Compared with these.</p>'
+               f'<ul class="list cols similar">{similar}</ul></section>')
+    body = (f'<h1>{p["name"]}</h1><section class="card">{card}</section>{slot("page")}<h2>Figures</h2><p>87.5%</p>'
+            + similar)
     return page(f"{p['name']} – {W['site']['name']}", body, W, depth=2, path=f"landlords/{p['slug']}/",
                 description=f"{p['name']}: grade, tenant satisfaction and complaints.")
 
@@ -131,7 +136,7 @@ def site(settings):
 def test_a_hidden_landlord_is_left_out_of_every_list_and_its_page_shows_the_note(settings, site):
     before = tree(site)
     assert run("hide", "landlords/example-council/", "--note", NOTE) == (0, json.dumps({
-        "hidden": "landlords/example-council/", "note": NOTE, "pages_changed": 15}) + "\n")
+        "hidden": "landlords/example-council/", "note": NOTE, "pages_changed": 17}) + "\n")
     now = {name: text.decode() for name, text in tree(site).items()}
 
     # its own page: its name, the sentence and the note, in place of its figures; nothing else of the page changes
@@ -156,7 +161,14 @@ def test_a_hidden_landlord_is_left_out_of_every_list_and_its_page_shows_the_note
     # each council area's table, its count, and the note under it that explained the council's star
     leeds = now["areas/leeds/index.html"]
     assert "example-council" not in leeds and "Example Council" not in leeds and "5,000" not in leeds
-    assert leeds.count("2 landlords we cover own homes in this area.") == 3 and "3 landlords" not in leeds
+    assert leeds.count("2 landlords we cover own homes in this area.") == 1 and "3 landlords" not in leeds
+    # and its description and title: the landlord with the most homes now, and no council among them
+    described = ("2 social landlords we cover own rented homes in Leeds. Example Housing owns the most here: 1,200 "
+                 "homes. See each one&#x27;s grade and tenant satisfaction.")
+    assert leeds.count(f'content="{described}"') == 2 and "Example Council" in before["areas/leeds/index.html"].decode()
+    assert "<title>Housing associations in Leeds | Where Landlords Stand</title>" in leeds
+    assert '<meta property="og:title" content="Housing associations in Leeds | Where Landlords Stand">' in leeds
+    assert "<title>Housing associations and council landlords in Leeds</title>" in before["areas/leeds/index.html"].decode()
     assert "A council&#x27;s homes are counted in its own area." not in leeds
     assert "A council&#x27;s homes are counted in its own area." in before["areas/leeds/index.html"].decode()
     assert now["areas/york/index.html"] == before["areas/york/index.html"].decode()       # it has no homes there
@@ -165,6 +177,11 @@ def test_a_hidden_landlord_is_left_out_of_every_list_and_its_page_shows_the_note
     # an area where it was the only landlord keeps its page, with nobody in its table
     assert "example-council" not in now["areas/scilly/index.html"]
     assert "0 landlords we cover own homes in this area." in now["areas/scilly/index.html"]
+    assert 'content="No social landlord we cover owns rented homes in Isles of Scilly."' in now["areas/scilly/index.html"]
+    # other landlords' lists of similar landlords
+    for slug in ("example-housing", "other-homes"):
+        assert "example-council" not in now[f"landlords/{slug}/index.html"]
+        assert "example-council" in before[f"landlords/{slug}/index.html"].decode()
     # the sitemap
     assert "landlords/example-council/" not in now["sitemap.xml"] and "landlords/example-housing/" in now["sitemap.xml"]
     # the downloads: its rows, and those of its companies, go from each file; the page says how many are left
@@ -181,9 +198,10 @@ def test_a_hidden_landlord_is_left_out_of_every_list_and_its_page_shows_the_note
     # nowhere else: no other file names it, by its address or by its name
     named = sorted(name for name, text in now.items() if "example-council" in text or "Example Council" in text)
     assert named == ["landlords/example-council/index.html"]
-    # the other landlords' own pages are untouched
+    # the other landlords' own pages are untouched, but for their lists of similar landlords
     for slug in ("example-housing", "other-homes"):
-        assert now[f"landlords/{slug}/index.html"] == before[f"landlords/{slug}/index.html"].decode()
+        assert now[f"landlords/{slug}/index.html"] == before[f"landlords/{slug}/index.html"].decode().replace(
+            '<li><a href="../example-council/">Example Council</a></li>', "")
 
 
 def test_showing_it_again_puts_back_exactly_what_was_there(settings, site):
@@ -196,7 +214,7 @@ def test_showing_it_again_puts_back_exactly_what_was_there(settings, site):
                                             "at": open_replies(settings).all_hidden()[0]["at"]}) + "\n")
     assert json.loads(run("waiting")[1])["hidden"] == 1
     assert run("unhide", "landlords/example-council/") == (0, json.dumps({
-        "shown": "landlords/example-council/", "pages_changed": 15}) + "\n")
+        "shown": "landlords/example-council/", "pages_changed": 17}) + "\n")
     assert tree(site) == before
     assert not (settings.data_dir / "hidden-originals").exists()
     assert run("hidden") == (0, "") and run("unhide", "landlords/example-council/")[0] == 1
@@ -215,6 +233,7 @@ def test_two_landlords_are_hidden_and_shown_again_in_any_order(settings, site):
     assert "1 landlords we cover own homes in this area." in both["areas/leeds/index.html"].decode()
     assert both["areas/leeds/index.html"].decode().count('<tr role="row"><td role="cell"><a href=') == 1
     assert json.loads(both["names.json"])[0]["s"] == "other-homes"
+    assert 'aria-labelledby="similar"' not in both["landlords/other-homes/index.html"].decode()   # nobody left in it
     run("unhide", "landlords/example-council/")                     # the one hidden first is shown first
     assert tree(site) == only_housing
     run("hide", "landlords/example-council/", "--note", "B")
@@ -311,7 +330,7 @@ def test_every_set_of_pages_that_can_be_live_is_written_and_a_cleared_build_take
         (publish.builds_dir(settings) / name / "build-info.json").write_text(json.dumps({"build": name,
                                                                                          "checks_failed": []}))
     publish.publish(settings, "20261110-000000")
-    assert json.loads(run("hide", "landlords/example-council/", "--note", NOTE)[1])["pages_changed"] == 45
+    assert json.loads(run("hide", "landlords/example-council/", "--note", NOTE)[1])["pages_changed"] == 51
     for folder in (settings.data_dir / "live", publish.builds_dir(settings) / "20261111-000000", site):
         assert HIDDEN in (folder / "landlords" / "example-council" / "index.html").read_text()
     publish.publish(settings, "20261111-000000")                    # approving the waiting pages keeps it hidden
@@ -322,6 +341,6 @@ def test_every_set_of_pages_that_can_be_live_is_written_and_a_cleared_build_take
     assert sorted(p.name for p in kept.iterdir()) == ["builds__20261110-000000", "builds__20261111-000000", "site"]
     publish._prune(settings, 1, {"20261111-000000"})                 # an old build is cleared away
     assert sorted(p.name for p in kept.iterdir()) == ["builds__20261111-000000", "site"]
-    assert json.loads(run("unhide", "landlords/example-council/")[1])["pages_changed"] == 30
+    assert json.loads(run("unhide", "landlords/example-council/")[1])["pages_changed"] == 34
     assert "Grade C3" in (publish.builds_dir(settings) / "20261111-000000" / "landlords" / "example-council"
                           / "index.html").read_text()

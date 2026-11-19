@@ -9,7 +9,8 @@ While a landlord is hidden:
 * its own page says "This page is hidden while a concern about it is decided." and then the owner's note, under its
   name, in place of its figures and of any statement beside them;
 * it is left out of the list of all landlords, of search (names.json), of the compare page (its data file goes), of
-  the table on each council area's page, of the sitemap, and of the downloads (its rows go from each CSV file);
+  the table on each council area's page (and that page's description), of other landlords' lists of similar
+  landlords, of the sitemap, and of the downloads (its rows go from each CSV file);
 * statements beside its page are not shown, nor one on an area's page that speaks for it, and none is taken or
   published for it (src/landlords/replies.py and statements.py).
 
@@ -98,6 +99,35 @@ class _Pages:
     def areas(self) -> list[str]:
         return sorted(p.relative_to(self.folder).as_posix() for p in self.folder.glob("areas/*/index.html"))
 
+    def landlords(self) -> list[str]:
+        return sorted(p.relative_to(self.folder).as_posix() for p in self.folder.glob("landlords/*/index.html"))
+
+
+def _area_head(area: str, no_council: bool, w: dict) -> str:
+    """An area's page, without a landlord in its table: its description says again how many landlords are left and
+    which owns the most homes there, and, if the landlord was the only council left, its title no longer says that
+    a council is among them."""
+    from html import unescape
+
+    from landlords.site import esc
+    from landlords.site_pages import area_description, area_title
+
+    name = re.search(r'<h1 id="area">(.*?)</h1>', area)
+    if not name:
+        return area
+    name = unescape(name[1])
+    rows = [(unescape(n), h) for n, h in re.findall(
+        r'<tr role="row"><td role="cell"><a href="[^"]*">([^<]*)</a>(?: \*)?</td><td role="cell" class="n"[^>]*>([^<]*)</td>',
+        area)]
+    words = esc(area_description(name, rows, w))
+    area = re.sub(r'(<meta (?:name="description"|property="og:description") content=")[^"]*(">)',
+                  lambda m: m[1] + words + m[2], area)
+    if no_council:
+        was, now = esc(area_title(name, True, w)), esc(area_title(name, False, w))
+        area = area.replace(f"<title>{was}</title>", f"<title>{now}</title>", 1).replace(
+            f'<meta property="og:title" content="{was}">', f'<meta property="og:title" content="{now}">', 1)
+    return area
+
 
 def _csv(rows: list[list[str]]) -> str:
     buf = io.StringIO()
@@ -146,11 +176,12 @@ def _leave_out(pages: _Pages, slug: str, note: str, w: dict) -> None:
         if area is None or not row.search(area):
             continue
         listed = len(re.findall(r'<tr role="row"><td role="cell"><a href="\.\./\.\./landlords/', area))
+        council = "</a> *</td>" in row.search(area)[0]
         area = row.sub("", area, count=1)
         area = area.replace(fill(w["area"]["intro"], count=listed), fill(w["area"]["intro"], count=listed - 1))
         if "</a> *</td>" not in area:                                   # no council's total left to explain
             area = area.replace(f'<p class="hint">* {esc(w["area"]["council_note"])}</p>', "", 1)
-        pages.now[address] = area
+        pages.now[address] = _area_head(area, council and "</a> *</td>" not in area, w)
         fewer.append(address.split("/")[1])
     areas = pages.read("areas/index.html")
     if areas is not None and fewer:
@@ -158,6 +189,15 @@ def _leave_out(pages: _Pages, slug: str, note: str, w: dict) -> None:
             areas = re.sub(rf'(<a href="{re.escape(area_slug)}/{INDEX}">[^<]*</a> <span class="hint">\()(\d+)(\))',
                            lambda m: f"{m[1]}{int(m[2]) - 1}{m[3]}", areas, count=1)
         pages.now["areas/index.html"] = areas
+
+    similar = re.compile(rf'<li><a href="\.\./{re.escape(slug)}/">[^<]*</a></li>')
+    for address in pages.landlords():                                   # other landlords' lists of similar ones
+        other = pages.read(address)
+        if address == own or other is None or '<ul class="list cols similar">' not in other or not similar.search(other):
+            continue
+        other = similar.sub("", other, count=1)
+        pages.now[address] = re.sub(r'<section aria-labelledby="similar">(?:(?!</section>).)*'
+                                    r'<ul class="list cols similar"></ul></section>', "", other, flags=re.S)
 
     sitemap = pages.read("sitemap.xml")
     if sitemap is not None:

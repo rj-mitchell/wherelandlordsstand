@@ -15,7 +15,19 @@ from landlords.config import Settings, load_toml
 from landlords.register import normalise, slugify
 from landlords.score import rules
 from landlords.sisters import council_url, councils_covered
-from landlords.site import band_name, esc, fill, fill_html, nice_date, page, rich, sister_link, stack_table
+from landlords.site import (
+    band_name,
+    esc,
+    fill,
+    fill_html,
+    first_fit,
+    nice_date,
+    page,
+    rich,
+    sister_link,
+    stack_table,
+    titled,
+)
 from landlords.statements import slot
 
 # Search
@@ -102,7 +114,7 @@ def index_html(profiles: list[dict], w: dict) -> str:
     for letter, ps in by_letter.items():
         items = "".join(f'<li><a href="landlords/{esc(p["slug"])}/">{esc(p["name"])}</a></li>' for p in ps)
         parts.append(f'<h3>{esc(letter)}</h3><ul class="az">{items}</ul>')
-    return page(w["site"]["name"], "".join(parts), w, depth=0, scripts=("search.js",), here="",
+    return page(w["site"]["home_title"], "".join(parts), w, depth=0, scripts=("search.js",), here="",
                 path="", description=w["site"]["tagline"])
 
 
@@ -132,6 +144,24 @@ def area_rows(settings: Settings, profiles: list[dict]) -> dict[str, dict]:
     return areas
 
 
+def area_title(name: str, council: bool, w: dict) -> str:
+    """An area's page title: "title_council" when a council we cover owns homes there ([area] in wording.toml)."""
+    return titled(w["area"]["title_council" if council else "title"].format(area=name), w)
+
+
+def area_description(name: str, landlords: list[tuple[str, str]], w: dict) -> str:
+    """An area's page in search results: how many landlords we cover own rented homes there, and which owns the most
+    (``landlords``: each one's name and homes there, as the table shows them, most first)."""
+    t = w["area"]
+    if not landlords:
+        return t["description_none"].format(area=name)
+    top, homes = landlords[0]
+    if len(landlords) == 1:
+        return first_fit(t["description_one"].format(area=name, top=top, homes=homes), t["description_more_one"])
+    return first_fit(t["description"].format(count=len(landlords), area=name, top=top, homes=homes),
+                     t["description_more"])
+
+
 def area_html(a: dict, w: dict, sources: dict) -> str:
     from landlords.site import Sources
 
@@ -158,8 +188,9 @@ def area_html(a: dict, w: dict, sources: dict) -> str:
             + slot("page")
             + sister_link(a.get("council_url", ""), fill(t["council_link"], council=a.get("council_name", "")))
             + src.html(w))
-    return page(f"{a['name']} | {w['site']['name']}", body, w, depth=2, here="areas/", path=f"areas/{a['slug']}/",
-                description=fill(t["intro"], count=len(a["landlords"])))
+    council = any(p.get("type") == "council" for p, _, _ in a["landlords"])
+    return page(area_title(a["name"], council, w), body, w, depth=2, here="areas/", path=f"areas/{a['slug']}/",
+                description=area_description(a["name"], [(p["name"], f"{h:,.0f}") for p, h, _ in a["landlords"]], w))
 
 
 def areas_index_html(areas: dict[str, dict], w: dict) -> str:
@@ -552,9 +583,9 @@ def robots_and_sitemap(settings: Settings, out: Path) -> None:
     (out / "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: {url}/sitemap.xml\n")
 
 
-def build_extra(settings: Settings, profiles: list[dict], out: Path, w: dict) -> dict:
+def build_extra(settings: Settings, profiles: list[dict], out: Path, w: dict, areas: dict | None = None) -> dict:
     """Write every page except the profiles and the method page (the stylesheet, scripts and fonts are in assets/,
-    written by ``site.write_assets``)."""
+    written by ``site.write_assets``). ``areas`` is ``area_rows``, if already worked out."""
     from landlords.register import aliases, landlords
 
     parents, small = search_facts(settings)
@@ -563,7 +594,7 @@ def build_extra(settings: Settings, profiles: list[dict], out: Path, w: dict) ->
     (out / "index.html").write_text(index_html(profiles, w))
 
     sources = json.loads((settings.staging_dir / "sources.json").read_text())
-    areas = area_rows(settings, profiles)
+    areas = area_rows(settings, profiles) if areas is None else areas
     for a in areas.values():
         d = out / "areas" / a["slug"]
         d.mkdir(parents=True)

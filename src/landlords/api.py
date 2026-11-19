@@ -406,5 +406,11 @@ def create_app(settings: Settings, behind_proxy: bool = False, clock: Clock = SY
             status, body = check(request.headers.get("authorization"))
             return JSONResponse(body, status_code=status, headers={"Cache-Control": "no-store"})
 
+    # /landlords/ is the folder of every landlord's page, but the list of them is the home page
+    @app.api_route("/landlords/", methods=["GET", "HEAD"])
+    @app.api_route("/landlords", methods=["GET", "HEAD"])
+    def landlords_list():
+        return RedirectResponse("/", status_code=301)
+
     app.mount("/", LiveFiles(settings), name="site")
     return app

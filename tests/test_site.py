@@ -381,3 +381,39 @@ def test_a_landlords_page_links_to_its_areas_and_to_similar_landlords_nearest_in
     near = similar_landlords(ps, most=2)
     assert [x["id"] for x in near["L1"]] == ["L3", "L2"] and near["L4"] == [] and "L6" not in near
     assert load_toml("wording.toml")["similar"]["heading"] == "Similar landlords"
+
+
+def test_the_sitemap_dates_a_page_by_the_last_change_to_its_content(tmp_path, monkeypatch):
+    """A page's <lastmod> is the day its main content last changed, carried from the pages it replaces; the
+    header, footer and head (the same change on every page) don't count, and the status and press pages, which
+    change with every build, have none."""
+    import dataclasses
+    import json
+
+    from landlords import site
+    from landlords.config import load_settings
+    from landlords.site_pages import PAGE_DATES, robots_and_sitemap
+
+    s = load_settings(env={"LANDLORDS_DATA_DIR": str(tmp_path / "data")})
+    s = dataclasses.replace(s, raw={**s.raw, "site": {**s.section("site"), "launched": True,
+                                                      "url": "https://example.org"}})
+    monkeypatch.setattr(site, "_SITE", s.section("site"))
+    monkeypatch.setattr(site, "_LAUNCHED", True)
+
+    def pages(folder, about, nav):
+        for address, main in (("", "home"), ("about/", about), ("status/", "made today"), ("press/", "today")):
+            (folder / address).mkdir(parents=True, exist_ok=True)
+            (folder / address / "index.html").write_text(f'<nav>{nav}</nav><main id="main" class="wrap">{main}</main>')
+
+    first, second = tmp_path / "1", tmp_path / "2"
+    pages(first, "about us", "old tabs")
+    robots_and_sitemap(s, first, None, "2026-11-01")
+    pages(second, "about us, changed", "new tabs")
+    robots_and_sitemap(s, second, json.loads((first / PAGE_DATES).read_text()), "2026-11-19")
+    sitemap = (second / "sitemap.xml").read_text()
+    assert "<url><loc>https://example.org/</loc><lastmod>2026-11-01</lastmod></url>" in sitemap      # only its tabs
+    assert "<url><loc>https://example.org/about/</loc><lastmod>2026-11-19</lastmod></url>" in sitemap
+    assert "<url><loc>https://example.org/status/</loc></url>" in sitemap
+    assert "<url><loc>https://example.org/press/</loc></url>" in sitemap
+    # the first pages ever built are dated the day they were built
+    assert "<loc>https://example.org/</loc><lastmod>2026-11-01</lastmod>" in (first / "sitemap.xml").read_text()

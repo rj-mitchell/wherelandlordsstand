@@ -324,3 +324,11 @@ def test_behind_the_front_door_the_app_trusts_its_forwarded_scheme(monkeypatch, 
     compose = (Path(__file__).parents[1] / "deploy" / "docker-compose.yml").read_text()
     assert re.findall(r'^\s+- "([\d.]+:\d+:8000)"', compose, re.M) == ["127.0.0.1:8004:8000"]
     assert '"--behind-proxy"' in (Path(__file__).parents[1] / "Dockerfile").read_text()
+
+
+def test_the_folder_of_landlords_pages_sends_readers_to_the_list_of_them(client):
+    """/landlords/ held 363 pages but answered 404; the list of every landlord is the home page."""
+    for asked in ("/landlords/", "/landlords", "/landlords/index.html"):
+        r = client.get(asked, follow_redirects=False)
+        assert r.status_code == 301 and r.headers["location"] in ("/", "/landlords/"), asked
+    assert client.get("/landlords/").url.path == "/"

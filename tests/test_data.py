@@ -200,6 +200,7 @@ def test_the_launch_switch(tmp_path):
     assert '"item":"https://example.org/areas/leeds/"' in (live / "areas" / "leeds" / "index.html").read_text()
     data = json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script>',
                                 (live / "data" / "index.html").read_text())[1])
+    assert data["license"] == "https://example.org/terms/"  # the terms page, which gives each part's licence
     licences = {d["name"]: d.get("license") for d in data["distribution"]}
     assert licences == {"landlords.csv": OGL, "bands.csv": CC_BY, "tenant-satisfaction-measures.csv": OGL,
                         "ombudsman.csv": None, "regulatory-judgements.csv": OGL, "homes-by-area.csv": CC_BY}

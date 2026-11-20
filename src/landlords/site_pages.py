@@ -321,7 +321,9 @@ def downloads(settings: Settings, profiles: list[dict], out: Path, w: dict) -> l
 
 # The licence of each download, as the data page and the terms page state them: the regulator's figures under the
 # Open Government Licence v3.0, and our own work (the bands, homes by area) under CC BY 4.0. The Ombudsman's terms
-# for reuse are still being confirmed, so its file states none.
+# for reuse are still being confirmed, so its file states none. The Dataset as a whole names the terms page, which
+# sets out each part's licence: there is no one licence for every file, and Search Console asks for one for the
+# whole (20 November 2026).
 OGL = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 CC_BY = "https://creativecommons.org/licenses/by/4.0/"
 LICENCES = {"landlords.csv": OGL, "bands.csv": CC_BY, "tenant-satisfaction-measures.csv": OGL,
@@ -333,7 +335,7 @@ def dataset(files: list[tuple[str, str, int]], w: dict) -> dict:
     t = w["downloads"]
     url = site_url()
     return {"@type": "Dataset", "name": t["dataset_name"], "description": t["description"], "url": f"{url}/data/",
-            "inLanguage": "en-GB", "isAccessibleForFree": True, "spatialCoverage": "England",
+            "inLanguage": "en-GB", "isAccessibleForFree": True, "spatialCoverage": "England", "license": f"{url}/terms/",
             "creator": {"@type": "Organization", "name": w["site"]["name"], "url": f"{url}/"}, "publisher": charity(),
             "distribution": [{"@type": "DataDownload", "name": n, "description": t["files"].get(n, ""),
                               "contentUrl": f"{url}/data/{n}", "encodingFormat": "text/csv",

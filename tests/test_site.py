@@ -417,3 +417,19 @@ def test_the_sitemap_dates_a_page_by_the_last_change_to_its_content(tmp_path, mo
     assert "<url><loc>https://example.org/press/</loc></url>" in sitemap
     # the first pages ever built are dated the day they were built
     assert "<loc>https://example.org/</loc><lastmod>2026-11-01</lastmod>" in (first / "sitemap.xml").read_text()
+
+
+def test_the_data_pages_dataset_names_a_licence_for_the_whole_and_one_for_each_file_whose_terms_are_known(monkeypatch):
+    """Search Console asks a Dataset for one licence (20 November 2026): the files have different ones, and the
+    Ombudsman's are still being confirmed, so the whole names the terms page, which sets out each part's licence."""
+    from landlords import site
+    from landlords.site_pages import CC_BY, OGL, dataset
+
+    monkeypatch.setitem(site._SITE, "url", "https://example.org")
+    w = {"site": {"name": "Where Landlords Stand"},
+         "downloads": {"dataset_name": "Social landlords", "description": "CSV files.", "files": {}}}
+    files = [(n, "", 0) for n in ("landlords.csv", "bands.csv", "ombudsman.csv")]
+    d = dataset(files, w)
+    assert d["license"] == "https://example.org/terms/"
+    assert {f["name"]: f.get("license") for f in d["distribution"]} == {
+        "landlords.csv": OGL, "bands.csv": CC_BY, "ombudsman.csv": None}

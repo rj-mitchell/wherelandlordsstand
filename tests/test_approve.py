@@ -133,3 +133,45 @@ def test_the_preview_serves_a_folders_page_at_its_slashed_address(site):
     r = client.get(f"/admin/preview/{token}/index.html", follow_redirects=False)
     assert r.status_code == 200 and r.text == "home 20261105-000000"
     assert f"/admin/preview/{token}/\"" in client.get(f"/admin/approve/{token}").text
+
+
+def _page(folder, address, title, text, head=""):
+    path = folder / address / "index.html"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(f'<html><head><title>{title} | Where Landlords Stand</title>{head}</head><body>'
+                    f'<main id="main" class="wrap">{text}</main></body></html>')
+
+
+def test_the_approval_page_says_what_changes_against_the_live_pages(site):
+    """Which pages' text changes (with links into the preview), which are new or go, how many change only outside
+    their text, and which downloads change (20 November 2026: the page said only "new code or wording")."""
+    settings, state, client = site
+    live, new = (publish.builds_dir(settings) / b for b in ("20261101-000000", "20261105-000000"))
+    for root, grade, head, csv in ((live, "C1", "", "a,b\n1,2\n"), (new, "C2", "<meta name=x>", "a,b\n1,3\n")):
+        _page(root, "landlords/hyde", "Hyde Housing", f"Grade {grade}")
+        _page(root, "areas/adur", "Adur", "Adur's landlords", head)
+        _page(root, "status", "Status", f"Built {grade}")
+        (root / "data").mkdir(exist_ok=True)
+        (root / "data" / "landlords.csv").write_text(csv)
+    _page(new, "landlords/abri", "Abri Group", "New")
+    token = state.add_approval("20261105-000000", 14)
+    page = client.get(f"/admin/approve/{token}").text
+    assert "The text of 3 pages changes" in page                      # with the fixture's home and landlords/x
+    assert f'<a href="/admin/preview/{token}/landlords/hyde/">Hyde Housing</a>' in page
+    assert "New pages (1)" in page and f'<a href="/admin/preview/{token}/landlords/abri/">Abri Group</a>' in page
+    # the area's head and the weekly status page: counted, not listed
+    assert "2 other pages change only outside their text" in page and ">Adur<" not in page
+    assert "Downloads that change: landlords.csv." in page
+
+
+def test_a_good_link_is_never_too_many_tries_but_wrong_ones_are(site):
+    """The preview's every page and file comes through the link: looking round it must not use up the minute
+    before Publish is pressed (it did, 20 November 2026). Guessing links is still limited."""
+    settings, state, client = site
+    token = state.add_approval("20261105-000000", 14)
+    for _ in range(30):
+        assert client.get(f"/admin/preview/{token}/landlords/x/").status_code == 200
+    assert client.post(f"/admin/approve/{token}", follow_redirects=False).status_code == 303
+    answers = [client.get(f"/admin/approve/wrong-{i}").status_code for i in range(11)]
+    assert answers == [404] * 10 + [429]
+    assert client.get(f"/admin/approve/{token}").status_code == 200      # the good link still works

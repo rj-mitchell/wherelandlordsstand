@@ -246,3 +246,45 @@ def _prune(settings: Settings, keep: int, protect: set) -> None:
         if p.name not in protect:
             shutil.rmtree(p)
             hiding.forget(settings, p)      # and what was kept of it while a landlord was hidden
+
+
+def differences(settings: Settings, build: str) -> dict | None:
+    """What a build changes, against the pages that are live, for the approval page: the pages whose own content
+    differs and the new pages (each its address and title), the addresses of the pages gone, how many changed only outside their content (titles,
+    descriptions, the data search engines read, the header and footer), and the downloads that differ. None if no
+    other build is live to compare with."""
+    import re
+
+    from landlords.site_pages import UNDATED, main_text
+
+    live = current(settings)
+    if not live or live == build:
+        return None
+    old_root, new_root = builds_dir(settings) / live, builds_dir(settings) / build
+
+    def pages(root: Path) -> dict[str, Path]:
+        return {p.relative_to(root).as_posix().removesuffix("index.html"): p for p in root.rglob("index.html")}
+
+    old, new = pages(old_root), pages(new_root)
+    text, outside = [], 0
+    def titled(address: str, html: str) -> tuple[str, str]:
+        title = re.search(r"<title>(.*?)</title>", html, re.S)
+        return address, (title[1].split(" | ")[0].strip() if title else address) or "Home"
+
+    for address in sorted(old.keys() & new.keys()):
+        before, after = old[address].read_text(), new[address].read_text()
+        if before == after:
+            continue
+        if main_text(before) != main_text(after) and address not in UNDATED:
+            text.append(titled(address, after))
+        else:
+            outside += 1
+
+    def data(root: Path) -> dict[str, bytes]:
+        return {p.name: p.read_bytes() for p in sorted((root / "data").glob("*.csv"))}
+
+    old_data, new_data = data(old_root), data(new_root)
+    return {"live": live, "text": text, "outside": outside,
+            "added": [titled(a, new[a].read_text()) for a in sorted(new.keys() - old.keys())], "removed": sorted(old.keys() - new.keys()),
+            "data": sorted(n for n in new_data if old_data.get(n) != new_data[n]),
+            "data_removed": sorted(old_data.keys() - new_data.keys())}

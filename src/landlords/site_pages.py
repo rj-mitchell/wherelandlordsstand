@@ -602,18 +602,25 @@ PAGE_DATES = "page-dates.json"
 UNDATED = {"status/", "press/"}
 
 
+def main_text(html: str) -> str:
+    """A page's own content: what is inside its <main> (not the head, the header or the footer, which change for every
+    page at once), or the whole page if it has none."""
+    import re
+
+    main = re.search(r'<main id="main" class="wrap">(.*)</main>', html, re.S)
+    return main[1] if main else html
+
+
 def page_dates(out: Path, previous: dict, today: str) -> dict[str, dict]:
     """Each page's address, a fingerprint of its main content (what is inside <main>: not the header, the footer or
     the head, which change for every page at once) and the day that content last changed: the day recorded by the
     pages it replaces (``previous``, their PAGE_DATES) if it is the same, else ``today``."""
     import hashlib
-    import re
 
     out_dates = {}
     for path in sorted(out.rglob("index.html")):
         address = path.relative_to(out).as_posix().removesuffix("index.html")
-        main = re.search(r'<main id="main" class="wrap">(.*)</main>', path.read_text(), re.S)
-        digest = hashlib.sha256((main[1] if main else path.read_text()).encode()).hexdigest()[:16]
+        digest = hashlib.sha256(main_text(path.read_text()).encode()).hexdigest()[:16]
         was = previous.get(address) or {}
         out_dates[address] = {"hash": digest, "date": was["date"] if was.get("hash") == digest else today}
     return out_dates

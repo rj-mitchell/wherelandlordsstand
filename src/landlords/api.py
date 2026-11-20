@@ -26,6 +26,7 @@ other sites.
 from __future__ import annotations
 
 import json
+import logging
 import re
 from hashlib import sha256
 from pathlib import Path
@@ -46,6 +47,7 @@ from landlords.replies import RULES, beside, open_replies, report_kind
 from landlords.state import BACKUPS, State, open_state
 
 MAX_BODY = 20000                    # bytes of a posted report or statement that are read
+log = logging.getLogger(__name__)
 PER_MINUTE = 10                     # posts a minute from one visitor
 FORGET_OVER = 50_000                # visitors remembered before those with nothing in the last minute are forgotten
 BACKUPS_DIR = Path("/backups")      # where the server's nightly backup is written (deploy/docker-compose.yml)
@@ -301,16 +303,57 @@ def create_app(settings: Settings, behind_proxy: bool = False, clock: Clock = SY
         return HTMLResponse(html, status_code=status, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex"})
 
     def approval_or_404(request: Request, token: str):
-        if not limiter.allow(visitor(request)):
-            return None, admin_page("Too many tries", "<p>Try again in a minute.</p>", 429)
+        # Only a wrong or expired link counts against the limit (which is there to stop links being guessed): a
+        # good one is never refused, as its preview's every page, style sheet and font comes through it, and ten of
+        # those used to use up the minute before Publish was pressed (20 November 2026).
         a = state.approval(token)
         info_path = settings.data_dir / "builds" / (a["build"] if a else "-") / "build-info.json"
         if not a or not info_path.exists():
+            if not limiter.allow(visitor(request)):
+                return None, admin_page("Too many tries", "<p>Try again in a minute.</p>", 429)
             return None, admin_page("This link has expired", "<p>It is no longer valid, or its pages have been "
                                     "cleared away. The next weekly update sends a new one.</p>", 404)
         return (a, json.loads(info_path.read_text())), None
 
-    def summary(info: dict) -> str:
+    def changes(build: str, token: str) -> str:
+        """What these pages change, against the live ones (publish.differences), with links into the preview."""
+        from html import escape
+        from urllib.parse import quote
+
+        from landlords.publish import differences
+
+        d = differences(settings, build)
+        if d is None:
+            return ""
+        shown = 25
+
+        def links(rows: list[tuple[str, str]]) -> str:
+            items = "".join(f'<li><a href="/admin/preview/{quote(token)}/{quote(address)}">{escape(title)}</a></li>'
+                            for address, title in rows[:shown])
+            more = f"<li>and {len(rows) - shown:,} more</li>" if len(rows) > shown else ""
+            return f"<ul>{items}{more}</ul>"
+
+        parts = ["<h2>What changes on the site</h2>"]
+        if d["text"]:
+            parts.append(f"<p>The text of {len(d['text']):,} page{'s' if len(d['text']) != 1 else ''} changes:</p>"
+                         + links(d["text"]))
+        else:
+            parts.append("<p>No page's text changes.</p>")
+        if d["added"]:
+            parts.append(f"<p>New pages ({len(d['added']):,}):</p>" + links(d["added"]))
+        if d["removed"]:
+            parts.append(f"<p>Pages that go ({len(d['removed']):,}):</p><ul>"
+                         + "".join(f"<li>/{escape(a)}</li>" for a in d["removed"][:shown]) + "</ul>")
+        if d["outside"]:
+            parts.append(f"<p>{d['outside']:,} other page{'s' if d['outside'] != 1 else ''} change only outside "
+                         "their text: the page title, the description search engines show, the data they read, or "
+                         "the header and footer. The status and press pages, which change every week, are counted "
+                         "here too.</p>")
+        if d["data"] or d["data_removed"]:
+            parts.append("<p>Downloads that change: " + escape(", ".join(d["data"] + d["data_removed"])) + ".</p>")
+        return "".join(parts)
+
+    def summary(info: dict, token: str) -> str:
         from html import escape
 
         new = info.get("new_file_titles") or []
@@ -319,6 +362,10 @@ def create_app(settings: Settings, behind_proxy: bool = False, clock: Clock = SY
         parts.append("<h2>New files from the publishers</h2>" + (
             "<ul>" + "".join(f"<li>{escape(t)}</li>" for t in new) + "</ul>" if new else
             "<p>None: these pages have new code or wording.</p>"))
+        try:
+            parts.append(changes(info.get("build") or "", token))
+        except Exception:  # noqa: BLE001 - the page must still offer the button
+            log.exception("the changes against the live pages were not worked out")
         parts.append("<h2>Checks</h2>" + ("<p>All passed.</p>" if not failed else
                      "<ul>" + "".join(f"<li>{escape(f)}</li>" for f in failed) + "</ul>"))
         return "".join(parts)
@@ -340,7 +387,7 @@ def create_app(settings: Settings, behind_proxy: bool = False, clock: Clock = SY
                 body += (f'<form method="post" action="/admin/rollback/{token}"><p><button type="submit">'
                          "Undo: put back the previous pages</button></p></form>")
             return admin_page("Published", body)
-        body = summary(info) + f'<p><a href="/admin/preview/{token}/">Look at the new pages</a></p>'
+        body = summary({**info, "build": a["build"]}, token) + f'<p><a href="/admin/preview/{token}/">Look at the new pages</a></p>'
         if info.get("checks_failed"):
             body += "<p>These pages can't be published until the failed checks are fixed.</p>"
         else:

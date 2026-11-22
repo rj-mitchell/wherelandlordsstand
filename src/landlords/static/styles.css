@@ -5,7 +5,7 @@
 --on-cloth:var(--wts-on-cloth);--link:#2f4a5e;--band-off:#dde2e3;--band-on:#40484d;--mark-tile:#5b666d;
 --serif:var(--wts-serif);--sans:var(--wts-sans);--wrap:72rem;--measure:48rem;--gutter:clamp(16px,4vw,48px);
 --wts-focus:currentColor;--wts-gutter:var(--gutter);--wts-shelf-width:calc(var(--wrap) - 2 * var(--gutter))}
-@media (prefers-color-scheme:dark){:root{--link:#a9c6dc;--band-off:#2a3236;--band-on:#b3bec5;--mark-tile:#40484d}}
+@media (prefers-color-scheme:dark){:root{--link:#a9c6dc;--band-off:#38434a;--band-on:#b3bec5;--mark-tile:#40484d}}
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scrollbar-gutter:stable;overflow-wrap:break-word}
 body{margin:0;min-height:100vh;min-height:100svh;display:flex;flex-direction:column;background:var(--page);
@@ -60,7 +60,7 @@ main p,main li,main dl{max-width:var(--measure)}
 .panel,.note,.warn,.times{background:var(--panel);padding:1rem 1.25rem}
 .panel>:first-child{margin-block-start:0}.panel>:last-child{margin-block-end:0}
 .note,.warn,.times{margin:1rem 0}main .note,main .warn,main .times{max-width:none}
-ul.list{padding-inline-start:1.2rem}
+ul.list{padding-inline-start:1.2rem}ul.list>li+li{margin-block-start:.3rem}
 ul.list.cols{columns:3 14rem;column-gap:2rem;max-width:none}ul.list.cols li{break-inside:avoid}
 ul.links{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:.25rem 2rem}
 ul.links a{display:inline-flex;align-items:center;min-block-size:var(--wts-target-min,24px)}
@@ -71,11 +71,17 @@ dl.src dd a{display:inline-block;min-block-size:var(--wts-target-min,24px);paddi
 
 /* Home page: the search beside a panel, then every landlord */
 .lead{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:1.5rem 3rem;align-items:start}
-@media (max-width:56rem){.lead{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:56rem){.lead{grid-template-columns:minmax(0,1fr)}.lead .lead-side{margin-block-start:0}}
 .lead-side{margin-block-start:.5rem}
 ul.az{list-style:none;padding:0;columns:4 13rem;column-gap:2rem;max-width:none}
 ul.az li{padding-block:.15rem;break-inside:avoid}
 main>h3{font-size:1.2rem;margin:1.5rem 0 .4rem;max-width:none}
+/* A to Z: each letter in a narrow column beside its landlords, like an index, not a heading over them */
+main>h3:has(+ul.az){float:left;clear:left;inline-size:2.25rem;margin:0;padding-block-start:.15rem;line-height:1.65rem}
+h3+ul.az{margin-block:0 1.5rem}
+/* council areas: short names, so two columns even on a phone */
+.prose+ul.az{columns:4 9.5rem}
+@media (max-width:40rem){.prose+ul.az{columns:2;column-gap:1.25rem}}
 
 /* Forms */
 label{display:block;font-weight:600;margin:1rem 0 .35rem}
@@ -116,19 +122,20 @@ min-block-size:var(--wts-target,44px);text-decoration:underline;text-decoration-
 .st-note{font-size:.9rem;color:var(--muted)}
 
 /* A landlord's card: one panel, its parts side by side on a wide screen */
-.card{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 3rem;background:var(--panel);
-padding:clamp(1rem,3vw,1.75rem);margin:1.5rem 0 2rem}
-.card>h2,.card>.warn,.card>.homes{grid-column:1 / -1}
-.card>h2{margin-block-start:0}
+.card{columns:2;column-gap:3rem;background:var(--panel);padding:clamp(1rem,3vw,1.75rem);margin:1.5rem 0 2rem}
+.card>h2,.card>.warn,.card>.homes{column-span:all}
+.card>section:not(.homes){break-inside:avoid;padding-block-start:1.25rem}
+.card>section>h3:first-child,.card>.homes>:first-child{margin-block-start:0}
+/* no two margins meet here, so the spaces are the same whether or not they would collapse */
+.card>h2{margin:0}
 .card .warn,.card .note{background:none;padding:0;margin:.75rem 0}
-.card .warn{font-size:1.0625rem;font-weight:600}
-.card section h3{margin-block-start:1.25rem}
+.card>.warn{margin:1.35rem 0 1rem;font-size:1.0625rem;font-weight:600}
 .card p,.card li{max-width:none}.card>.homes p{max-width:var(--measure)}
-@media (max-width:48rem){.card{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:48rem){.card{columns:auto}}
 .grade{display:inline-block;font:700 2rem/1 var(--serif);font-variant-numeric:lining-nums;border:2px solid var(--ink);
 background:var(--page);padding:.35rem .6rem;margin:.2rem 0 .4rem}
-.band{display:flex;align-items:center;gap:.75rem;margin:.4rem 0}
-.meter{display:inline-flex;gap:3px;flex:none}
+.band{display:flex;align-items:flex-start;gap:.75rem;margin:.4rem 0}
+.meter{display:inline-flex;gap:3px;flex:none;margin-block-start:.35rem}
 .meter i{width:15px;height:15px;display:block;background:var(--band-off)}
 .meter i.on{background:var(--band-on)}
 .trend{color:var(--muted);font-size:.95rem}
@@ -136,6 +143,7 @@ background:var(--page);padding:.35rem .6rem;margin:.2rem 0 .4rem}
 /* Tables and sources */
 table{border-collapse:collapse;width:100%;font-size:.975rem;margin:.4rem 0}
 th,td{text-align:start;padding:.5rem .6rem;border-block-end:1px solid var(--rule-faint);vertical-align:top}
+:is(th,td):first-child{padding-inline-start:0}:is(th,td):last-child{padding-inline-end:0}
 thead th{font-weight:600;border-block-end:1px solid var(--ink)}
 th[scope=colgroup]{font-family:var(--serif);font-size:1.05rem;padding-block-start:1rem}
 td.n,th.n{text-align:end;white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -148,7 +156,7 @@ footer{margin-block-start:3rem}
 footer .wts-shelf{margin-block-start:0}
 .foot{background:var(--panel);color:var(--muted);font-size:.9375rem}
 .foot .wrap{padding-block:0 1.75rem}
-.foot-links{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:0 1.25rem}
+.foot-links{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.25rem 1.25rem}
 .foot-links a{display:inline-flex;align-items:center;min-block-size:var(--wts-target-min,24px);color:inherit}
 .foot p{margin:.5rem 0 0;max-width:var(--measure)}
 

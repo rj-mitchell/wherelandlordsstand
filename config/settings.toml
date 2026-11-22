@@ -33,6 +33,19 @@ feedback_email = "admin@wherelandlordsstand.com"
 # come from the Where They Stand family kit (src/landlords/family/; docs/DESIGN.md).
 parent_name = "Where They Stand"
 
+[ads]
+# Measurement for Google Ad Grants (docs/DECISIONS.md, 20; the charity's family/MEASUREMENT.md). Off, as it ships:
+# the pages are as they were, with no script, no banner and nothing from Google, and the content security policy
+# allows nothing from other sites. Turned on (with the Google tag's ID from the charity's Google Ads account) only
+# once the charity is registered and its Ad Grants account is set up: then every page loads the family kit's
+# measure.js, which asks the reader first and loads the Google tag only if they accept; the footer gains
+# "Measurement choices"; the privacy page is the measurement version ([privacy_measurement] in config/wording.toml);
+# and the API's content security policy adds the Google tag's hosts (src/landlords/family/measure-csp.json). On the
+# server, LANDLORDS_ADS_MEASUREMENT and LANDLORDS_ADS_TAG in deploy/.env set these, and the shared front door's
+# policy must be changed too (docs/DEPLOY.md, "Measurement").
+measurement = false
+tag = ""
+
 [sister_sites]
 # Council landlords, and each council area's page, link to the council's page on Where Councils Stand where it covers
 # the council (docs/DECISIONS.md, 4): the councils in data_static/councils_covered.csv, made from that site's own list

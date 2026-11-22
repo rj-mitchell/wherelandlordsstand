@@ -75,6 +75,10 @@ def update(settings: Settings, fetch: bool = True, notify: bool = True) -> dict:
                   # set on the server (deploy/.env), not in the code: going public must rebuild the pages too
                   "site_settings": {"url": settings.section("site").get("url") or "",
                                     "launched": bool(settings.section("site").get("launched"))}}
+    # turning measurement on or off rebuilds the pages too (docs/DECISIONS.md, 20); while it is off the key is left
+    # out, so builds from before the switch existed compare as the same
+    if site.measure_tag(settings):
+        info["site_settings"]["measurement"] = site.measure_tag(settings)
     if fetch:
         results = fetch_.run(settings)
         new = [n for r in results for n in r.new]

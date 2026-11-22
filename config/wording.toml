@@ -30,6 +30,9 @@ links = [
   ["Privacy", "privacy/"],
   ["Source code", "https://github.com/rj-mitchell/wherelandlordsstand"],
 ]
+# While measurement is on ([ads] in config/settings.toml), a line of its own after the notices, which opens the
+# family kit's banner again (docs/DECISIONS.md, 20)
+measure_choices = "Measurement choices"
 # One short paragraph after the independence line
 notices = [
   "Contains public sector information from the Regulator of Social Housing, licensed under the Open Government Licence v3.0. Complaints figures © Housing Ombudsman Service. Our own work is under CC BY 4.0, and the code under AGPL-3.0.",
@@ -288,6 +291,33 @@ sections = [
   ["Statements from landlords", "A landlord, or someone acting for it, can add a short statement beside what this site says about it (the charity's impartiality policy, section 7.2). The statement is published with their name and role, as they wrote it. The email address used to confirm who they are, and to let them update or withdraw it, is kept while the statement is waiting or shown, and deleted three months after it is withdrawn, declined or removed. It is never shown on the site."],
   ["Backups", "Backups of the site's database are kept for up to two months, so a deleted address can remain in a backup until then."],
   ["Visits", "Visits pass through Cloudflare, which protects the site. We do not keep logs of visits."],
+]
+
+[privacy_measurement]
+# The privacy page while measurement is on ([ads] in config/settings.toml; docs/DECISIONS.md, 20), and only then. A
+# draft until the charity is registered: before turning measurement on, put the charity number in place of NNNNNNN
+# and set `updated` (the build refuses while either is a placeholder). Each section is [heading, paragraph or
+# paragraphs, id]; [words](https://...) become links.
+heading = "Privacy"
+description = "What Where Landlords Stand keeps about you: nothing is measured unless you agree, searches that find nothing, reports and statements."
+updated = "Last updated 21 November 2026 (draft, for when measurement is turned on)."
+sections = [
+  ["Who runs the site", "Where They Stand, a charitable incorporated organisation registered in England and Wales (charity number NNNNNNN), is the data controller. Contact: admin@wherelandlordsstand.com."],
+  ["Cookies and tracking", "This site sets no cookies and loads nothing from other websites unless you agree to measurement (below). It never shows advertising."],
+  ["Measuring visits for Google's advertising grant", [
+    "Where They Stand advertises its sites on Google Search with Google Ad Grants, free advertising that Google gives charities. To keep the grant, it has to show Google that the ads lead people to use the sites. So, only if you agree, this site uses the Google tag to tell Google when you open a source, download a file, follow the Donate link or send a report or a statement. That is all it tells Google about: no list of the pages you read, and nothing you type or search for.",
+    "Nothing is loaded from Google until you choose. A box at the top of the page asks you, with \"Accept\" and \"Reject\". If you reject, or don't choose, nothing is loaded from Google and no cookie is set. If you accept, your browser loads the Google tag from Google, which sets cookies whose names start \"_gcl_\" on this site, and sends Google your IP address, details of your browser, the address of the page and the action. Google uses them to count how many visits from its ads led to that action.",
+    "Google receives this information as an independent controller, for its own purposes, under the [Google Ads Controller-Controller Data Protection Terms](https://business.safety.google/adscontrollerterms/). How it uses it is set out in [Google's privacy policy](https://policies.google.com/privacy) and on its [Business Data Responsibility](https://business.safety.google/privacy/) page. Google says its \"_gcl_\" cookies last for 90 days ([how Google uses cookies](https://policies.google.com/technologies/cookies)), and explains how long it keeps what it collects in [how Google retains data](https://policies.google.com/technologies/retention).",
+    "The legal basis is your consent. We keep only your choice, and the day you made it, in your own browser (in its local storage, not in a cookie), and we never receive it. After a year you are asked again.",
+    "To change your mind, use \"Measurement choices\" at the foot of any page. Choosing \"Reject\" after accepting deletes Google's cookies on this site and reloads the page with nothing from Google. Clearing this site's data in your browser also removes them, and your choice.",
+    "No ads are ever shown on this site or on the charity's other sites, and nothing on them is personalised. The Google tag is told not to use your visit to personalise ads.",
+  ], "measurement"],
+  ["Searches", "Searching happens in your browser. If a search finds nothing, the words you searched for are sent to us, with the date and nothing else, so we can add names people look for. Google is not told what you search for, whatever your choice about measurement."],
+  ["Reports of mistakes", "If you report a mistake, we keep what you wrote and, if you give it, your email address, until we have dealt with it. Then we delete your email address. If you agreed to measurement, Google is told only that a report was sent, never what it says or who sent it."],
+  ["Statements from landlords", "A landlord, or someone acting for it, can add a short statement beside what this site says about it (the charity's impartiality policy, section 7.2). The statement is published with their name and role, as they wrote it. The email address used to confirm who they are, and to let them update or withdraw it, is kept while the statement is waiting or shown, and deleted three months after it is withdrawn, declined or removed. It is never shown on the site."],
+  ["Backups", "Backups of the site's database are kept for up to two months, so a deleted address can remain in a backup until then."],
+  ["Visits", "Visits pass through Cloudflare, which protects the site. We do not keep logs of visits."],
+  ["Your rights", "Under UK data protection law you can ask for a copy of information held about you, ask for it to be corrected or deleted, object to its use, and withdraw your consent to measurement at any time, as above. Email admin@wherelandlordsstand.com. If you're unhappy with the answer, you can complain to the [Information Commissioner's Office](https://ico.org.uk/make-a-complaint/)."],
 ]
 
 [statement]

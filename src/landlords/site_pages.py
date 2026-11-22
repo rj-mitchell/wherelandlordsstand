@@ -8,6 +8,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import re
 from collections import defaultdict
 from pathlib import Path
 
@@ -344,7 +345,7 @@ def dataset(files: list[tuple[str, str, int]], w: dict) -> dict:
 
 def downloads_html(files: list[tuple[str, str, int]], w: dict) -> str:
     t = w["downloads"]
-    items = "".join(f'<li><a href="{esc(n)}">{esc(n)}</a> <span class="hint">({c:,} rows, '
+    items = "".join(f'<li><a href="{esc(n)}" data-wts-conversion="download">{esc(n)}</a> <span class="hint">({c:,} rows, '
                     f'{len(text.encode()) // 1024 + 1} KB)</span>: {esc(t["files"].get(n, ""))}</li>'
                     for n, text, c in files)
     body = (f"<h1>{esc(t['heading'])}</h1><p>{esc(t['intro'])}</p><ul class=\"list\">{items}</ul>"
@@ -475,7 +476,7 @@ def named_html(settings: Settings, w: dict) -> str:
 def named_thanks_html(w: dict) -> str:
     t = w["statement"]
     return page(f"{t['thanks_heading']} | {w['site']['name']}",
-                f"<h1>{esc(t['thanks_heading'])}</h1><p>{esc(t['thanks'])}</p>"
+                f"<h1>{esc(t['thanks_heading'])}</h1><p data-wts-conversion=\"report_sent\">{esc(t['thanks'])}</p>"
                 f'<p class="times">{esc(w["corrections"]["times"])}</p>'
                 f'<p><a href="./">{esc(load_toml("pages.toml")["named"]["heading"])}</a></p>', w, depth=1,
                 path="named/thanks.html", noindex=True)
@@ -484,14 +485,31 @@ def named_thanks_html(w: dict) -> str:
 def thanks_html(w: dict) -> str:
     t = w["corrections"]
     return page(f"{t['thanks_heading']} | {w['site']['name']}",
-                f"<h1>{esc(t['thanks_heading'])}</h1><p>{esc(t['thanks'])}</p>"
+                f"<h1>{esc(t['thanks_heading'])}</h1><p data-wts-conversion=\"report_sent\">{esc(t['thanks'])}</p>"
                 f'<p class="times">{esc(t["times"])} {esc(t["times_note"])}</p>', w, depth=1,
                 path="corrections/thanks.html", noindex=True)
 
 
 def privacy_html(w: dict) -> str:
-    t = w["privacy"]
-    body = f"<h1>{esc(t['heading'])}</h1>" + "".join(f"<h2>{esc(h)}</h2><p>{esc(x)}</p>" for h, x in t["sections"])
+    """The privacy page: [privacy] in config/wording.toml, or while measuring (docs/DECISIONS.md, 20) the measurement
+    version beside it, [privacy_measurement], whose sections may have an id ("measurement", which the banner and
+    the footer link to) and several paragraphs."""
+    from landlords.site import measuring
+
+    t = w["privacy_measurement"] if measuring() else w["privacy"]
+    if measuring() and re.search(r"NNNNNNN|\(draft\b", repr(t)):
+        raise RuntimeError("[ads] measurement is on, but [privacy_measurement] in config/wording.toml isn't finished:"
+                           " put in the charity number for NNNNNNN and the date it was last updated")
+
+    def section(sec: list) -> str:
+        heading, text = sec[0], sec[1]
+        anchor = f' id="{esc(sec[2])}"' if len(sec) > 2 else ""
+        paras = text if isinstance(text, list) else [text]
+        return f"<h2{anchor}>{esc(heading)}</h2>" + "".join(f"<p>{rich(x)}</p>" for x in paras)
+
+    body = f"<h1>{esc(t['heading'])}</h1>" + "".join(section(sec) for sec in t["sections"])
+    if t.get("updated"):
+        body += f'<p class="hint">{esc(t["updated"])}</p>'
     return page(f"{t['heading']} | {w['site']['name']}", body, w, depth=1, path="privacy/",
                 description=t["description"])
 
@@ -591,7 +609,8 @@ def not_found_html(w: dict) -> str:
     import re
 
     text = page(f"{t['heading']} | {w['site']['name']}", body, w, depth=0)
-    text = re.sub(r'(href|src)="(?![a-z]+:|/|#)', r'\1="/', text)   # every link and file from the site's root
+    # every link and file from the site's root (and the privacy page that measure.js links, while measuring)
+    text = re.sub(r'(href|src|data-privacy)="(?![a-z]+:|/|#)', r'\1="/', text)
     return text.replace('href="/./"', 'href="/"')
 
 

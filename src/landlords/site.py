@@ -89,8 +89,9 @@ class Sources:
         for i, s in enumerate(self.items, 1):
             title = esc(s.get("title") or s.get("file", ""))
             lis.append(
-                f'<li id="source-{i}">{esc(s.get("publisher", ""))}, <a href="{esc(s.get("page", ""))}">{title}</a>'
-                f' ({esc(s.get("period", ""))}). <a href="{esc(s.get("url", ""))}">The file</a>, downloaded '
+                f'<li id="source-{i}">{esc(s.get("publisher", ""))}, <a href="{esc(s.get("page", ""))}"'
+                f' data-wts-conversion="source_opened">{title}</a> ({esc(s.get("period", ""))}).'
+                f' <a href="{esc(s.get("url", ""))}" data-wts-conversion="source_opened">The file</a>, downloaded '
                 f'{esc(nice_date(s["fetched_at"][:10]) if s.get("fetched_at") else "")}. {esc(s.get("licence", ""))}.</li>')
         return (f'<section aria-labelledby="sources"><h2 id="sources">{esc(w["sources"]["heading"])}</h2>'
                 f'<p>{esc(w["sources"]["intro"])}</p><ol class="sources">{"".join(lis)}</ol></section>')
@@ -108,6 +109,25 @@ SCROLLED_TABS = {href for href, _ in NAV[3:]}
 
 _LAUNCHED = False
 _SITE: dict = {}
+# The measurement switch ([ads] in config/settings.toml; docs/DECISIONS.md, 20), as set by the current build: the
+# Google tag's ID while it is on, else "". Off, the pages carry nothing of it but the family kit's inert
+# data-wts-conversion attributes (on the Donate link, the sources, the downloads and the thank-you pages).
+_MEASURE = ""
+# The conversions this site has, for the kit's measure.js (the banner names only these)
+MEASURES = "source_opened download donate_click report_sent"
+_TAG = re.compile(r"(?:AW|G|GT)-[A-Za-z0-9]+")
+
+
+def measure_tag(settings: Settings) -> str:
+    """The Google tag's ID when [ads] measurement is on with a valid tag, else "" (off)."""
+    ads = settings.section("ads")
+    tag = str(ads.get("tag") or "").strip()
+    return tag if ads.get("measurement") and _TAG.fullmatch(tag) else ""
+
+
+def measuring() -> str:
+    """The Google tag's ID if the current build measures (docs/DECISIONS.md, 20), else ""."""
+    return _MEASURE
 # The files every page uses (stylesheets, scripts, icons, fonts, the link card), by their plain name, and where this
 # build put them: under assets/, with a fingerprint of their content in the name ("assets/styles.3f9a2c1d.css"). A
 # changed file gets a new address that no cache (Cloudflare's, a browser's) has seen, so a page never meets an old
@@ -143,10 +163,11 @@ def fingerprint(name: str, content: bytes) -> str:
     return f"{stem}.{hashlib.sha256(content).hexdigest()[:10]}.{ext}"
 
 
-def write_assets(out: Path) -> dict[str, str]:
+def write_assets(out: Path, measure: bool = False) -> dict[str, str]:
     """Copy the stylesheets, scripts, icons, fonts and link card into ``out/assets/`` under fingerprinted names, and
     return where each went. The fonts go first, because the kit's fonts.css names them: it is written with their new
-    names in it. The kit's favicon is also copied to the root, where browsers ask for it whatever a page says."""
+    names in it. The kit's favicon is also copied to the root, where browsers ask for it whatever a page says. The
+    kit's measure.js is copied only when ``measure`` (the measurement switch is on)."""
     folder = out / ASSETS
     (folder / "fonts").mkdir(parents=True)
     names: dict[str, str] = {}
@@ -165,6 +186,8 @@ def write_assets(out: Path) -> dict[str, str]:
     files |= {name: (FAMILY / name).read_bytes() for name in FAMILY_FILES if name != "fonts.css"}
     files |= {"styles.css": CSS_FILE.read_bytes()}
     files |= {name: (STATIC / name).read_bytes() for name in ("search.js", "compare.js", "tabs.js")}
+    if measure:
+        files["measure.js"] = (FAMILY / "measure.js").read_bytes()
     for name, content in files.items():
         names[name] = f"{ASSETS}/{fingerprint(name, content)}"
         (out / names[name]).write_bytes(content)
@@ -275,9 +298,13 @@ def footer(w: dict, up: str) -> str:
     links = "".join(f'<li><a href="{esc(href if href.startswith("https://") else to(up, href))}">{esc(label)}</a></li>'
                     for label, href in w["footer"]["links"])
     notices = " ".join(esc(x) for x in [w["site"]["independence"], *w["footer"]["notices"]])
+    # While measuring, "Measurement choices" opens the kit's banner again. It is a control, not one of the six pages
+    # the footer links, so it has a line of its own after the notices (docs/DECISIONS.md, 20).
+    choices = (f'<p class="measure-choices"><a href="{to(up, "privacy/")}#measurement" data-wts-measure-open>'
+               f'{esc(w["footer"]["measure_choices"])}</a></p>') if measuring() else ""
     return (f'<footer>{_PARTS.get("shelf", "")}\n<div class="foot"><div class="wrap">'
             f'<nav aria-label="{esc(w["footer"]["label"])}"><ul class="foot-links">{links}</ul></nav>'
-            f'<p>{notices}</p></div></div></footer>')
+            f'<p>{notices}</p>{choices}</div></div></footer>')
 
 
 def page(title: str, body: str, w: dict, depth: int, description: str = "", scripts: tuple[str, ...] = (),
@@ -296,6 +323,10 @@ def page(title: str, body: str, w: dict, depth: int, description: str = "", scri
     if here in SCROLLED_TABS:
         scripts += ("tabs.js",)
     js = "".join(f'<script src="{up}{asset(src)}" defer></script>' for src in scripts)
+    if measuring():
+        # the kit's consent banner and Google tag loader: nothing loads from Google unless the reader accepts
+        js += (f'<script src="{up}{asset("measure.js")}" data-tag="{esc(measuring())}" '
+               f'data-privacy="{to(up, "privacy/")}" data-measures="{MEASURES}" defer></script>')
     site = w["site"]
     description = description or site["tagline"]
     url = (_SITE.get("url") or "").rstrip("/")
@@ -674,10 +705,12 @@ its file.</p>
 
 def use_build(settings: Settings, names: dict[str, str], launched: bool) -> None:
     """Write pages for a build whose files are at ``names`` (its assets.json): ``build`` uses it for a new build, and
-    the status page (src/landlords/status.py) to write itself again in the live one."""
-    global _LAUNCHED, _SITE, _ASSETS
+    the status page (src/landlords/status.py) to write itself again in the live one. A build measures only if the
+    switch is on and the build has the kit's measure.js among its files."""
+    global _LAUNCHED, _SITE, _ASSETS, _MEASURE
     _LAUNCHED = launched
     _SITE = settings.section("site")
+    _MEASURE = measure_tag(settings) if "measure.js" in names else ""
     _ASSETS = names
     _PARTS.update(family_parts(names))
 
@@ -697,7 +730,8 @@ def build(settings: Settings, out: Path | None = None) -> dict[str, int]:
         shutil.rmtree(out)
     (out / "landlords").mkdir(parents=True)
     (out / "method").mkdir()
-    use_build(settings, write_assets(out), bool(settings.section("site").get("launched")))
+    use_build(settings, write_assets(out, measure=bool(measure_tag(settings))),
+              bool(settings.section("site").get("launched")))
     profiles = build_profiles(settings)
 
     areas = area_rows(settings, profiles)

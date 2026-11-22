@@ -70,6 +70,27 @@ counts as something new, so the next update builds the pages again. To switch it
 `cd /opt/wherelandlordsstand/deploy && bash update.sh && bash run-update.sh` and approve the new pages from the email.
 Check that `robots.txt` and `/sitemap.xml` say what they should and that `check.sh` shows the site working.
 
+## Measurement
+
+Measurement for Google Ad Grants (docs/DECISIONS.md, 20; the charity's `family/MEASUREMENT.md`) is off:
+`[ads] measurement = false` and `tag = ""` in `config/settings.toml`. Turn it on only once the charity is registered
+and its Google Ads account has the conversions set up, in this order:
+
+1. Finish `[privacy_measurement]` in `config/wording.toml`: the charity number for `NNNNNNN`, and `updated`. Merge it.
+2. The front door. On this server Where MPs Stand's Caddy front door sends its own content security policy in place
+   of this site's, and it would block the Google tag. Apply the charity's `family/front-door-measurement.patch` to
+   `wherempsstand` and run its `update.sh`; then add `MEASURED_SITES="wherelandlordsstand.com"` to
+   `/opt/hansardgpt/deploy/.env` and run its `update.sh` again. Until `MEASURED_SITES` names this site, the front door
+   sends what it sends today.
+3. Add `LANDLORDS_ADS_MEASUREMENT=true` and `LANDLORDS_ADS_TAG=AW-…` to `/opt/wherelandlordsstand/deploy/.env`, run
+   `bash update.sh && bash run-update.sh`, and approve the rebuilt pages from the email.
+4. Check in a private window: the banner shows; "Reject" leaves no request to Google; "Accept" loads the tag;
+   "Measurement choices" at the foot of a page opens the banner again; and
+   `curl -sI https://wherelandlordsstand.com/ | grep -i content-security-policy` names `https://www.googletagmanager.com`.
+
+To turn it off, remove the two lines from `.env`, run the update and approve, and take the site out of
+`MEASURED_SITES`.
+
 ## Running it
 
 Commands are run in `/opt/wherelandlordsstand/deploy`. Any `landlords` command runs in a one-off container:
@@ -186,7 +207,8 @@ nightly check"). Until then the address `/api/check` does not exist.
 ### Privacy
 
 The privacy page (`[privacy]` in `config/wording.toml`) names Cloudflare and says visits are not logged. Keep it true:
-`landlords serve` turns uvicorn's access log off, and the front door keeps none.
+`landlords serve` turns uvicorn's access log off, and the front door keeps none. While measurement is on, the page is
+`[privacy_measurement]` instead ("Measurement", above).
 
 ## On the maintainer's own computer
 

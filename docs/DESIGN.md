@@ -37,6 +37,10 @@ The kit's files are copied into `src/landlords/family/` by the kit's own sync sc
 - `fonts.css` and `fonts/` hold Source Serif 4 and Source Sans 3 (SIL Open Font License), served from this site, so
   no request goes to Google.
 - `<body class="wts-headings">` sets headings in Source Serif 4.
+- `measure.js` and `measure-csp.json` are the family's consent banner and Google tag loader, and the hosts the
+  content security policy adds for it. Both are unused while measurement is off, as it ships (docs/DECISIONS.md, 20):
+  the build copies `measure.js` and the pages load it only when `[ads] measurement` is on. Its banner's styles are
+  in `family.css` (`.wts-measure`).
 
 A link to a sister site shows its spine: a council's page and each area's page link to the council on Where
 Councils Stand with that site's spine beside the link.

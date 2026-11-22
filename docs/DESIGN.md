@@ -78,7 +78,7 @@ Colours come from the kit's tokens (`--wts-*` in `family.css`), with a few of th
 | `--ink`, `--muted` | text, and hints and source lines | `#1C2427`, `#4F5A5E` | `#E6EAEA`, `#A9B4B7` |
 | `--cloth` (kit `--wts-cloth-landlords`) | the header band, buttons, selected radio buttons | `#40484D` | `#5B666D` |
 | `--link` | links | `#2F4A5E` | `#A9C6DC` |
-| `--band-on`, `--band-off` | filled and empty band squares | `#40484D`, `#DDE2E3` | `#B3BEC5`, `#2A3236` |
+| `--band-on`, `--band-off` | filled and empty band squares | `#40484D`, `#DDE2E3` | `#B3BEC5`, `#38434A` |
 
 There are no shadows, no coloured stripes down the side of boxes, no double rules and no gold text; gilt appears only
 in the mark and on the book spines.
@@ -94,17 +94,21 @@ The header, the main column and the footer share one 72rem column with the kit's
   tab can start out of sight (Your rights, Methodology), `static/tabs.js` scrolls the row so the current tab shows.
 - The alpha banner sits under the band while `[site] stage` is "alpha": an "Alpha" tag, one sentence and a link to
   the report form (`[site] alpha` in `config/wording.toml`).
-- The home page puts the search beside a panel, then lists every landlord from A to Z in columns.
+- The home page puts the search beside a panel, then lists every landlord from A to Z in columns, each letter in a
+  narrow column of its own beside its landlords, as in an index. The list of council areas has two columns even on
+  a phone, as their names are short.
 - A landlord's card, "Before you bid", is one grey panel. Its parts (the grade, how it compares, complaints, safety
-  checks) sit side by side on a wide screen and one under another on a phone. The line about turning down an offer
-  is in bold at the top.
+  checks) sit in two columns on a wide screen, filled from the top of the left column to the bottom of the right, so
+  a short part never leaves a hole beside a long one; on a phone they sit one under another. Each band's squares sit
+  beside the first line of its words. The line about turning down an offer is in bold at the top.
 - A statement in a landlord's own words (docs/DECISIONS.md, 15) must never look like the site's own text. It sits
   inside a dashed border on the page colour, with a sans-serif heading, "Statement from [name], [date]", its words
   indented, and "In their own words. Not checked or endorsed by Where Landlords Stand." in small type. It is a note
   for screen readers (`role="note"`), named by its heading.
-- Tables have a dark rule under the column headings and faint rules between rows. On a narrow phone (under 30rem)
-  the area tables and the status page's table are drawn one block per row, with each figure under its column's
-  name, so no name or date is broken mid-word. The column headings stay in the table for screen readers, and ARIA
+- Tables have a dark rule under the column headings and faint rules between rows. The first and last columns'
+  words line up with the text above and below the table. On a narrow phone (under 30rem) the area tables and the
+  status page's table are drawn one block per row, with each figure under its column's name, so no name or date is
+  broken mid-word. The column headings stay in the table for screen readers, and ARIA
   roles keep it a table whatever the stylesheet does (`stack_table` in `site.py`). The compare table scrolls inside
   its own box, which takes the keyboard focus.
 - Forms have a label over each field and a hint under it. The report form's kinds are radio buttons, each with its

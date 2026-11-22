@@ -25,7 +25,7 @@ def plain(value, tmp: Path):
     return json.loads(json.dumps(value).replace(str(tmp), "<tmp>").replace(str(REPO_ROOT), "<root>"))
 
 
-# settings: no difference
+# settings: no difference but the measurement switch, [ads] (below)
 
 
 @pytest.mark.parametrize("case", shared.read("settings.json"), ids=lambda case: case["name"])
@@ -41,7 +41,11 @@ def test_settings_resolve_as_before(case, tmp_path):
         else:
             env["LANDLORDS_CONFIG"] = str(path)
     s = load_settings(argument, env)
-    assert plain({"raw": s.raw, "data_dir": str(s.data_dir), "config_path": str(s.config_path), "fetch": s.fetch,
+    # The one difference on purpose: the measurement switch, [ads], added on 21 November 2026 (docs/DECISIONS.md,
+    # 20), after the recording. It ships off with no tag, and a file without it reads as an empty table, as [site] does.
+    raw = dict(s.raw)
+    assert raw.pop("ads") == ({"measurement": False, "tag": ""} if case["config"] == "real" else {})
+    assert plain({"raw": raw, "data_dir": str(s.data_dir), "config_path": str(s.config_path), "fetch": s.fetch,
                   "raw_dir": str(s.raw_dir), "staging_dir": str(s.staging_dir), "site": s.section("site"),
                   "no_such_section": s.section("no_such_section")}, tmp) == case["gives"]
 

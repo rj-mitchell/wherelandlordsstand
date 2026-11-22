@@ -170,3 +170,25 @@ landlord's "reviews" or "complaints". So (19 November 2026):
   The order is by size only, never by any result, so it is not a ranking (decision 2).
 
 The wording is in `config/wording.toml` ([profile], [similar], [area]).
+
+## 20. Measurement for Google Ad Grants, built and switched off
+
+The charity will apply for Google Ad Grants once it is registered, which needs the Google tag on the sites to count
+conversions (the charity's review plan, Part D; its `family/MEASUREMENT.md`). It is built now and off, so the site is
+what it was until the owner turns it on (21 November 2026):
+
+- The switch is `[ads] measurement` and `tag` in `config/settings.toml`, false and empty; on the server
+  `LANDLORDS_ADS_MEASUREMENT` and `LANDLORDS_ADS_TAG` in `deploy/.env`, like the launch switch. Off, the pages carry
+  nothing of it but the family kit's inert `data-wts-conversion` marks, and the build copies no `measure.js`.
+- On, every page loads the kit's `measure.js` (under `assets/`, fingerprinted like the site's other files), which
+  shows the family's consent banner and loads the Google tag only if the reader accepts. The footer gains
+  "Measurement choices" on a line of its own after the notices: it is a control, not a page, so the footer keeps the
+  family's six links. The privacy page is `[privacy_measurement]` in `config/wording.toml`, a draft in the
+  glossary's "once registered" words; the build refuses it while it still says `NNNNNNN` or "(draft". The API's
+  policy adds the kit's Google hosts (`src/landlords/family/measure-csp.json`). A change of the switch counts as
+  something new, so the next update rebuilds the pages, which wait for approval as always.
+- What is measured: a figure's source opened (the publisher's page or the file, in each page's list of sources), a
+  download from the data page, the Donate link in the kit's shelf, and a report or statement sent, counted when its
+  thank-you page loads (the forms work without script). Nothing else: no page views, and never a search.
+- The front door on the shared server replaces this site's policy with its own, so it must change too before the
+  switch is turned on: the charity's `family/front-door-measurement.patch` (docs/DEPLOY.md, "Measurement").

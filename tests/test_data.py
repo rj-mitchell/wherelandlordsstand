@@ -207,6 +207,55 @@ def test_the_launch_switch(tmp_path):
     site.build(settings, settings.data_dir / "site")  # put the test-version pages back
 
 
+@pytest.mark.skipif(not (SITE / "index.html").exists(), reason="pages not built (`landlords build`)")
+def test_with_measurement_off_no_page_names_measure_js_or_google():
+    """The measurement switch ships off (docs/DECISIONS.md, 20): the built pages carry nothing of it but the kit's inert
+    data-wts-conversion attributes, and no measure.js is among the built files."""
+    assert settings.section("ads").get("measurement") is False
+    for path in sorted(SITE.rglob("*.html")):
+        text = path.read_text()
+        assert not re.search(r"measure\.[0-9a-f]{10}\.js|googletagmanager|data-wts-measure-open", text), path
+    assert not list((SITE / "assets").glob("measure.*.js"))
+    assert 'data-wts-conversion="download"' in (SITE / "data" / "index.html").read_text()
+    assert 'data-wts-conversion="source_opened"' in (SITE / "landlords" / "abri-group" / "index.html").read_text()
+
+
+@pytest.mark.skipif(not (settings.staging_dir / "scores.parquet").exists(), reason="data not scored")
+def test_the_measurement_switch_on_every_real_page(tmp_path, monkeypatch):
+    import dataclasses
+    import json
+
+    from landlords import site
+    from landlords.config import load_toml
+
+    def wording(name):
+        w = load_toml(name)
+        if name == "wording.toml":   # the notice as the owner finishes it before turning measurement on
+            text = json.dumps(w["privacy_measurement"]).replace("NNNNNNN", "1234567")
+            w["privacy_measurement"] = {**json.loads(text), "updated": "Last updated 1 March 2027."}
+        return w
+
+    monkeypatch.setattr(site, "load_toml", wording)
+    raw = {**settings.raw, "ads": {"measurement": True, "tag": "AW-123456789"}}
+    out = tmp_path / "on"
+    try:
+        site.build(dataclasses.replace(settings, raw=raw), out)
+        pages = sorted(out.rglob("*.html"))
+        assert len(pages) > 600
+        # relative to the page, or from the root on the 404 page, which is served at any address
+        script = re.compile(r'<script src="(/|(?:\.\./)*)assets/measure\.[0-9a-f]{10}\.js" data-tag="AW-123456789" '
+                            r'data-privacy="\1privacy/" data-measures="[a-z_ ]+" defer></script>')
+        for path in pages:
+            text = path.read_text()
+            assert script.search(text.split("</head>")[0]), path
+            assert "data-wts-measure-open>Measurement choices</a>" in text, path
+        assert 'id="measurement"' in (out / "privacy" / "index.html").read_text()
+        assert len(list((out / "assets").glob("measure.*.js"))) == 1
+    finally:
+        monkeypatch.undo()
+        site.build(settings, settings.data_dir / "site")  # put the test-version pages back
+
+
 @pytest.mark.skipif(not (settings.raw_dir / "tsm").exists(), reason="data not fetched")
 def test_the_weekly_update_publishes_the_first_pages_and_asks_for_the_rest(tmp_path, monkeypatch):
     """The site is public, in alpha (docs/DECISIONS.md, 12): once pages are live, new ones wait for the owner's

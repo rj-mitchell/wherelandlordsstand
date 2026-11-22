@@ -20,7 +20,9 @@ statements are waiting and for how long, how old the newest backup is), and only
 (``LANDLORDS_CHECK_TOKEN`` in deploy/.env; wts-core docs/adr/0010). With no token set, the address isn't there.
 
 No cookies, no logs of visits (uvicorn's access log is off), and a content security policy that allows nothing from
-other sites.
+other sites. While the measurement switch is on ([ads] in config/settings.toml; docs/DECISIONS.md, 20), the policy
+adds the hosts the Google tag needs, from the family kit's measure-csp.json, and nothing else (``csp``). On the shared
+server the front door sends its own policy in place of this one (docs/DEPLOY.md, "Measurement").
 """
 
 from __future__ import annotations
@@ -51,9 +53,31 @@ log = logging.getLogger(__name__)
 PER_MINUTE = 10                     # posts a minute from one visitor
 FORGET_OVER = 50_000                # visitors remembered before those with nothing in the last minute are forgotten
 BACKUPS_DIR = Path("/backups")      # where the server's nightly backup is written (deploy/docker-compose.yml)
+CSP = ("default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; "
+       "form-action 'self'; frame-ancestors 'none'; base-uri 'none'")
+# The hosts the Google tag needs, by directive, while measuring: the family kit's list (never edited here)
+MEASURE_CSP = Path(__file__).parent / "family" / "measure-csp.json"
+
+
+def csp(measure: bool) -> str:
+    """The content security policy: ``CSP``, or while measuring the same with the kit's hosts added to each directive
+    it names (a directive the policy lacks starts from 'self', as default-src gave it)."""
+    if not measure:
+        return CSP
+    directives = [d.strip() for d in CSP.split(";") if d.strip()]
+    for name, hosts in json.loads(MEASURE_CSP.read_text()).items():
+        if not isinstance(hosts, list):
+            continue
+        at = next((i for i, d in enumerate(directives) if d.split()[0] == name), None)
+        if at is None:
+            directives.append(" ".join([name, "'self'", *hosts]))
+        else:
+            directives[at] = " ".join([directives[at], *hosts])
+    return "; ".join(directives)
+
+
 HEADERS = {
-    "Content-Security-Policy": "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; "
-                               "form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
+    "Content-Security-Policy": CSP,
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "no-referrer",
     "Permissions-Policy": "interest-cohort=()",
@@ -177,10 +201,14 @@ def create_app(settings: Settings, behind_proxy: bool = False, clock: Clock = SY
             return RedirectResponse(to, status_code=301)
         return await call_next(request)
 
+    from landlords.site import measure_tag
+
+    sent = {**HEADERS, "Content-Security-Policy": csp(bool(measure_tag(settings)))}
+
     @app.middleware("http")
     async def headers(request: Request, call_next):
         response = await call_next(request)
-        for k, v in HEADERS.items():
+        for k, v in sent.items():
             response.headers.setdefault(k, v)
         response.headers.setdefault("Cache-Control", cache_control(request.url.path))
         return response

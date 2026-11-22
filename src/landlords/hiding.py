@@ -224,7 +224,7 @@ def _leave_out(pages: _Pages, slug: str, note: str, w: dict) -> None:
         text = _csv(kept)
         pages.now[f"data/{name}"] = text
         if listing is not None:
-            listing = re.sub(rf'(<a href="{re.escape(name)}">{re.escape(name)}</a> <span class="hint">\()[^)]*(\))',
+            listing = re.sub(rf'(<a href="{re.escape(name)}"[^>]*>{re.escape(name)}</a> <span class="hint">\()[^)]*(\))',
                              lambda m, text=text, kept=kept: f"{m[1]}{len(kept) - 1:,} rows, "
                                                              f"{len(text.encode()) // 1024 + 1} KB{m[2]}",
                              listing, count=1)

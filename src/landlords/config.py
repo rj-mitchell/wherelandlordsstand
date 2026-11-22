@@ -2,8 +2,8 @@
 ``wts_core.settings``), and the facts about this site that are fixed in its code.
 
 The loader reads config/settings.toml (or the file named by ``LANDLORDS_CONFIG``), then ``settings.local.toml`` in
-the data folder if there is one, then the two settings the server keeps in deploy/.env: ``LANDLORDS_SITE_URL`` and
-``LANDLORDS_LAUNCHED`` (docs/DEPLOY.md). The data folder is ``LANDLORDS_DATA_DIR``, else ``[paths] data_dir``.
+the data folder if there is one, then the settings the server keeps in deploy/.env: ``LANDLORDS_SITE_URL``, ``LANDLORDS_LAUNCHED``, and the measurement
+switch, ``LANDLORDS_ADS_MEASUREMENT`` and ``LANDLORDS_ADS_TAG`` (docs/DEPLOY.md). The data folder is ``LANDLORDS_DATA_DIR``, else ``[paths] data_dir``.
 """
 
 from __future__ import annotations
@@ -38,10 +38,13 @@ SITE = core.Site(
     version=_version(),
     # On the server the site's settings live in deploy/.env (never in git), so the address and the launch switch can
     # be set there without changing the repository: LANDLORDS_SITE_URL sets [site] url, and LANDLORDS_LAUNCHED
-    # ("1", "true" or "yes") sets [site] launched.
+    # ("1", "true" or "yes") sets [site] launched. The same for the measurement switch (docs/DECISIONS.md, 20):
+    # LANDLORDS_ADS_MEASUREMENT sets [ads] measurement, and LANDLORDS_ADS_TAG [ads] tag.
     env_settings=(
         core.EnvSetting("SITE_URL", "site", "url"),
         core.EnvSetting("LAUNCHED", "site", "launched", "flag"),
+        core.EnvSetting("ADS_MEASUREMENT", "ads", "measurement", "flag"),
+        core.EnvSetting("ADS_TAG", "ads", "tag"),
     ),
 )
 

@@ -1,0 +1,29 @@
+To: inforequests@housing-ombudsman.org.uk
+Cc: hossectordevelopment@housing-ombudsman.org.uk
+Subject: Reuse of your landlord performance tables on Where Landlords Stand
+
+Dear Housing Ombudsman Service,
+
+I am writing from Where Landlords Stand (https://wherelandlordsstand.com), a free, non-commercial website that helps social housing tenants and people bidding for a home see how England's councils and housing associations look after their tenants, from what the Regulator of Social Housing and the Housing Ombudsman publish. It is a project of Where They Stand, which is applying to register as a charity in England and Wales. The site carries no adverts and sets no cookies or trackers.
+
+We use Table 1 of your "Tables for landlords with individual performance reports", for 2025-26 and 2024-25, in two ways:
+
+- Each landlord's page says, in words, how many findings you made about it in 2025-26, the share in which you found maladministration, and the compensation you ordered or recommended. Its 2024-25 findings and that share are shown separately, as earlier figures, with a note that from October 2025 you examine complaint handling in every case, so the two years are not compared.
+- The site's data page (https://wherelandlordsstand.com/data/) offers a download, ombudsman.csv, with every figure in Table 1 for every landlord in both files (290 landlords for 2025-26 and 277 for 2024-25), as you publish them. Each row names the file it comes from, with a link to it on your website.
+
+Everywhere, the figures are credited "© Housing Ombudsman Service" with a link to your page, are never combined with other sources into new rates, and are marked as used while your reuse terms are confirmed.
+
+Your website states copyright but no reuse licence, so I would be grateful for your answers to four questions:
+
+1. May we republish these figures on a public, non-commercial website, both on the landlords' pages and as the download, and if so on what terms? The Regulator of Social Housing publishes its data under the Open Government Licence v3.0; if the same licence covers your tables, it would be helpful to know.
+2. What credit or attribution would you like us to use?
+3. Do you publish, or could you share, the number of homes each member landlord has under your jurisdiction? The tables give size bands, and because the bands are each member's own, a group parent can be "Less than 100 units" while its homes are held by its subsidiaries.
+4. Table 6 in the 2025-26 file is marked "TBC" and is empty. Is it to be filled in, and if so, roughly when?
+
+If you would rather we did not use the tables, or did not offer the download, please say so and we will take them down. I am happy to answer any questions about the site or how it shows your figures.
+
+Kind regards,
+
+Where They Stand
+wheretheystanduk@gmail.com
+https://wherelandlordsstand.com
